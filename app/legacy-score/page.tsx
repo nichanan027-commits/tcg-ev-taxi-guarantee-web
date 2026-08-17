@@ -152,6 +152,7 @@ export default function Home() {
           </div>
         </div>
         <div className="navlinks">
+          <a href="/">← หน้าหลัก Route2Own</a>
           <a href="#demo">ทดลองระบบ</a>
           <a href="#dashboard">Dashboard</a>
           <a href="#deploy">Deploy</a>
