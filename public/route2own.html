@@ -91,17 +91,35 @@ a{text-decoration:none;color:inherit}.hidden{display:none!important}.screen{min-
 .breakeven-note.risk{background:var(--v4-riskbg);border:1px solid var(--v4-riskline);color:#9c2828}
 
 /* --- รายงาน PDF (แสดงเฉพาะตอนพิมพ์) --- */
-#reportArea{display:none}
+/* เวทีนอกจอสำหรับถ่ายภาพเอกสาร — ตรึงความกว้างเท่ากระดาษ A4 ที่ 96dpi
+   เพื่อให้มือถือได้เลย์เอาต์เดียวกับเดสก์ท็อป
+   หมายเหตุ: ห้ามใส่ position/left ที่ #reportArea เอง เพราะ html2pdf จะ clone element
+   นั้นไปวาด ถ้า clone ติดตำแหน่งนอกจอไปด้วยจะได้ PDF เปล่า */
+#reportStage{position:fixed;top:0;left:-10000px;width:794px;z-index:-1;pointer-events:none}
+#reportArea{display:none;width:794px;padding:22px;background:#fff}
+#reportArea.capturing{display:block}
 .report-head{border-bottom:3px solid var(--navy);padding-bottom:12px;margin-bottom:16px;display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
 .report-head h1{margin:0 0 4px;font-size:22px;color:var(--navy)}
 .report-head .meta{text-align:right;font-size:11px;color:var(--muted);line-height:1.7}
-.report-section{margin-top:16px;break-inside:avoid}
+.report-section{margin-top:16px}
+#reportArea .chartcard,#reportArea .report-kv,#reportArea .datatable tr{break-inside:avoid}
+.report-section h2{break-after:avoid}
 .report-section h2{font-size:14px;color:var(--navy);margin:0 0 8px;padding-bottom:5px;border-bottom:1px solid var(--line);text-transform:uppercase;letter-spacing:.05em}
 .report-kv{display:grid;grid-template-columns:repeat(2,1fr);gap:0 22px}
 .report-kv div{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dotted #d8e0e8;font-size:12.5px}
 .report-kv span{color:var(--muted)}
 .report-kv b{color:var(--navy)}
 .report-foot{margin-top:18px;padding-top:11px;border-top:1px solid var(--line);font-size:10.5px;color:var(--muted);line-height:1.7}
+/* เอกสารต้องพอดีกรอบ 794px เสมอ — ห้ามมี element ใดล้นออกนอกกรอบ
+   มิฉะนั้น html2canvas จะตัดขอบขวาทิ้งตอนแปลงเป็น PDF */
+#reportArea .tablewrap{overflow:visible}
+#reportArea .datatable{table-layout:fixed;width:100%;font-size:11.5px}
+#reportArea .datatable th,#reportArea .datatable td{white-space:normal;overflow-wrap:anywhere;padding:7px 5px}
+#reportArea .datatable th:first-child,#reportArea .datatable td:first-child{width:17%}
+#reportArea .report-kv div{font-size:12px}
+#reportArea .report-kv b{overflow-wrap:anywhere;text-align:right}
+#reportArea .chartcard,#reportArea .legend,#reportArea .breakeven-note{max-width:100%}
+#reportArea .legend span{max-width:100%}
 
 @media(max-width:1000px){.biz-grid{grid-template-columns:1fr}.biz-tiles{grid-template-columns:1fr}.livebar-stats{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:720px){
@@ -113,10 +131,15 @@ a{text-decoration:none;color:inherit}.hidden{display:none!important}.screen{min-
   .scoredial{width:48px;height:48px}
   .biz-tile .val{font-size:23px}
   .report-kv{grid-template-columns:1fr}
+  /* เอกสารที่จะแปลงเป็น PDF ต้องคงเลย์เอาต์ A4 เสมอ ไม่ยุบตามความกว้างจอมือถือ */
+  #reportArea .report-kv{grid-template-columns:repeat(2,1fr)}
+  #reportArea .datatable{font-size:12.5px}
+  #reportArea .chartcard{padding:17px}
 }
 
 @media print{
-  #reportArea{display:block!important}
+  #reportStage{position:static;left:auto;top:auto;width:auto;z-index:auto}
+  #reportArea{display:block!important;width:auto;padding:0}
   #reportArea .amortsvg{height:190px}
   #reportArea .chartcard{padding:12px}
   body{background:#fff}
@@ -403,7 +426,7 @@ function driverStepHtml(i){
  if(i===2)return head('สร้างข้อมูลอาชีพของฉัน','Financial + Occupational Passport — แยกรายได้ที่ตรวจสอบได้ การทำงาน ต้นทุน และภาระทางการเงิน')+passportHtml()+navButtons('ไปหน้าคำนวณ →');
  if(i===3)return head('รถคันนี้เหมาะกับรายได้ของคุณหรือไม่?','Route2Own Calculator ใช้ข้อมูลของผู้ขับเป็นหลัก ค่า 1,850.52 บาท/วันเป็น Base Scenario สำหรับสาธิตและสามารถแก้ไขได้')+calculatorHtml()+navButtons('ดูผล Credit Readiness →');
  if(i===4)return head('เส้นทางที่เหมาะกับคุณตอนนี้','ระบบให้ Route ที่เหมาะ แทนการบังคับทุกคนไปสู่ Ownership')+`<div id="readinessArea"></div>${navButtons('ออกใบผลความพร้อม →')}`;
- if(i===5)return head('Route2Own Readiness Certificate','ใบผลการประเมินความพร้อมเบื้องต้นสำหรับประกอบการพิจารณา — ไม่ใช่ Loan Approval')+`<div id="certArea"></div><div class="actions"><button class="btn ghost" onclick="prevDriver()">← ย้อนกลับ</button><div style="display:flex;gap:8px"><button class="btn teal" onclick="downloadReport()">⬇ ดาวน์โหลดใบรายงานความพร้อมและแผนธุรกิจ v1.4</button><button class="btn primary" onclick="nextDriver()">เลือกสถาบันการเงิน →</button></div></div>`;
+ if(i===5)return head('Route2Own Readiness Certificate','ใบผลการประเมินความพร้อมเบื้องต้นสำหรับประกอบการพิจารณา — ไม่ใช่ Loan Approval')+`<div id="certArea"></div><div class="actions"><button class="btn ghost" onclick="prevDriver()">← ย้อนกลับ</button><div style="display:flex;gap:8px"><button id="btnReportPdf" class="btn teal" onclick="downloadReport(this)">⬇ ดาวน์โหลดใบรายงานความพร้อมและแผนธุรกิจ v1.4</button><button class="btn primary" onclick="nextDriver()">เลือกสถาบันการเงิน →</button></div></div>`;
  if(i===6)return head('สินเชื่อ EV ที่อาจเหมาะกับเส้นทางของคุณ','เลือก FI เพื่อส่ง Readiness Package — เงื่อนไขสินเชื่อและ Commercial Taxi Eligibility ต้องยืนยันจาก FI/Term Sheet จริง')+fiHtml()+`<div class="notice warn" style="margin-top:14px">รายชื่อ FI ด้านล่างเป็นรายชื่อสำหรับ Prototype ตามข้อมูลโครงการ สถานะ MOU / ผลิตภัณฑ์ EV Taxi / อัตราดอกเบี้ย / วงเงินจริงต้องตรวจเอกสารและ Partner Term Sheet ก่อนใช้งานจริง</div><div class="actions"><button class="btn ghost" onclick="prevDriver()">← ย้อนกลับ</button><button class="btn primary" onclick="submitToFI()">ส่ง Readiness Package →</button></div>`;
  return head('ส่งต่อ FI และติดตามสถานะ','Route2Own ส่งข้อมูลประกอบเพื่อช่วย FI พิจารณา แต่ FI เป็นผู้อนุมัติ/ปฏิเสธและกำหนดเงื่อนไขสินเชื่อขั้นสุดท้าย')+`<div class="card"><h3>สถานะการส่งคำขอ</h3><div id="trackerArea"></div><div class="notice" style="margin-top:14px"><b>Package ที่ส่ง:</b> Readiness Certificate • Financial Passport • Occupational Passport • DSCR/Stress • PAI • TCO • Indicative Risk Tier • Consent Reference</div><div style="margin-top:16px;display:flex;gap:9px;flex-wrap:wrap"><button class="btn teal" onclick="advanceSubmission()">จำลองสถานะถัดไป</button><button class="btn ghost" onclick="showContact()">สอบถาม บสย.</button><button class="btn ghost" onclick="toast('เมื่อ FI Approved ระบบจะ Handoff ไปยัง Post-Approval Activation Gate')">ดู Handoff หลังอนุมัติ</button></div></div><div class="card" style="margin-top:14px"><h3>ขอบเขตบทบาท</h3><div class="cards" style="grid-template-columns:repeat(2,1fr)"><div><span class="pill blue">Route2Own / บสย.</span><p>ประเมินความพร้อมของโครงการ สร้างข้อมูลอาชีพและความสามารถจ่าย จัด Route และ Indicative Guarantee Tier</p></div><div><span class="pill green">FI / Leasing</span><p>Final underwriting • Approve / Decline • วงเงิน • ดอกเบี้ย • Tenor • Contractual Due</p></div></div></div><div class="actions"><button class="btn ghost" onclick="prevDriver()">← ย้อนกลับ</button><button class="btn primary" onclick="goHome()">กลับหน้าหลัก</button></div>`;
 }
@@ -669,7 +692,7 @@ function buildReport(){
  const host=document.getElementById('reportArea');if(!host)return;
  if(!state.calc||!state.calc.breakEven)calculateRoute();
  const c=state.calc,r=state.readiness,be=c.breakEven;
- const ref='R2O-'+new Date().getFullYear()+'-'+String(Math.floor(Math.random()*900000)+100000);
+ const ref=reportRef();
  const d=new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
  const kv=(k,v)=>`<div><span>${k}</span><b>${v}</b></div>`;
  host.innerHTML=`<div class="report-page" style="padding:16px">
@@ -718,7 +741,61 @@ function buildReport(){
    และเงื่อนไขสินเชื่อเป็นอำนาจของสถาบันการเงิน • ตัวเลข Threshold ยังต้องผ่าน Real Data Replay / Risk / FI Validation ก่อน Pilot</div>
  </div>`;
 }
-function downloadReport(){buildReport();toast('กำลังเปิดหน้าต่างพิมพ์ — เลือก “บันทึกเป็น PDF” เพื่อดาวน์โหลด');setTimeout(()=>window.print(),350)}
+/* ---------- ดาวน์โหลด PDF คลิกเดียว ---------- */
+/* สลับไปใช้ CDN ได้โดยเปลี่ยนค่านี้เป็น
+   'https://cdn.jsdelivr.net/npm/html2pdf.js@0.14.0/dist/html2pdf.bundle.min.js' */
+const PDF_LIB_URL='/vendor/html2pdf.bundle.min.js';
+let __pdfLib=null;
+/** โหลด html2pdf เฉพาะตอนกดปุ่ม เพื่อไม่ให้ bundle ~950KB ถ่วงเวลาโหลดหน้าเว็บ */
+function loadPdfLib(){
+ if(window.html2pdf)return Promise.resolve(window.html2pdf);
+ if(__pdfLib)return __pdfLib;
+ __pdfLib=new Promise((resolve,reject)=>{
+  const sc=document.createElement('script');
+  sc.src=PDF_LIB_URL;sc.async=true;
+  sc.onload=()=>window.html2pdf?resolve(window.html2pdf):reject(new Error('html2pdf not exposed'));
+  sc.onerror=()=>{__pdfLib=null;reject(new Error('cannot load '+PDF_LIB_URL))};
+  document.head.appendChild(sc);
+ });
+ return __pdfLib;
+}
+function reportRef(){
+ if(!state.reportRef)state.reportRef='R2O-'+new Date().getFullYear()+'-'+String(Math.floor(Math.random()*900000)+100000);
+ return state.reportRef;
+}
+function reportFilename(){
+ const d=new Date(),pad=n=>String(n).padStart(2,'0');
+ return `Route2Own-Readiness-${reportRef()}-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}.pdf`;
+}
+async function downloadReport(btn){
+ const host=document.getElementById('reportArea');if(!host)return;
+ const label=btn?btn.innerHTML:null;
+ if(btn){btn.disabled=true;btn.innerHTML='⏳ กำลังสร้าง PDF…'}
+ try{
+  const html2pdf=await loadPdfLib();
+  buildReport();
+  host.classList.add('capturing');
+  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));  // รอ layout นิ่งก่อนถ่ายภาพ
+  await html2pdf().set({
+   margin:[10,9,12,9],
+   filename:reportFilename(),
+   image:{type:'jpeg',quality:0.95},
+   html2canvas:{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,width:794,windowWidth:794},
+   jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
+   pagebreak:{mode:['css','legacy']}
+  }).from(host).save();
+  toast('ดาวน์โหลดไฟล์ '+reportFilename()+' แล้ว');
+ }catch(err){
+  // ถ้าโหลด library ไม่ได้หรือแปลงไม่สำเร็จ ยังพิมพ์เป็น PDF ผ่านเบราว์เซอร์ได้
+  console.error('[Route2Own] PDF generation failed:',err);
+  toast('สร้าง PDF อัตโนมัติไม่สำเร็จ — เปิดหน้าต่างพิมพ์ให้แทน กรุณาเลือก “บันทึกเป็น PDF”');
+  buildReport();
+  setTimeout(()=>window.print(),400);
+ }finally{
+  host.classList.remove('capturing');
+  if(btn){btn.disabled=false;btn.innerHTML=label}
+ }
+}
 
 </script>
 <script>
@@ -727,6 +804,6 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 </script>
 
-<div id="reportArea" aria-hidden="true"></div>
+<div id="reportStage" aria-hidden="true"><div id="reportArea"></div></div>
 </body>
 </html>
