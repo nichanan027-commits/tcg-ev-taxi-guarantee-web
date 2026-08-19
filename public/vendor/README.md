@@ -15,5 +15,8 @@
 และเก็บไว้ใน repo แทนการเรียกจาก CDN ตอน runtime เพื่อให้ระบบไม่ล่มตามโฮสต์ภายนอก
 หากต้องการสลับไปใช้ CDN ให้แก้ค่า `PDF_LIB_URL` ในไฟล์ `public/route2own.html`
 
+การโหลดมี timeout 12 วินาที (`PDF_LIB_TIMEOUT_MS`) ถ้าเกินนั้นระบบจะตกไปใช้หน้าต่างพิมพ์ของเบราว์เซอร์แทน
+ขั้นตอนซ้อมก่อนวันแข่งและวิธีเก็บ log ดูที่ [`docs/pdf-demo-checklist.md`](../../docs/pdf-demo-checklist.md)
+
 การอัปเดตเวอร์ชัน: `npm install html2pdf.js@<version> --no-save` แล้วคัดลอก `dist/html2pdf.bundle.min.js`
 และไฟล์ `.LICENSE.txt` มาทับ พร้อมแก้ตารางด้านบน
