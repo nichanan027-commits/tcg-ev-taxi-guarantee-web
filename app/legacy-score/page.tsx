@@ -340,7 +340,8 @@ export default function Home() {
                   <span>Route2Own Credit Readiness</span>
                   <h2>{routeText(result.readiness.route)}</h2>
                   <p>
-                    Indicative Tier: {result.readiness.tier} • Data Confidence: {result.readiness.dataConfidence}
+                    คะแนนความพร้อม {result.readiness.readinessScore}/100 • Indicative Tier: {result.readiness.tier} •
+                    Data Confidence: {result.readiness.dataConfidence}
                   </p>
                 </div>
 
@@ -365,6 +366,13 @@ export default function Home() {
                     <span>TCO เทียบเช่ารถเดิม</span>
                     <b>{result.calc.tcoDelta >= 0 ? '+' : '−'}{baht.format(Math.abs(result.calc.tcoDelta))}</b>
                   </div>
+                </div>
+
+                <div className="kpiGrid">
+                  <div><span>ยอดผ่อนชำระรวมตลอดสัญญา</span><b>{baht.format(result.calc.totalRepayment)}</b></div>
+                  <div><span>ดอกเบี้ยรวมที่ต้องจ่าย</span><b>{baht.format(result.calc.totalInterest)}</b></div>
+                  <div><span>จุดคุ้มทุน / วัน</span><b>{baht.format(result.calc.breakEven.requiredGrossDaily)}</b></div>
+                  <div><span>ส่วนต่างคงเหลือ / วัน</span><b>{baht.format(result.calc.breakEven.marginDaily)}</b></div>
                 </div>
 
                 <div className="reasonBox">

@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { normalize, scoreRoute2Own, type ScoreInput } from "../../lib/route2own";
+import { evaluate, type ScoreInput } from "../../lib/route2own";
 
 /**
- * POST /api/score — Route2Own Credit Readiness
- * Competition Working Scenario v1.3 (800K / BaaS 400)
+ * POST /api/score — Route2Own Credit Readiness v1.4
+ * Competition Working Scenario (800K / BaaS 400)
  *
- * ตรรกะการคำนวณอยู่ใน app/lib/route2own.ts ซึ่งใช้ร่วมกับหน้า /legacy-score
- * เพื่อให้ API และหน้าบ้าน (public/route2own.html) ให้ผลตรงกัน
+ * ตรรกะการคำนวณอยู่ใน public/route2own-engine.js ซึ่งเป็นไฟล์เดียวกับที่หน้าบ้าน
+ * (public/route2own.html) โหลดไปใช้ จึงรับประกันว่าให้ผลตรงกันเสมอ
  */
 export async function POST(request: Request) {
   let body: Partial<ScoreInput> = {};
@@ -16,11 +16,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const input = normalize(body);
-  const { calc, readiness, reasons } = scoreRoute2Own(input);
+  const { input, calc, readiness, reasons } = evaluate(body);
 
   return NextResponse.json({
-    scenario: "Route2Own Competition Working Scenario v1.3 (800K / BaaS 400)",
+    scenario: "Route2Own Competition Working Scenario v1.4 (800K / BaaS 400)",
     disclaimer:
       "ผลลัพธ์นี้เป็นการประเมินความพร้อมเบื้องต้น ไม่ใช่การอนุมัติสินเชื่อ ไม่ใช่ Pre-approved Loan " +
       "และไม่ผูกพันสถาบันการเงิน — FI เป็นผู้อนุมัติวงเงิน ดอกเบี้ย Tenor และเงื่อนไขสินเชื่อขั้นสุดท้าย",

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Route2Own by บสย. — Financial Gateway Competition v1.3 (800K)</title>
+<title>Route2Own by บสย. — Financial Gateway Competition v1.4 (800K)</title>
 <style>
 :root{--navy:#0b1f3a;--navy2:#12345a;--teal:#00a8a8;--teal2:#00c2b8;--aqua:#eafafa;--bg:#f5f7fa;--card:#fff;--text:#142033;--muted:#667085;--line:#e4e9f0;--green:#0f8a5f;--greenbg:#eaf8f2;--amber:#b7791f;--amberbg:#fff7e6;--red:#c83b3b;--redbg:#fff0f0;--blue:#2458a6;--bluebg:#eef4ff;--shadow:0 12px 30px rgba(11,31,58,.08);--r:18px}
 *{box-sizing:border-box} body{margin:0;font-family:"Noto Sans Thai","Tahoma",system-ui,sans-serif;background:var(--bg);color:var(--text)} button,input,select,textarea{font:inherit} button{cursor:pointer}
@@ -15,12 +15,173 @@ a{text-decoration:none;color:inherit}.hidden{display:none!important}.screen{min-
 .metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}.metric{border:1px solid var(--line);background:white;border-radius:15px;padding:16px}.metric .label{font-size:12px;color:var(--muted);font-weight:800}.metric .value{font-size:25px;font-weight:900;color:var(--navy);margin-top:5px}.metric .sub{font-size:11px;color:var(--muted);margin-top:3px}.metric.good{border-color:#b9e3d4;background:#fbfffd}.metric.warn{border-color:#efd59a;background:#fffdf8}.metric.bad{border-color:#efbebe;background:#fffafa}.calc-layout{display:grid;grid-template-columns:1.05fr .95fr;gap:18px}.result-box{background:linear-gradient(160deg,#081f38,#0e3f5b);color:white;border-radius:20px;padding:21px}.result-box h3{margin:0 0 14px}.result-row{display:flex;justify-content:space-between;gap:20px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.12)}.result-row:last-child{border:0}.result-row span{color:#cfe0ed}.result-row b{font-size:16px;text-align:right}.waterfall{display:grid;gap:8px}.wf{display:grid;grid-template-columns:1fr auto;align-items:center;border-radius:11px;padding:10px 12px;background:#f7f9fc}.wf.minus{border-left:4px solid #d28b32}.wf.reserve{border-left:4px solid #00a8a8;background:#f0fcfb}.wf.total{background:#102c49;color:white}.wf.total small{color:#cbd9e5}.chartbar{height:10px;background:#edf1f5;border-radius:999px;overflow:hidden}.chartbar span{display:block;height:100%;background:linear-gradient(90deg,#17a593,#43d2c3)}
 .route-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.route{border:2px solid var(--line);border-radius:18px;padding:18px;background:white}.route.active-own{border-color:#35a778;background:#f7fdfa}.route.active-build{border-color:#dfa847;background:#fffcf4}.route.active-no{border-color:#d65454;background:#fff8f8}.route h3{margin:0 0 6px}.certificate{max-width:860px;margin:auto;background:white;border:1px solid var(--line);border-radius:20px;overflow:hidden}.cert-head{padding:24px;background:linear-gradient(135deg,#0b1f3a,#0d5664);color:white}.cert-body{padding:24px}.cert-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 22px}.cert-item{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line);gap:12px}.cert-item span{color:var(--muted)}.disclaimer{margin-top:18px;padding:14px;background:#fff7e8;border:1px solid #f2dab0;border-radius:12px;font-size:13px;line-height:1.7;color:#82560e}.fi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.fi-card{border:1px solid var(--line);background:white;border-radius:17px;padding:17px}.fi-card.selected{border:2px solid var(--teal);box-shadow:0 8px 26px rgba(0,168,168,.12)}.fi-logo{height:44px;display:flex;align-items:center;font-weight:900;color:var(--navy)}.fi-card ul{padding-left:18px;color:var(--muted);font-size:13px;line-height:1.7}.tracker{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:18px 0}.track{padding:12px 8px;border-radius:12px;background:#edf1f5;text-align:center;font-size:12px;font-weight:800;color:#667085}.track.done{background:var(--greenbg);color:var(--green)}.track.current{background:var(--bluebg);color:var(--blue);outline:2px solid #a8c7ff}
 .partner-shell{max-width:1120px;margin:auto;padding:30px 22px 60px}.partner-types{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.ptype{border:1px solid var(--line);background:white;border-radius:15px;padding:16px;cursor:pointer;min-height:116px}.ptype:hover,.ptype.selected{border:2px solid var(--teal);background:#f7fffe}.ptype b{display:block;color:var(--navy);margin-top:8px}.gate-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.gate{background:white;border:1px solid var(--line);border-radius:14px;padding:14px}.gate h4{margin:0 0 8px;color:var(--navy)}.gate select{width:100%;border:1px solid #d8e0e8;border-radius:10px;padding:9px}.partner-status{display:grid;grid-template-columns:1fr .7fr;gap:18px}.status-panel{border-radius:20px;padding:24px;background:linear-gradient(150deg,#0b1f3a,#0b5260);color:white}.status-panel .statusbig{font-size:28px;font-weight:900;margin:8px 0}.todo{background:white;border:1px solid var(--line);border-radius:18px;padding:20px}.todo li{margin:9px 0;color:var(--muted)}
-.contact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.contact{background:white;border:1px solid var(--line);border-radius:16px;padding:18px}.contact b{display:block;color:var(--navy);margin-bottom:5px}.footer{padding:28px 0;background:#081a30;color:#9fb4c5;font-size:12px}.footer strong{color:white}
+.contact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.contact{background:white;border:1px solid var(--line);border-radius:16px;padding:18px}.contact b{display:block;color:var(--navy);margin-bottom:5px}.footer{padding:26px 0 30px;background:#081a30;color:#9fb4c5;font-size:12px;line-height:1.85}.footer strong,.footer b{color:white}.footer-inner{max-width:640px}.footer p{margin:6px 0 0;overflow-wrap:anywhere}.footer-note{color:#7d94a8}
 .toast{position:fixed;right:22px;bottom:22px;background:#101828;color:white;padding:13px 17px;border-radius:12px;box-shadow:0 18px 40px rgba(0,0,0,.2);z-index:100;opacity:0;transform:translateY(10px);pointer-events:none;transition:.25s}.toast.show{opacity:1;transform:translateY(0)}
 .mobile-progress{display:none;padding:13px 18px;background:#102d49;color:white}.mobile-progress b{display:block}.mobile-progress small{color:#c9d8e5}
 @media(max-width:1000px){.hero-grid{grid-template-columns:1fr}.hero h1{font-size:40px}.cards,.fi-grid{grid-template-columns:repeat(2,1fr)}.app-shell{grid-template-columns:240px 1fr}.content{padding:25px 22px}.metric-grid{grid-template-columns:repeat(2,1fr)}.calc-layout{grid-template-columns:1fr}.partner-types{grid-template-columns:repeat(2,1fr)}.gate-grid{grid-template-columns:repeat(2,1fr)}.route-cards{grid-template-columns:1fr}.partner-status{grid-template-columns:1fr}}
 @media(max-width:720px){.result-row{flex-wrap:wrap}.result-row span,.result-row b{min-width:0;overflow-wrap:anywhere}.cards{grid-template-columns:1fr!important}.calc-layout,.card,.result-box{min-width:0}.topbar .inner{height:64px}.brandtext small{display:none}.top-actions .hide-mobile{display:none}.hero{padding:42px 0}.hero h1{font-size:34px}.hero p{font-size:16px}.cards,.fi-grid,.contact-grid{grid-template-columns:1fr}.app-shell{display:block}.sidebar{display:none}.mobile-progress{display:block;position:sticky;top:64px;z-index:45}.content{padding:20px 15px 40px}.form-grid,.form-grid.three,.checkgrid,.metric-grid,.cert-grid{grid-template-columns:1fr}.span2{grid-column:auto}.content-head{display:block}.actions{position:sticky;bottom:0;background:rgba(245,247,250,.96);padding:13px 0 4px;z-index:30}.tracker{grid-template-columns:1fr}.partner-types,.gate-grid{grid-template-columns:1fr}.hero-cta{flex-direction:column}.hero-cta .btn{width:100%}.route-cards{grid-template-columns:1fr}}
 @media print{.topbar,.sidebar,.mobile-progress,.actions,.no-print,.footer{display:none!important}.app-shell{display:block}.content{padding:0}.certificate{border:0;box-shadow:none}.screen{min-height:auto}.hidden.print-cert{display:block!important}.print-cert{display:block!important}}
+
+/* ================= v1.4 — Stepper / Live Readiness / Business Dashboard ================= */
+:root{--v4-s1:#2a78d6;--v4-s2:#eb6834;--v4-s3:#1baf7a;--v4-s4:#eda100;--v4-s5:#e87ba4;
+--v4-good:#0f8a5f;--v4-goodbg:#eefaf4;--v4-goodline:#a9dcc6;
+--v4-watch:#b7791f;--v4-watchbg:#fff8ea;--v4-watchline:#f0d9a6;
+--v4-risk:#c83b3b;--v4-riskbg:#fff1f1;--v4-riskline:#f0c2c2}
+
+/* --- ปุ่ม +/- --- */
+.stepper{display:flex;align-items:stretch;gap:6px}
+.stepper input{flex:1;min-width:0;text-align:center;font-weight:800}
+.stepper button{flex:none;width:42px;border:1px solid #d3dde7;background:#fff;border-radius:11px;font-size:19px;font-weight:900;color:var(--navy);line-height:1;transition:.15s}
+.stepper button:hover{background:var(--aqua);border-color:#8fd6d0;color:#07736f}
+.stepper button:active{transform:scale(.94)}
+.stepper button:disabled{opacity:.35;cursor:not-allowed}
+.field input[readonly]{background:#f2f6fa;color:var(--navy);font-weight:900;cursor:default}
+.autoflag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:900;color:#07736f;background:var(--aqua);border-radius:999px;padding:3px 8px}
+
+/* --- แผงผลลัพธ์สดขณะปรับตัวเลข --- */
+#liveBar{position:sticky;bottom:0;z-index:20;display:block}
+.livebar{margin-top:16px;border-radius:18px;padding:15px 17px;border:1px solid var(--line);background:#fff;box-shadow:0 -6px 24px rgba(11,31,58,.14)}
+.livebar.good{border-color:var(--v4-goodline);background:var(--v4-goodbg)}
+.livebar.watch{border-color:var(--v4-watchline);background:var(--v4-watchbg)}
+.livebar.risk{border-color:var(--v4-riskline);background:var(--v4-riskbg)}
+.livebar-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.livebar-title{font-size:12px;font-weight:900;letter-spacing:.04em;color:var(--muted)}
+.livebar-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:11px}
+.livemini{display:none;margin-top:9px;font-size:13px;font-weight:800;color:var(--navy)}
+.livemini em{font-style:normal;color:var(--muted);font-weight:700}
+/* --- แถบผลลัพธ์แบบย่อ/ขยาย (มือถือ) --- */
+.livebar-toggle{display:none;width:100%;min-height:44px;align-items:center;justify-content:space-between;gap:10px;
+ background:none;border:0;padding:0;text-align:left;color:var(--navy);font-weight:900}
+.livebar-brief{display:flex;align-items:center;gap:8px;font-size:14px;min-width:0}
+.livebar-brief b{white-space:nowrap}
+.livebar-brief em{font-style:normal;color:var(--muted);font-weight:800;font-size:13px;white-space:nowrap}
+.statusdot{width:10px;height:10px;border-radius:50%;flex:none}
+.livebar.good .statusdot{background:var(--v4-good)}
+.livebar.watch .statusdot{background:var(--v4-watch)}
+.livebar.risk .statusdot{background:var(--v4-risk)}
+.livebar-toggle .chev{transition:.2s;font-size:13px;color:var(--muted);flex:none}
+.livebar.is-collapsed .livebar-toggle .chev{transform:rotate(-90deg)}
+
+/* --- การ์ดแจ้งว่าไฟล์พร้อม + ทางหนีเปิดแท็บใหม่ --- */
+.pdf-ready-card{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:120;max-width:min(560px,calc(100vw - 28px));
+ display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:space-between;
+ background:#fff;border:1px solid var(--v4-goodline);border-left:5px solid var(--v4-good);
+ border-radius:15px;padding:13px 16px;box-shadow:0 16px 40px rgba(11,31,58,.22)}
+.pdf-ready-card b{display:block;color:var(--navy);font-size:14px}
+.pdf-ready-card small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px;overflow-wrap:anywhere}
+.pdf-ready-actions{display:flex;gap:8px;flex-wrap:wrap}
+.pdf-ready-actions .btn{padding:9px 13px;font-size:13px}
+@media(max-width:720px){.pdf-ready-card{left:12px;right:12px;transform:none;max-width:none;bottom:12px}}
+@media print{.pdf-ready-card{display:none!important}}
+.livestat{background:rgba(255,255,255,.75);border:1px solid rgba(11,31,58,.07);border-radius:13px;padding:9px 11px}
+.livestat span{display:block;font-size:11px;color:var(--muted);font-weight:800}
+.livestat b{font-size:19px;color:var(--navy)}
+.scorewrap{display:flex;align-items:center;gap:12px}
+.scoredial{width:58px;height:58px;flex:none}
+.statuschip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:900}
+.statuschip.good{background:#d9f2e6;color:#0b6a49}
+.statuschip.watch{background:#fdecc8;color:#8c5a12}
+.statuschip.risk{background:#fbd9d9;color:#9c2828}
+
+/* --- Business Dashboard --- */
+.biz-head{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin:26px 0 13px}
+.biz-head h3{margin:0;font-size:22px;color:var(--navy)}
+.biz-head p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.biz-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+.biz-tile{border:1px solid var(--line);background:#fff;border-radius:17px;padding:17px}
+.biz-tile .lab{font-size:12px;font-weight:900;color:var(--muted)}
+.biz-tile .val{font-size:27px;font-weight:900;color:var(--navy);margin-top:6px;line-height:1.15;overflow-wrap:anywhere}
+.biz-tile .sub{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.6}
+.biz-tile.accent{background:linear-gradient(160deg,#081f38,#0e3f5b);border-color:#0e3f5b}
+.biz-tile.accent .lab,.biz-tile.accent .sub{color:#cfe0ed}
+.biz-tile.accent .val{color:#fff}
+.biz-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.chartcard{border:1px solid var(--line);background:#fff;border-radius:17px;padding:17px;min-width:0}
+.chartcard h4{margin:0 0 3px;font-size:15px;color:var(--navy)}
+.chartcard .hint{margin:0 0 13px;font-size:12px;color:var(--muted);line-height:1.6}
+.chartcard svg{display:block;width:100%;height:auto;overflow:visible}
+.legend{display:flex;flex-wrap:wrap;gap:9px 15px;margin-top:11px}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block;flex:none}
+.legend span{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text);font-weight:700}
+.legend small{color:var(--muted);font-weight:600}
+.datatable{width:100%;border-collapse:collapse;margin-top:12px;font-size:12.5px}
+.datatable th,.datatable td{padding:8px 9px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+.datatable th:first-child,.datatable td:first-child{text-align:left}
+.datatable thead th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.datatable tfoot td{font-weight:900;color:var(--navy);border-top:2px solid var(--line);border-bottom:0}
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.breakeven-note{margin-top:12px;border-radius:13px;padding:12px 14px;font-size:13px;line-height:1.7}
+.breakeven-note.good{background:var(--v4-goodbg);border:1px solid var(--v4-goodline);color:#0b6a49}
+.breakeven-note.risk{background:var(--v4-riskbg);border:1px solid var(--v4-riskline);color:#9c2828}
+
+/* --- รายงาน PDF (แสดงเฉพาะตอนพิมพ์) --- */
+/* เวทีนอกจอสำหรับถ่ายภาพเอกสาร — ตรึงความกว้างเท่ากระดาษ A4 ที่ 96dpi
+   เพื่อให้มือถือได้เลย์เอาต์เดียวกับเดสก์ท็อป
+   หมายเหตุ: ห้ามใส่ position/left ที่ #reportArea เอง เพราะ html2pdf จะ clone element
+   นั้นไปวาด ถ้า clone ติดตำแหน่งนอกจอไปด้วยจะได้ PDF เปล่า */
+#reportStage{position:fixed;top:0;left:-10000px;width:794px;z-index:-1;pointer-events:none}
+#reportArea{display:none;width:794px;padding:22px;background:#fff}
+#reportArea.capturing{display:block}
+.report-head{border-bottom:3px solid var(--navy);padding-bottom:12px;margin-bottom:16px;display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.report-head h1{margin:0 0 4px;font-size:22px;color:var(--navy)}
+.report-head .meta{text-align:right;font-size:11px;color:var(--muted);line-height:1.7}
+.report-section{margin-top:16px}
+#reportArea .chartcard,#reportArea .report-kv,#reportArea .datatable tr{break-inside:avoid}
+.report-section h2{break-after:avoid}
+.report-section h2{font-size:14px;color:var(--navy);margin:0 0 8px;padding-bottom:5px;border-bottom:1px solid var(--line);text-transform:uppercase;letter-spacing:.05em}
+.report-kv{display:grid;grid-template-columns:repeat(2,1fr);gap:0 22px}
+.report-kv div{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dotted #d8e0e8;font-size:12.5px}
+.report-kv span{color:var(--muted)}
+.report-kv b{color:var(--navy)}
+.report-foot{margin-top:18px;padding-top:11px;border-top:1px solid var(--line);font-size:10.5px;color:var(--muted);line-height:1.7}
+/* เอกสารต้องพอดีกรอบ 794px เสมอ — ห้ามมี element ใดล้นออกนอกกรอบ
+   มิฉะนั้น html2canvas จะตัดขอบขวาทิ้งตอนแปลงเป็น PDF */
+#reportArea .tablewrap{overflow:visible}
+#reportArea .datatable{table-layout:fixed;width:100%;font-size:11.5px}
+#reportArea .datatable th,#reportArea .datatable td{white-space:normal;overflow-wrap:anywhere;padding:7px 5px}
+#reportArea .datatable th:first-child,#reportArea .datatable td:first-child{width:17%}
+#reportArea .report-kv div{font-size:12px}
+#reportArea .report-kv b{overflow-wrap:anywhere;text-align:right}
+#reportArea .chartcard,#reportArea .legend,#reportArea .breakeven-note{max-width:100%}
+#reportArea .legend span{max-width:100%}
+
+@media(max-width:1000px){.biz-grid{grid-template-columns:1fr}.biz-tiles{grid-template-columns:1fr}.livebar-stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:720px){
+  .stepper button{width:46px}
+  #liveBar{bottom:70px;z-index:19}
+  /* แถบผลลัพธ์เริ่มต้นเป็นแบบย่อ กดจึงขยาย เพื่อไม่ให้บังฟอร์ม */
+  .livebar-toggle{display:flex}
+  .livebar.is-collapsed .livebar-body{display:none}
+  .livebar.is-collapsed{padding:8px 14px}
+  /* footer: เพิ่มระยะขอบและปล่อยให้ตัดหลายบรรทัด */
+  .footer .wrap{padding:0 24px}
+  .footer-inner{max-width:none}
+  .livebar{margin-left:-15px;margin-right:-15px;margin-top:10px;border-radius:16px;padding:11px 14px}
+  .livebar-stats{display:none}
+  .livemini{display:block}
+  .scoredial{width:48px;height:48px}
+  .biz-tile .val{font-size:23px}
+  .report-kv{grid-template-columns:1fr}
+  /* เอกสารที่จะแปลงเป็น PDF ต้องคงเลย์เอาต์ A4 เสมอ ไม่ยุบตามความกว้างจอมือถือ */
+  #reportArea .report-kv{grid-template-columns:repeat(2,1fr)}
+  #reportArea .datatable{font-size:12.5px}
+  #reportArea .chartcard{padding:17px}
+}
+
+@media print{
+  #reportStage{position:static;left:auto;top:auto;width:auto;z-index:auto}
+  #reportArea{display:block!important;width:auto;padding:0}
+  #reportArea .amortsvg{height:190px}
+  #reportArea .chartcard{padding:12px}
+  body{background:#fff}
+  .report-page{page-break-after:always}
+  .report-page:last-child{page-break-after:auto}
+  .chartcard{border:1px solid #ccc;box-shadow:none}
+  .biz-tile.accent{background:#fff!important;border:1px solid #ccc}
+  .biz-tile.accent .val{color:var(--navy)!important}
+  .biz-tile.accent .lab,.biz-tile.accent .sub{color:#555!important}
+  .livebar{display:none!important}
+}
 
 /* ===== MAIN GATEWAY / หน้าหลักก่อนเข้าสู่ระบบ ===== */
 .main-gateway{min-height:calc(100vh - 72px);background:
@@ -56,6 +217,7 @@ linear-gradient(145deg,#071a31 0%,#0c2d4d 52%,#0c4c58 100%);color:white;display:
 }
 
 </style>
+<script type="module" src="/route2own-engine.js"></script>
 </head>
 <body>
 <div id="toast" class="toast"></div>
@@ -228,7 +390,7 @@ linear-gradient(145deg,#071a31 0%,#0c2d4d 52%,#0c4c58 100%);color:white;display:
   </div></div>
 </section>
 
-<footer class="footer"><div class="wrap"><strong>Route2Own by บสย.</strong> — Prototype Financial Gateway สำหรับ TCG Route2Own EV Taxi Guarantee • Competition Working Scenario: Loan/Guarantee 800,000 บาท, BaaS 400 บาท/วัน (Energy Included), RBP Tier + Proposed 3-Year Fee Waiver — ตัวเลขยังต้อง Validation ก่อน Pilot</div></footer>
+<footer class="footer"><div class="wrap footer-inner"><b>Route2Own by บสย.</b><p>Prototype Financial Gateway สำหรับ TCG Route2Own EV Taxi Guarantee • v1.4</p><p>Competition Working Scenario: Loan/Guarantee 800,000 บาท • BaaS 400 บาท/วัน (Energy Included) • RBP Tier + Proposed 3-Year Fee Waiver</p><p class="footer-note">ตัวเลขยังต้อง Validation ก่อน Pilot</p></div></footer>
 
 <script>
 const driverSteps=[
@@ -242,7 +404,8 @@ const driverSteps=[
  {t:'ส่งต่อและติดตาม',s:'FI เป็นผู้ตัดสินสินเชื่อขั้นสุดท้าย'}
 ];
 let currentDriverStep=0; let previousScreen='home';
-const state={lead:{},elig:{},passport:{},calc:{},readiness:{route:'',tier:'',dataConfidence:''},fi:'',submission:0,partner:{step:1,type:'',org:{},gates:{}}};
+let liveBarOpen=false;   // มือถือเริ่มแบบย่อ เดสก์ท็อปแสดงเต็มเสมอ
+const state={lead:{},elig:{},passport:{},calc:{},reasons:[],readiness:{route:'',tier:'',dataConfidence:''},fi:'',submission:0,partner:{step:1,type:'',org:{},gates:{}}};
 function money(x){return new Intl.NumberFormat('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(x||0))}
 function pct(x){return (Number(x||0)*100).toFixed(0)+'%'}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(window.__tt);window.__tt=setTimeout(()=>t.classList.remove('show'),2600)}
@@ -286,7 +449,7 @@ function saveCurrentStep(){if(currentDriverStep===0){['fullName','phone','provin
  if(currentDriverStep===1){['isPro','publicLicense','vehicleReg','memberVerify','dataConsent','revenueSource','driverVehicle','assetScope','integrity'].forEach(k=>{const e=document.getElementById(k);if(e)state.elig[k]=e.checked})}
  if(currentDriverStep===2){['grossDaily','workDays','verifiedPct','commissionPct','serviceKm','repositionKm','chargingKm','downtimeDays','gpsComplete','electricityRate','kwhKm','maintKm','tireKm','insuranceMonthly','otherOpEx','baasDaily','existingDebt','householdMonthly','nextShiftDaily','downPayment','vehiclePrice','loanNeed','interest','tenor','rentDaily','fuelDaily'].forEach(k=>{const e=document.getElementById(k);if(e)state.passport[k]=parseFloat(e.value)||0});const et=document.getElementById('energyIncluded');if(et)state.passport.energyIncluded=et.value}
 }
-function renderDriver(){renderSidebar();const c=document.getElementById('driverStepContainer');c.innerHTML=driverStepHtml(currentDriverStep);if(currentDriverStep===3)setTimeout(calculateRoute,0);if(currentDriverStep===4)setTimeout(renderReadinessResult,0);if(currentDriverStep===5)setTimeout(renderCertificate,0);if(currentDriverStep===7)setTimeout(renderTracker,0)}
+function renderDriver(){renderSidebar();const c=document.getElementById('driverStepContainer');c.innerHTML=driverStepHtml(currentDriverStep);if(currentDriverStep===2||currentDriverStep===3)setTimeout(initLiveBindings,0);if(currentDriverStep===4)setTimeout(renderReadinessResult,0);if(currentDriverStep===5)setTimeout(renderCertificate,0);if(currentDriverStep===7)setTimeout(renderTracker,0)}
 function head(title,sub){return `<div class="content-head"><div><h2>${title}</h2><p>${sub}</p><div class="progress"><div style="width:${(currentDriverStep+1)/8*100}%"></div></div></div><span class="pill blue">ขั้นที่ ${currentDriverStep+1}/8</span></div>`}
 function navButtons(next='ถัดไป →',disabled=false){return `<div class="actions"><button class="btn ghost" onclick="prevDriver()">← ย้อนกลับ</button><button class="btn primary" ${disabled?'disabled':''} onclick="nextDriver()">${next}</button></div>`}
 function driverStepHtml(i){
@@ -295,7 +458,7 @@ function driverStepHtml(i){
  if(i===2)return head('สร้างข้อมูลอาชีพของฉัน','Financial + Occupational Passport — แยกรายได้ที่ตรวจสอบได้ การทำงาน ต้นทุน และภาระทางการเงิน')+passportHtml()+navButtons('ไปหน้าคำนวณ →');
  if(i===3)return head('รถคันนี้เหมาะกับรายได้ของคุณหรือไม่?','Route2Own Calculator ใช้ข้อมูลของผู้ขับเป็นหลัก ค่า 1,850.52 บาท/วันเป็น Base Scenario สำหรับสาธิตและสามารถแก้ไขได้')+calculatorHtml()+navButtons('ดูผล Credit Readiness →');
  if(i===4)return head('เส้นทางที่เหมาะกับคุณตอนนี้','ระบบให้ Route ที่เหมาะ แทนการบังคับทุกคนไปสู่ Ownership')+`<div id="readinessArea"></div>${navButtons('ออกใบผลความพร้อม →')}`;
- if(i===5)return head('Route2Own Readiness Certificate','ใบผลการประเมินความพร้อมเบื้องต้นสำหรับประกอบการพิจารณา — ไม่ใช่ Loan Approval')+`<div id="certArea"></div><div class="actions"><button class="btn ghost" onclick="prevDriver()">← ย้อนกลับ</button><div style="display:flex;gap:8px"><button class="btn ghost" onclick="window.print()">🖨 พิมพ์ / บันทึก PDF</button><button class="btn primary" onclick="nextDriver()">เลือกสถาบันการเงิน →</button></div></div>`;
+ if(i===5)return head('Route2Own Readiness Certificate','ใบผลการประเมินความพร้อมเบื้องต้นสำหรับประกอบการพิจารณา — ไม่ใช่ Loan Approval')+`<div id="certArea"></div><div class="actions"><button class="btn ghost" onclick="prevDriver()">← ย้อนกลับ</button><div style="display:flex;gap:8px"><button id="btnReportPdf" class="btn teal" onclick="downloadReport(this)">⬇ ดาวน์โหลดใบรายงานความพร้อมและแผนธุรกิจ v1.4</button><button class="btn primary" onclick="nextDriver()">เลือกสถาบันการเงิน →</button></div></div>`;
  if(i===6)return head('สินเชื่อ EV ที่อาจเหมาะกับเส้นทางของคุณ','เลือก FI เพื่อส่ง Readiness Package — เงื่อนไขสินเชื่อและ Commercial Taxi Eligibility ต้องยืนยันจาก FI/Term Sheet จริง')+fiHtml()+`<div class="notice warn" style="margin-top:14px">รายชื่อ FI ด้านล่างเป็นรายชื่อสำหรับ Prototype ตามข้อมูลโครงการ สถานะ MOU / ผลิตภัณฑ์ EV Taxi / อัตราดอกเบี้ย / วงเงินจริงต้องตรวจเอกสารและ Partner Term Sheet ก่อนใช้งานจริง</div><div class="actions"><button class="btn ghost" onclick="prevDriver()">← ย้อนกลับ</button><button class="btn primary" onclick="submitToFI()">ส่ง Readiness Package →</button></div>`;
  return head('ส่งต่อ FI และติดตามสถานะ','Route2Own ส่งข้อมูลประกอบเพื่อช่วย FI พิจารณา แต่ FI เป็นผู้อนุมัติ/ปฏิเสธและกำหนดเงื่อนไขสินเชื่อขั้นสุดท้าย')+`<div class="card"><h3>สถานะการส่งคำขอ</h3><div id="trackerArea"></div><div class="notice" style="margin-top:14px"><b>Package ที่ส่ง:</b> Readiness Certificate • Financial Passport • Occupational Passport • DSCR/Stress • PAI • TCO • Indicative Risk Tier • Consent Reference</div><div style="margin-top:16px;display:flex;gap:9px;flex-wrap:wrap"><button class="btn teal" onclick="advanceSubmission()">จำลองสถานะถัดไป</button><button class="btn ghost" onclick="showContact()">สอบถาม บสย.</button><button class="btn ghost" onclick="toast('เมื่อ FI Approved ระบบจะ Handoff ไปยัง Post-Approval Activation Gate')">ดู Handoff หลังอนุมัติ</button></div></div><div class="card" style="margin-top:14px"><h3>ขอบเขตบทบาท</h3><div class="cards" style="grid-template-columns:repeat(2,1fr)"><div><span class="pill blue">Route2Own / บสย.</span><p>ประเมินความพร้อมของโครงการ สร้างข้อมูลอาชีพและความสามารถจ่าย จัด Route และ Indicative Guarantee Tier</p></div><div><span class="pill green">FI / Leasing</span><p>Final underwriting • Approve / Decline • วงเงิน • ดอกเบี้ย • Tenor • Contractual Due</p></div></div></div><div class="actions"><button class="btn ghost" onclick="prevDriver()">← ย้อนกลับ</button><button class="btn primary" onclick="goHome()">กลับหน้าหลัก</button></div>`;
 }
@@ -304,90 +467,69 @@ function checkEligibility(){saveCurrentStep();const k=['isPro','publicLicense','
 function passportHtml(){const p=state.passport;return `<div class="form-section card"><h3>💰 A. รายได้</h3><div class="form-grid three"><div class="field"><label>รายได้รวมเฉลี่ย / วัน (บาท)</label><input id="grossDaily" type="number" step="0.01" value="${p.grossDaily??1850.52}"><small>Base Scenario ปัจจุบัน 1,850.52 บาท/วัน — เปลี่ยนเป็นข้อมูลรายบุคคลได้</small></div><div class="field"><label>วันทำงาน / เดือน</label><input id="workDays" type="number" value="${p.workDays??25}"></div><div class="field"><label>สัดส่วนรายได้ที่ Verify ได้ (%)</label><input id="verifiedPct" type="number" min="0" max="100" value="${p.verifiedPct??95}"></div><div class="field"><label>Commission / Refund (%)</label><input id="commissionPct" type="number" min="0" max="100" value="${p.commissionPct??0}"></div><div class="field"><label>ค่าเช่ารถปัจจุบัน / วัน</label><input id="rentDaily" type="number" value="${p.rentDaily??600}"></div><div class="field"><label>ค่าเชื้อเพลิงรถเดิม / วัน</label><input id="fuelDaily" type="number" value="${p.fuelDaily??450}"></div></div></div>
 <div class="form-section card"><h3>🚕 B. การทำงาน / Mobility</h3><div class="form-grid three"><div class="field"><label>Service KM / วัน</label><input id="serviceKm" type="number" value="${p.serviceKm??180}"></div><div class="field"><label>Reposition KM / วัน</label><input id="repositionKm" type="number" value="${p.repositionKm??55}"></div><div class="field"><label>Charging-related KM / วัน</label><input id="chargingKm" type="number" value="${p.chargingKm??15}"></div><div class="field"><label>Downtime / เดือน (วัน)</label><input id="downtimeDays" type="number" value="${p.downtimeDays??1}"><small>ใช้เป็นข้อมูลความเสถียร/Stress Diagnostic; ยังไม่ใช่ Hard Threshold</small></div><div class="field"><label>GPS/Data completeness (%)</label><input id="gpsComplete" type="number" min="0" max="100" value="${p.gpsComplete??95}"></div><div class="field"><label>KM รวมโดยประมาณ</label><input value="250" disabled><small>Raw KM ไม่ใช่ EMU และไม่สร้างหนี้โดยตรง</small></div></div></div>
 <div class="form-section card"><h3>⚡ C. ค่าใช้จ่าย EV / BaaS</h3><div class="form-grid three"><div class="field"><label>BaaS / Battery Service / วัน</label><input id="baasDaily" type="number" value="${p.baasDaily??400}"><small>Competition Working Proxy = 400 บาท/วัน @250 km/day</small></div><div class="field"><label>การรวมพลังงานใน BaaS</label><select id="energyIncluded"><option value="included" ${(p.energyIncluded??'included')==='included'?'selected':''}>รวมค่าไฟ / Energy Included</option><option value="excluded" ${(p.energyIncluded??'included')==='excluded'?'selected':''}>ไม่รวมค่าไฟ / Energy Excluded</option></select><small>หากรวมค่าไฟ ระบบจะไม่หัก Energy ซ้ำ</small></div><div class="field"><label>ค่าไฟ (บาท/kWh)</label><input id="electricityRate" type="number" step="0.01" value="${p.electricityRate??5.9}"><small>ใช้เฉพาะกรณี BaaS ไม่รวมพลังงาน</small></div><div class="field"><label>การใช้พลังงาน (kWh/km)</label><input id="kwhKm" type="number" step="0.001" value="${p.kwhKm??0.185}"><small>ใช้เฉพาะกรณี BaaS ไม่รวมพลังงาน</small></div><div class="field"><label>Maintenance reserve (บาท/km)</label><input id="maintKm" type="number" step="0.0001" value="${p.maintKm??0.07828}"></div><div class="field"><label>Tire reserve (บาท/km)</label><input id="tireKm" type="number" step="0.01" value="${p.tireKm??0.10}"></div><div class="field"><label>ประกัน + ทะเบียน / เดือน</label><input id="insuranceMonthly" type="number" value="${p.insuranceMonthly??2500}"></div><div class="field"><label>Other OpEx / เดือน (ถ้ามี)</label><input id="otherOpEx" type="number" value="${p.otherOpEx??0}"><small>Working Scenario ล่าสุด = 0; ใส่เมื่อมีค่าใช้จ่ายเพิ่มที่ยืนยันแล้ว</small></div></div></div>
-<div class="form-section card"><h3>🏦 D. ภาระทางการเงินและรถที่สนใจ</h3><div class="form-grid three"><div class="field"><label>หนี้/ค่างวดเดิมรวม / เดือน</label><input id="existingDebt" type="number" value="${p.existingDebt??0}"></div><div class="field"><label>เงินจำเป็นครัวเรือน / เดือน</label><input id="householdMonthly" type="number" value="${p.householdMonthly??15000}"></div><div class="field"><label>Next-Shift Reserve / วัน</label><input id="nextShiftDaily" type="number" value="${p.nextShiftDaily??0}"></div><div class="field"><label>ราคารถ EV ที่สนใจ</label><input id="vehiclePrice" type="number" value="${p.vehiclePrice??800000}"></div><div class="field"><label>เงินดาวน์</label><input id="downPayment" type="number" value="${p.downPayment??0}"></div><div class="field"><label>วงเงินสินเชื่อที่ต้องใช้</label><input id="loanNeed" type="number" value="${p.loanNeed??800000}"><small>Competition Working Scenario = 800,000 บาท</small></div><div class="field"><label>อัตราดอกเบี้ย Scenario (% p.a.)</label><input id="interest" type="number" step="0.01" value="${p.interest??6}"><small>Working Scenario = 6%; FI เป็นผู้กำหนด Offer จริง</small></div><div class="field"><label>ระยะเวลา (เดือน)</label><input id="tenor" type="number" value="${p.tenor??84}"><small>Working Scenario = 7 ปี / 84 เดือน</small></div></div></div>`}
-function calculatorHtml(){return `<div class="notice warn"><b>Competition Working Scenario:</b> ค้ำ 100% ของวงเงินสินเชื่อ • RBP A/B/C = 1.20% / 1.50% / 2.50% • เสนอ Fee Waiver ปี 1–3 • Threshold และ FI Term ยังต้องผ่าน Real Data Replay / Risk / FI Validation</div><div class="card" style="margin-top:14px"><div class="form-grid three"><div class="field"><label>Guarantee Coverage</label><input id="coveragePct" type="number" value="100" disabled><small>ค้ำเต็มวงเงินสินเชื่อใน Working Scenario</small></div><div class="field"><label>RBP Fee Scenario</label><select id="tierInput" onchange="calculateRoute()"><option value="1.2">A — 1.20% p.a.</option><option value="1.5" selected>B — 1.50% p.a.</option><option value="2.5">C — 2.50% p.a.</option></select></div><div class="field"><label>ปีของสัญญาค้ำ (Guarantee Year)</label><select id="guaranteeYear" onchange="calculateRoute()">${[1,2,3,4,5,6,7].map(y=>`<option value="${y}" ${Number(state.calc.guaranteeYear||1)===y?'selected':''}>ปีที่ ${y}</option>`).join('')}</select><small>ปี 1–3 = Proposed RBP Fee Waiver</small></div><div class="field"><label>Monitoring / Eligible Day</label><input value="5" disabled><small>Base Monitoring Proposal</small></div></div><div style="margin-top:14px"><button class="btn teal" onclick="calculateRoute()">คำนวณใหม่</button></div></div><div id="calcArea" style="margin-top:16px"></div>`}
+<div class="form-section card"><h3>🏦 D. ภาระทางการเงินและรถที่สนใจ</h3>
+<div class="notice" style="margin-bottom:13px">กดปุ่ม <b>−</b> / <b>+</b> เพื่อปรับตัวเลขได้ทันที ระบบจะคำนวณคะแนนความพร้อมและ DSCR ใหม่แบบเรียลไทม์ที่แถบด้านล่าง</div>
+<div class="form-grid three">
+${stepField('existingDebt','หนี้/ค่างวดเดิมรวม / เดือน',p.existingDebt??0,500,0)}
+${stepField('householdMonthly','เงินจำเป็นครัวเรือน / เดือน',p.householdMonthly??15000,1000,0)}
+${stepField('nextShiftDaily','Next-Shift Reserve / วัน',p.nextShiftDaily??0,50,0)}
+${stepField('vehiclePrice','ราคารถ EV ที่สนใจ',p.vehiclePrice??800000,25000,0,'ปรับครั้งละ 25,000 บาท')}
+${stepField('downPayment','เงินดาวน์',p.downPayment??0,10000,0,'ปรับครั้งละ 10,000 บาท — ไม่เกินราคารถ')}
+<div class="field"><label>วงเงินสินเชื่อที่ต้องใช้ <span class="autoflag">⚙ คำนวณอัตโนมัติ</span></label><input id="loanNeed" type="number" readonly tabindex="-1" value="${window.Route2OwnEngine?window.Route2OwnEngine.deriveLoanNeed(p.vehiclePrice??800000,p.downPayment??0):(p.loanNeed??800000)}"><small>= ราคารถ EV − เงินดาวน์ (ไม่ติดลบ) • Working Scenario = 800,000 บาท</small></div>
+${stepField('interest','อัตราดอกเบี้ย Scenario (% p.a.)',p.interest??6,0.25,2,'Working Scenario = 6%; FI เป็นผู้กำหนด Offer จริง')}
+${stepField('tenor','ระยะเวลา (เดือน)',p.tenor??84,12,0,'ปรับครั้งละ 12 เดือน • Working Scenario = 84 เดือน')}
+</div></div>
+<div id="liveBar"></div>`}
+function calculatorHtml(){return `<div class="notice warn"><b>Competition Working Scenario:</b> ค้ำ 100% ของวงเงินสินเชื่อ • RBP A/B/C = 1.20% / 1.50% / 2.50% • เสนอ Fee Waiver ปี 1–3 • Threshold และ FI Term ยังต้องผ่าน Real Data Replay / Risk / FI Validation</div><div class="card" style="margin-top:14px"><div class="form-grid three"><div class="field"><label>Guarantee Coverage</label><input id="coveragePct" type="number" value="100" disabled><small>ค้ำเต็มวงเงินสินเชื่อใน Working Scenario</small></div><div class="field"><label>RBP Fee Scenario</label><select id="tierInput" onchange="calculateRoute()"><option value="1.2">A — 1.20% p.a.</option><option value="1.5" selected>B — 1.50% p.a.</option><option value="2.5">C — 2.50% p.a.</option></select></div><div class="field"><label>ปีของสัญญาค้ำ (Guarantee Year)</label><select id="guaranteeYear" onchange="calculateRoute()">${[1,2,3,4,5,6,7].map(y=>`<option value="${y}" ${Number(state.calc.guaranteeYear||1)===y?'selected':''}>ปีที่ ${y}</option>`).join('')}</select><small>ปี 1–3 = Proposed RBP Fee Waiver</small></div><div class="field"><label>Monitoring / Eligible Day</label><input value="5" disabled><small>Base Monitoring Proposal</small></div></div><div style="margin-top:14px"><button class="btn teal" onclick="calculateRoute()">คำนวณใหม่</button></div></div><div id="calcArea" style="margin-top:16px"></div><div id="businessArea"></div>`}
+function readPassportInputs(){
+ const p=state.passport;const g=id=>document.getElementById(id);
+ const val=(id,fb)=>{const e=g(id);if(!e)return (p[id]!==undefined&&p[id]!==null)?p[id]:fb;const v=parseFloat(e.value);return Number.isFinite(v)?v:fb};
+ const E=window.Route2OwnEngine;
+ const energyEl=g('energyIncluded');
+ const tierEl=g('tierInput'),yearEl=g('guaranteeYear');
+ const tierMap={'1.2':'A','1.5':'B','2.5':'C'};
+ const vehiclePrice=Math.max(0,val('vehiclePrice',800000));
+ const downPayment=Math.min(Math.max(0,val('downPayment',0)),vehiclePrice);
+ return {
+  grossDaily:val('grossDaily',1850.52),workDays:val('workDays',25),verifiedPct:val('verifiedPct',95),commissionPct:val('commissionPct',0),
+  rentDaily:val('rentDaily',600),fuelDaily:val('fuelDaily',450),
+  serviceKm:val('serviceKm',180),repositionKm:val('repositionKm',55),chargingKm:val('chargingKm',15),
+  downtimeDays:val('downtimeDays',1),gpsComplete:val('gpsComplete',95),
+  baasDaily:val('baasDaily',400),
+  energyIncluded:energyEl?energyEl.value:(p.energyIncluded||'included'),
+  electricityRate:val('electricityRate',5.9),kwhKm:val('kwhKm',0.185),maintKm:val('maintKm',0.07828),tireKm:val('tireKm',0.10),
+  insuranceMonthly:val('insuranceMonthly',2500),otherOpEx:val('otherOpEx',0),
+  existingDebt:val('existingDebt',0),householdMonthly:val('householdMonthly',15000),nextShiftDaily:val('nextShiftDaily',0),
+  vehiclePrice,downPayment,
+  loanNeed:E?E.deriveLoanNeed(vehiclePrice,downPayment):Math.max(0,vehiclePrice-downPayment),
+  interest:val('interest',6),tenor:val('tenor',84),
+  rbpTier:tierEl?(tierMap[tierEl.value]||'B'):(state.calc.rbpTier||'B'),
+  guaranteeYear:yearEl?parseInt(yearEl.value,10)||1:(state.calc.guaranteeYear||1)
+ };
+}
 function calculateRoute(){
  saveCurrentStep();
- const p=state.passport;
- const wd=p.workDays||25;
- const km=(p.serviceKm||0)+(p.repositionKm||0)+(p.chargingKm||0);
- const gross=(p.grossDaily??1850.52);
- const verified=gross*((p.verifiedPct??95)/100)*(1-((p.commissionPct??0)/100));
- const baas=(p.baasDaily??400);
- const energyIncluded=(p.energyIncluded??'included')==='included';
- const rawEnergy=km*(p.kwhKm??0.185)*(p.electricityRate??5.9);
- const energy=energyIncluded?0:rawEnergy;
- const maint=km*(p.maintKm??0.07828);
- const tire=km*(p.tireKm??0.10);
- const ins=(p.insuranceMonthly??2500)/wd;
- const other=(p.otherOpEx??0)/wd;
- const dailyOpEx=baas+energy+maint+tire+ins+other;
- const protectedDaily=(p.householdMonthly??15000)/wd+(p.nextShiftDaily??0);
- const rawAvailDaily=verified-dailyOpEx-protectedDaily;
- const sweepableCash=Math.max(0,rawAvailDaily);
-
- const annualRate=(p.interest??6)/100;
- const r=annualRate/12;
- const n=p.tenor||84;
- const years=n/12;
- const P=p.loanNeed??800000;
- const pmt=r>0?P*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1):P/n;
- const existingDebtMonthly=p.existingDebt??0;
- const eligibleDaysAnnual=wd*12;
- const annualDebtService=annualRate>0?P*annualRate*Math.pow(1+annualRate,years)/(Math.pow(1+annualRate,years)-1):P/years;
- const paydRefDaily=annualDebtService/eligibleDaysAnnual;
- const existingDebtDaily=existingDebtMonthly/wd;
- const requiredDebtDaily=paydRefDaily+existingDebtDaily;
- const dscr=requiredDebtDaily>0?Math.max(0,rawAvailDaily)/requiredDebtDaily:99;
- const stress15Rev=verified*.85,stress30Rev=verified*.70;
- const rawAvail15=stress15Rev-dailyOpEx-protectedDaily;
- const rawAvail30=stress30Rev-dailyOpEx-protectedDaily;
- const dscr15=requiredDebtDaily>0?Math.max(0,rawAvail15)/requiredDebtDaily:99;
- const dscr30=requiredDebtDaily>0?Math.max(0,rawAvail30)/requiredDebtDaily:99;
- const pai=rawAvailDaily>0?requiredDebtDaily/rawAvailDaily:9.99;
-
- const cov=1;
- const rbpRate=(parseFloat(document.getElementById('tierInput')?.value)||1.5)/100;
- const guaranteeYear=parseInt(document.getElementById('guaranteeYear')?.value||state.calc.guaranteeYear||1,10);
- const guaranteedOutstanding=P*cov;
- const rbpReferenceDay=guaranteedOutstanding*rbpRate/365;
- const customerRbpDay=guaranteeYear<=3?0:rbpReferenceDay;
- const monitoring=5;
- const cure=Math.min(20,Math.max(0,rawAvailDaily-requiredDebtDaily-customerRbpDay-monitoring));
- const remaining=rawAvailDaily-requiredDebtDaily-customerRbpDay-monitoring-cure;
-
- const cfadsMonthly=Math.max(0,rawAvailDaily)*wd;
- const actualNewLoanCapacity=Math.max(0,cfadsMonthly-existingDebtMonthly);
- let bal=P;
- for(let m=0;m<n;m++){
-   const pay=Math.min(pmt,actualNewLoanCapacity);
-   const interest=bal*r;
-   bal=Math.max(0,bal+interest-pay);
- }
- const maturity=bal;
- const currentCost=((p.rentDaily??600)+(p.fuelDaily??450))*wd;
- const evExpense=(dailyOpEx+requiredDebtDaily+customerRbpDay+monitoring)*wd;
- const tcoDelta=evExpense-currentCost;
- const dataConf=((p.verifiedPct??0)>=90&&(p.gpsComplete??0)>=90)?'HIGH':((p.verifiedPct??0)>=70&&(p.gpsComplete??0)>=70)?'MEDIUM':'LOW';
- let route='BUILD READINESS';
- if(dscr<1||maturity>1000)route='NO NEW DEBT';
- else if(dscr>=1&&dataConf!=='LOW')route='OWN READY';
- let tier='—';
- if(route==='OWN READY'){
-   if(dscr>=1.5&&dataConf==='HIGH')tier='A';
-   else if(dscr>=1.25&&dataConf!=='LOW')tier='B';
-   else tier='C';
- }
- state.calc={gross,verified,km,energyIncluded,rawEnergy,energy,maint,tire,ins,other,baas,dailyOpEx,protectedDaily,rawAvailDaily,availDaily:rawAvailDaily,sweepableCash,pmt,annualDebtService,paydRefDaily,requiredDebtDaily,dscr,dscr15,dscr30,pai,coveragePct:100,guaranteedOutstanding,rbpReferenceDay,rbpDay:customerRbpDay,customerRbpDay,guaranteeYear,monitoring,cure,remaining,maturity,currentCost,evExpense,tcoDelta};
- state.readiness={route,tier,dataConfidence:dataConf};
+ const E=window.Route2OwnEngine;
+ if(!E){window.addEventListener('route2own-engine-ready',calculateRoute,{once:true});return}
+ const res=E.evaluate(readPassportInputs());
+ state.passport=Object.assign({},state.passport,res.input);
+ state.calc=Object.assign({},res.calc,{rbpTier:res.input.rbpTier,loanNeed:res.input.loanNeed,tenor:res.input.tenor,interest:res.input.interest});
+ state.readiness=res.readiness;
+ state.reasons=res.reasons;
+ updateLiveBar();
  const a=document.getElementById('calcArea');if(!a)return;
+ const c=res.calc;
+ const {gross,verified,energyIncluded,energy,maint,tire,ins,other,baas,dailyOpEx,protectedDaily,rawAvailDaily,pmt,paydRefDaily,requiredDebtDaily,dscr,dscr15,dscr30,pai,guaranteedOutstanding,rbpReferenceDay,customerRbpDay,guaranteeYear,monitoring,cure,remaining,maturity,currentCost,evExpense,tcoDelta}=c;
+ const P=res.input.loanNeed;
+ const dataConf=res.readiness.dataConfidence,route=res.readiness.route,tier=res.readiness.tier;
  const energyLabel=energyIncluded?'พลังงาน EV (รวมใน BaaS)':'พลังงาน EV (แยกจาก BaaS)';
  const rbpLabel=guaranteeYear<=3?`RBP ลูกค้าจ่าย — ปี ${guaranteeYear} (Fee Waiver)`:`RBP ลูกค้าจ่าย — ปี ${guaranteeYear}`;
  const availCls=rawAvailDaily>=0?'':'bad';
  const remainText=money(remaining);
- a.innerHTML=`<div class="metric-grid"><div class="metric"><div class="label">Verified Revenue / วัน</div><div class="value">฿${money(verified)}</div><div class="sub">Gross ${money(gross)} × Verification</div></div><div class="metric ${availCls}"><div class="label">Available Cash / วัน</div><div class="value">฿${money(rawAvailDaily)}</div><div class="sub">หลัง Eligible OpEx + Protected Cash</div></div><div class="metric ${dscr>=1?'good':'bad'}"><div class="label">DSCR Base — PAYD Reference</div><div class="value">${dscr.toFixed(2)}x</div><div class="sub">Gate ขั้นต่ำใน Working Model = 1.00x</div></div><div class="metric ${maturity<1000?'good':'bad'}"><div class="label">Projected Maturity Balance</div><div class="value">฿${money(maturity)}</div><div class="sub">เทียบความสามารถจ่ายกับ FI Contractual Schedule</div></div></div><div class="calc-layout" style="margin-top:16px"><div class="card"><h3>Daily Financial X-Ray</h3><div class="waterfall"><div class="wf"><span>รายได้ที่ Verify ได้</span><b>+ ${money(verified)}</b></div><div class="wf minus"><span>BaaS / Battery Service</span><b>- ${money(baas)}</b></div><div class="wf minus"><span>${energyLabel}</span><b>- ${money(energy)}</b></div><div class="wf minus"><span>Maintenance + Tire</span><b>- ${money(maint+tire)}</b></div><div class="wf minus"><span>Insurance + Registration</span><b>- ${money(ins)}</b></div><div class="wf minus"><span>Other OpEx</span><b>- ${money(other)}</b></div><div class="wf reserve"><span>Protected Cash</span><b>- ${money(protectedDaily)}</b></div><div class="wf total"><span><small>Available Cash</small></span><b>${money(rawAvailDaily)}</b></div><div class="wf minus"><span>PAYD Reference Target</span><b>- ${money(requiredDebtDaily)}</b></div><div class="wf minus"><span>${rbpLabel}</span><b>- ${money(customerRbpDay)}</b></div><div class="wf minus"><span>Monitoring</span><b>- ${money(monitoring)}</b></div><div class="wf reserve"><span>Cure Reserve — สูงสุด 20 บาท (เงินของผู้ขับ)</span><b>- ${money(cure)}</b></div><div class="wf total"><span><small>เงินเหลือหลัง Base Allocation</small></span><b>${remainText}</b></div></div></div><div class="result-box"><h3>ผลคำนวณหลัก</h3><div class="result-row"><span>FI Contractual Instalment — Scenario</span><b>฿${money(pmt)} / เดือน</b></div><div class="result-row"><span>PAYD Reference Target</span><b>฿${money(paydRefDaily)} / Eligible Day</b></div><div class="result-row"><span>DSCR Base</span><b>${dscr.toFixed(2)}x</b></div><div class="result-row"><span>DSCR Downside −15%</span><b>${dscr15.toFixed(2)}x</b></div><div class="result-row"><span>DSCR Severe −30%</span><b>${dscr30.toFixed(2)}x</b></div><div class="result-row"><span>PAI</span><b>${pai.toFixed(2)}</b></div><div class="result-row"><span>Data Confidence</span><b>${dataConf}</b></div><div class="result-row"><span>Route (Prototype)</span><b>${route}</b></div><div class="result-row"><span>Indicative Risk Tier</span><b>${tier}</b></div></div></div><div class="cards" style="margin-top:16px;grid-template-columns:repeat(2,1fr)"><div class="card"><h3>TCO เปรียบเทียบรายเดือน</h3><div class="result-row"><span>เช่ารถเดิม + เชื้อเพลิง</span><b>฿${money(currentCost)}</b></div><div class="result-row"><span>EV Ownership Working Allocation*</span><b>฿${money(evExpense)}</b></div><div class="result-row"><span>ส่วนต่าง</span><b>${tcoDelta>=0?'+':''}฿${money(tcoDelta)}</b></div><small style="color:var(--muted)">*ใช้ PAYD Reference Target; ไม่รวม Cure Reserve เพราะยังเป็นเงินของผู้ขับ และ BaaS/Energy ยังต้อง Partner Validation</small></div><div class="card"><h3>RBP Transparency</h3><div class="result-row"><span>Loan Scenario</span><b>฿${money(P)}</b></div><div class="result-row"><span>Guarantee Coverage</span><b>100%</b></div><div class="result-row"><span>Guaranteed Outstanding</span><b>฿${money(guaranteedOutstanding)}</b></div><div class="result-row"><span>RBP Reference / วันปฏิทิน</span><b>฿${money(rbpReferenceDay)}</b></div><div class="result-row"><span>Customer RBP / วัน</span><b>฿${money(customerRbpDay)}</b></div><div class="result-row"><span>Guarantee Year</span><b>ปีที่ ${guaranteeYear}</b></div><small style="color:var(--muted)">Proposed Fee Waiver ปี 1–3; ปี 4 เป็นต้นไปเริ่มเก็บตาม Risk Tier. Terms subject to approval.</small></div></div><div class="notice warn" style="margin-top:14px"><b>Route / A-B-C เป็น Prototype Logic:</b> Base DSCR ≥1.00x + Principal Maturity + Data Confidence เป็น Gate หลัก; Stress DSCR แสดงเป็น Diagnostic เพื่อใช้ Calibration ไม่ใช่ Hard Decline จนกว่าจะผ่าน Real Data Replay.</div>`
+ a.innerHTML=`<div class="metric-grid"><div class="metric"><div class="label">Verified Revenue / วัน</div><div class="value">฿${money(verified)}</div><div class="sub">Gross ${money(gross)} × Verification</div></div><div class="metric ${availCls}"><div class="label">Available Cash / วัน</div><div class="value">฿${money(rawAvailDaily)}</div><div class="sub">หลัง Eligible OpEx + Protected Cash</div></div><div class="metric ${dscr>=1?'good':'bad'}"><div class="label">DSCR Base — PAYD Reference</div><div class="value">${dscr.toFixed(2)}x</div><div class="sub">Gate ขั้นต่ำใน Working Model = 1.00x</div></div><div class="metric ${maturity<1000?'good':'bad'}"><div class="label">Projected Maturity Balance</div><div class="value">฿${money(maturity)}</div><div class="sub">เทียบความสามารถจ่ายกับ FI Contractual Schedule</div></div></div><div class="calc-layout" style="margin-top:16px"><div class="card"><h3>Daily Financial X-Ray</h3><div class="waterfall"><div class="wf"><span>รายได้ที่ Verify ได้</span><b>+ ${money(verified)}</b></div><div class="wf minus"><span>BaaS / Battery Service</span><b>- ${money(baas)}</b></div><div class="wf minus"><span>${energyLabel}</span><b>- ${money(energy)}</b></div><div class="wf minus"><span>Maintenance + Tire</span><b>- ${money(maint+tire)}</b></div><div class="wf minus"><span>Insurance + Registration</span><b>- ${money(ins)}</b></div><div class="wf minus"><span>Other OpEx</span><b>- ${money(other)}</b></div><div class="wf reserve"><span>Protected Cash</span><b>- ${money(protectedDaily)}</b></div><div class="wf total"><span><small>Available Cash</small></span><b>${money(rawAvailDaily)}</b></div><div class="wf minus"><span>PAYD Reference Target</span><b>- ${money(requiredDebtDaily)}</b></div><div class="wf minus"><span>${rbpLabel}</span><b>- ${money(customerRbpDay)}</b></div><div class="wf minus"><span>Monitoring</span><b>- ${money(monitoring)}</b></div><div class="wf reserve"><span>Cure Reserve — สูงสุด 20 บาท (เงินของผู้ขับ)</span><b>- ${money(cure)}</b></div><div class="wf total"><span><small>เงินเหลือหลัง Base Allocation</small></span><b>${remainText}</b></div></div></div><div class="result-box"><h3>ผลคำนวณหลัก</h3><div class="result-row"><span>FI Contractual Instalment — Scenario</span><b>฿${money(pmt)} / เดือน</b></div><div class="result-row"><span>PAYD Reference Target</span><b>฿${money(paydRefDaily)} / Eligible Day</b></div><div class="result-row"><span>DSCR Base</span><b>${dscr.toFixed(2)}x</b></div><div class="result-row"><span>DSCR Downside −15%</span><b>${dscr15.toFixed(2)}x</b></div><div class="result-row"><span>DSCR Severe −30%</span><b>${dscr30.toFixed(2)}x</b></div><div class="result-row"><span>PAI</span><b>${pai.toFixed(2)}</b></div><div class="result-row"><span>Data Confidence</span><b>${dataConf}</b></div><div class="result-row"><span>Route (Prototype)</span><b>${route}</b></div><div class="result-row"><span>Indicative Risk Tier</span><b>${tier}</b></div></div></div><div class="cards" style="margin-top:16px;grid-template-columns:repeat(2,1fr)"><div class="card"><h3>TCO เปรียบเทียบรายเดือน</h3><div class="result-row"><span>เช่ารถเดิม + เชื้อเพลิง</span><b>฿${money(currentCost)}</b></div><div class="result-row"><span>EV Ownership Working Allocation*</span><b>฿${money(evExpense)}</b></div><div class="result-row"><span>ส่วนต่าง</span><b>${tcoDelta>=0?'+':''}฿${money(tcoDelta)}</b></div><small style="color:var(--muted)">*ใช้ PAYD Reference Target; ไม่รวม Cure Reserve เพราะยังเป็นเงินของผู้ขับ และ BaaS/Energy ยังต้อง Partner Validation</small></div><div class="card"><h3>RBP Transparency</h3><div class="result-row"><span>Loan Scenario</span><b>฿${money(P)}</b></div><div class="result-row"><span>Guarantee Coverage</span><b>100%</b></div><div class="result-row"><span>Guaranteed Outstanding</span><b>฿${money(guaranteedOutstanding)}</b></div><div class="result-row"><span>RBP Reference / วันปฏิทิน</span><b>฿${money(rbpReferenceDay)}</b></div><div class="result-row"><span>Customer RBP / วัน</span><b>฿${money(customerRbpDay)}</b></div><div class="result-row"><span>Guarantee Year</span><b>ปีที่ ${guaranteeYear}</b></div><small style="color:var(--muted)">Proposed Fee Waiver ปี 1–3; ปี 4 เป็นต้นไปเริ่มเก็บตาม Risk Tier. Terms subject to approval.</small></div></div><div class="notice warn" style="margin-top:14px"><b>Route / A-B-C เป็น Prototype Logic:</b> Base DSCR ≥1.00x + Principal Maturity + Data Confidence เป็น Gate หลัก; Stress DSCR แสดงเป็น Diagnostic เพื่อใช้ Calibration ไม่ใช่ Hard Decline จนกว่าจะผ่าน Real Data Replay.</div>`;
+ renderBusiness();
 }
-function renderReadinessResult(){if(!state.calc.dscr)calculateRoute();const r=state.readiness.route,t=state.readiness.tier;const cls=r==='OWN READY'?'active-own':r==='BUILD READINESS'?'active-build':'active-no';const a=document.getElementById('readinessArea');a.innerHTML=`<div class="route-cards"><div class="route ${r==='OWN READY'?cls:''}"><span class="pill green">Route A</span><h3>OWN READY</h3><p>มีศักยภาพเข้าสู่การพิจารณาสินเชื่อเพื่อเป็นเจ้าของ โดย FI ยังต้อง Underwrite จริง</p></div><div class="route ${r==='BUILD READINESS'?cls:''}"><span class="pill amber">Route B</span><h3>BUILD READINESS</h3><p>มีศักยภาพ แต่ควรสะสมข้อมูล ลดภาระ เพิ่มเงินดาวน์ หรือปรับรถ/โครงสร้างก่อน</p></div><div class="route ${r==='NO NEW DEBT'?cls:''}"><span class="pill red">Route C</span><h3>NO NEW DEBT</h3><p>ตอนนี้ Cashflow / Principal trajectory ยังไม่เหมาะกับการสร้างหนี้ Ownership ใหม่</p></div></div><div class="card" style="margin-top:16px"><h3>ผลของคุณ</h3><div class="metric-grid"><div class="metric"><div class="label">Route</div><div class="value" style="font-size:21px">${r}</div></div><div class="metric"><div class="label">Indicative Tier</div><div class="value">${t}</div></div><div class="metric"><div class="label">DSCR Base</div><div class="value">${state.calc.dscr.toFixed(2)}x</div></div><div class="metric"><div class="label">PAI</div><div class="value">${state.calc.pai.toFixed(2)}</div></div></div><div class="notice" style="margin-top:14px"><b>คำแนะนำ:</b> ${r==='OWN READY'?'สามารถจัดทำ Readiness Certificate และส่งต่อ FI ได้ โดยต้องยืนยันเอกสารและเงื่อนไข FI จริง':r==='BUILD READINESS'?'ยังไม่ควรเร่งสร้างหนี้ ระบบควรให้ Action Plan เช่น เก็บข้อมูลเพิ่ม ลดภาระ/ราคาสินทรัพย์ หรือเพิ่มเงินดาวน์':'ไม่ควรใช้ Guarantee Coverage เพื่อฝืน Affordability ให้ผ่าน ควรคงเส้นทางเช่า/ไม่สร้างหนี้ใหม่และทบทวนภายหลัง'}</div></div>`}
+function renderReadinessResult(){if(!state.calc.dscr)calculateRoute();const r=state.readiness.route,t=state.readiness.tier;const cls=r==='OWN READY'?'active-own':r==='BUILD READINESS'?'active-build':'active-no';const a=document.getElementById('readinessArea');a.innerHTML=`<div class="route-cards"><div class="route ${r==='OWN READY'?cls:''}"><span class="pill green">Route A</span><h3>OWN READY</h3><p>มีศักยภาพเข้าสู่การพิจารณาสินเชื่อเพื่อเป็นเจ้าของ โดย FI ยังต้อง Underwrite จริง</p></div><div class="route ${r==='BUILD READINESS'?cls:''}"><span class="pill amber">Route B</span><h3>BUILD READINESS</h3><p>มีศักยภาพ แต่ควรสะสมข้อมูล ลดภาระ เพิ่มเงินดาวน์ หรือปรับรถ/โครงสร้างก่อน</p></div><div class="route ${r==='NO NEW DEBT'?cls:''}"><span class="pill red">Route C</span><h3>NO NEW DEBT</h3><p>ตอนนี้ Cashflow / Principal trajectory ยังไม่เหมาะกับการสร้างหนี้ Ownership ใหม่</p></div></div><div class="card" style="margin-top:16px"><h3>ผลของคุณ</h3><div class="scorewrap" style="margin-bottom:14px">${scoreDial(state.readiness.readinessScore,state.readiness.riskLevel)}<div><div class="livebar-title">คะแนนความพร้อม (Prototype Composite)</div><b style="font-size:19px;color:var(--navy)">${state.readiness.readinessScore} / 100</b> <span class="statuschip ${state.readiness.riskLevel}">${state.readiness.riskLevel==='good'?'✓ อยู่ในเกณฑ์ดี':state.readiness.riskLevel==='watch'?'! ต้องเฝ้าระวังภาระหนี้':'✕ ภาระหนี้สูงเกินไป'}</span></div></div><div class="metric-grid"><div class="metric"><div class="label">Route</div><div class="value" style="font-size:21px">${r}</div></div><div class="metric"><div class="label">Indicative Tier</div><div class="value">${t}</div></div><div class="metric"><div class="label">DSCR Base</div><div class="value">${state.calc.dscr.toFixed(2)}x</div></div><div class="metric"><div class="label">PAI</div><div class="value">${state.calc.pai.toFixed(2)}</div></div></div><div class="notice" style="margin-top:14px"><b>คำแนะนำ:</b> ${r==='OWN READY'?'สามารถจัดทำ Readiness Certificate และส่งต่อ FI ได้ โดยต้องยืนยันเอกสารและเงื่อนไข FI จริง':r==='BUILD READINESS'?'ยังไม่ควรเร่งสร้างหนี้ ระบบควรให้ Action Plan เช่น เก็บข้อมูลเพิ่ม ลดภาระ/ราคาสินทรัพย์ หรือเพิ่มเงินดาวน์':'ไม่ควรใช้ Guarantee Coverage เพื่อฝืน Affordability ให้ผ่าน ควรคงเส้นทางเช่า/ไม่สร้างหนี้ใหม่และทบทวนภายหลัง'}</div></div>`}
 function renderCertificate(){if(!state.calc.dscr)calculateRoute();const a=document.getElementById('certArea');const ref='R2O-'+new Date().getFullYear()+'-'+String(Math.floor(Math.random()*900000)+100000);a.innerHTML=`<div class="certificate print-cert"><div class="cert-head"><div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start"><div><div style="font-size:13px;color:#83ddd5;font-weight:900">ROUTE2OWN by บสย.</div><h2 style="margin:5px 0">Route2Own Readiness Certificate</h2><div>ใบผลการประเมินความพร้อมเบื้องต้น</div></div><div style="text-align:right"><b>${ref}</b><br><small>สถานะ: READYNESS ASSESSMENT</small></div></div></div><div class="cert-body"><div class="cert-grid"><div class="cert-item"><span>ผู้ขับ</span><b>${state.lead.fullName||'ผู้สมัครตัวอย่าง'}</b></div><div class="cert-item"><span>Eligibility</span><b>${state.elig.integrity?'PASS':'REVIEW'}</b></div><div class="cert-item"><span>Data Confidence</span><b>${state.readiness.dataConfidence}</b></div><div class="cert-item"><span>Verified Income / วัน</span><b>฿${money(state.calc.verified)}</b></div><div class="cert-item"><span>Base DSCR</span><b>${state.calc.dscr.toFixed(2)}x</b></div><div class="cert-item"><span>Downside DSCR</span><b>${state.calc.dscr15.toFixed(2)}x</b></div><div class="cert-item"><span>PAI</span><b>${state.calc.pai.toFixed(2)}</b></div><div class="cert-item"><span>Principal Maturity</span><b>${state.calc.maturity<1000?'CLOSE':'GAP'}</b></div><div class="cert-item"><span>Ownership Route</span><b>${state.readiness.route}</b></div><div class="cert-item"><span>Indicative Guarantee Tier</span><b>${state.readiness.tier}</b></div><div class="cert-item"><span>Certificate Status</span><b>${state.readiness.route==='OWN READY'?'READY FOR FI REVIEW':'ADVICE / BUILD READINESS'}</b></div><div class="cert-item"><span>FI Credit Decision</span><b>PENDING</b></div></div><div class="disclaimer"><b>ข้อจำกัด:</b> เอกสารนี้เป็นผลประเมินความพร้อมเบื้องต้นเพื่อประกอบการพิจารณาเข้าร่วมโครงการค้ำประกัน ไม่ใช่การอนุมัติสินเชื่อ ไม่ใช่ Pre-approved Loan และไม่ผูกพันสถาบันการเงิน วงเงินจริง อัตราดอกเบี้ย ระยะเวลา และเงื่อนไขสินเชื่อเป็นอำนาจของ FI</div></div></div>`}
 function fiHtml(){const fis=[['KLeasing / กสิกรลีสซิ่ง','EV Finance / เงื่อนไขตาม FI'],['กรุงศรี ออโต้','EV / Auto Finance / เงื่อนไขตาม FI'],['SCB Auto Finance','Auto Finance / ต้องยืนยัน Commercial Taxi Term'],['ttb DRIVE','Auto Finance / เงื่อนไขตาม FI'],['CIMB Thai Auto','Auto Finance / เงื่อนไขตาม FI']];return `<div class="fi-grid">${fis.map(([n,d])=>`<div class="fi-card ${state.fi===n?'selected':''}"><div class="fi-logo">🏦 ${n}</div><span class="pill amber">ต้องยืนยัน Partner Term Sheet</span><ul><li>ประเภทรถ: EV — ตรวจเงื่อนไข Taxi จริง</li><li>วงเงิน / ดอกเบี้ย / Tenor: FI Final Offer</li><li>Route2Own DSCR: ${state.calc.dscr?state.calc.dscr.toFixed(2)+'x':'—'}</li><li>Credit Decision: FI</li></ul><button class="btn ${state.fi===n?'teal':'ghost'}" style="width:100%" onclick="selectFI('${n.replace(/'/g,"\\'")}')">${state.fi===n?'✓ เลือกแล้ว':'เลือก FI นี้'}</button></div>`).join('')}</div>`}
 function selectFI(n){state.fi=n;renderDriver();toast('เลือก '+n+' แล้ว')}
@@ -410,6 +552,418 @@ function partnerResultHtml(){const r=state.partner.result||'READY WITH CONDITION
 Object.assign(state.elig,{isPro:true,publicLicense:true,vehicleReg:true,memberVerify:true,dataConsent:true,revenueSource:true,driverVehicle:true,assetScope:true,integrity:true});
 Object.assign(state.passport,{grossDaily:1850.52,workDays:25,verifiedPct:95,commissionPct:0,serviceKm:180,repositionKm:55,chargingKm:15,downtimeDays:1,gpsComplete:95,electricityRate:5.9,kwhKm:.185,maintKm:.07828,tireKm:.10,insuranceMonthly:2500,otherOpEx:0,baasDaily:400,energyIncluded:'included',existingDebt:0,householdMonthly:15000,nextShiftDaily:0,vehiclePrice:800000,downPayment:0,loanNeed:800000,interest:6,tenor:84,rentDaily:600,fuelDaily:450});
 Object.assign(state.calc,{coveragePct:100,guaranteeYear:1});
+
+/* ================= v1.4 — Stepper • Live Readiness • Business Insights • Report ================= */
+const V4_BOUNDS={existingDebt:[0,500000],householdMonthly:[0,500000],nextShiftDaily:[0,10000],
+ vehiclePrice:[0,5000000],downPayment:[0,5000000],interest:[0,36],tenor:[12,120]};
+function money0(x){return new Intl.NumberFormat('th-TH',{maximumFractionDigits:0}).format(Number(x||0))}
+function v4Round(v,dec){const f=Math.pow(10,dec||0);return Math.round(v*f)/f}
+
+function stepField(id,label,value,step,dec,hint){
+ const h=hint?`<small>${hint}</small>`:'';
+ return `<div class="field"><label>${label}</label><div class="stepper">`+
+  `<button type="button" aria-label="ลด ${label}" onclick="bump('${id}',-${step},${dec||0})">−</button>`+
+  `<input id="${id}" type="number" step="${step}" value="${v4Round(Number(value),dec||0)}" inputmode="decimal">`+
+  `<button type="button" aria-label="เพิ่ม ${label}" onclick="bump('${id}',${step},${dec||0})">+</button>`+
+  `</div>${h}</div>`;
+}
+
+/** ปรับค่าจากปุ่ม +/- แล้วคำนวณใหม่ทันที */
+function bump(id,delta,dec){
+ const el=document.getElementById(id);if(!el)return;
+ const cur=parseFloat(el.value);
+ let next=(Number.isFinite(cur)?cur:0)+delta;
+ const b=V4_BOUNDS[id]||[0,Number.MAX_SAFE_INTEGER];
+ next=Math.min(b[1],Math.max(b[0],next));
+ el.value=v4Round(next,dec||0);
+ onPassportChange();
+}
+
+/** วงเงินสินเชื่อ = ราคารถ − เงินดาวน์ เสมอ และห้ามติดลบ/NaN */
+function syncLoanNeed(){
+ const E=window.Route2OwnEngine;
+ const price=document.getElementById('vehiclePrice'),down=document.getElementById('downPayment'),need=document.getElementById('loanNeed');
+ if(!need)return;
+ let pv=price?parseFloat(price.value):NaN, dv=down?parseFloat(down.value):NaN;
+ if(!Number.isFinite(pv)||pv<0)pv=0;
+ if(!Number.isFinite(dv)||dv<0)dv=0;
+ if(dv>pv){dv=pv;if(down)down.value=v4Round(dv,0)}   // เงินดาวน์เกินราคารถ → ตรึงไว้ที่ราคารถ
+ if(price)price.value=v4Round(pv,0);
+ need.value=E?E.deriveLoanNeed(pv,dv):Math.max(0,pv-dv);
+}
+
+function onPassportChange(){syncLoanNeed();calculateRoute()}
+function toggleLiveBar(){liveBarOpen=!liveBarOpen;updateLiveBar()}
+/** บนมือถือ ถ้าผู้ใช้กำลังกรอกข้อมูล ให้ย่อแถบลงเพื่อไม่ให้บังช่องที่พิมพ์อยู่ */
+function collapseLiveBarOnFocus(){if(window.innerWidth<=720&&liveBarOpen){liveBarOpen=false;updateLiveBar()}}
+
+/** ผูก input ทุกช่องในขั้นตอนปัจจุบันเข้ากับการคำนวณเรียลไทม์ */
+function initLiveBindings(){
+ const c=document.getElementById('driverStepContainer');if(!c)return;
+ if(!c.dataset.v4bound){
+  c.addEventListener('input',e=>{if(e.target.matches('input[type=number],select'))onPassportChange()});
+  c.addEventListener('change',e=>{if(e.target.matches('select'))onPassportChange()});
+  c.addEventListener('focusin',e=>{if(e.target.matches('input,select'))collapseLiveBarOnFocus()});
+  c.dataset.v4bound='1';
+ }
+ syncLoanNeed();calculateRoute();
+}
+
+function scoreDial(score,risk){
+ const col=risk==='good'?'var(--v4-good)':risk==='watch'?'var(--v4-watch)':'var(--v4-risk)';
+ const R=25,C=2*Math.PI*R,off=C*(1-Math.max(0,Math.min(100,score))/100);
+ return `<svg class="scoredial" viewBox="0 0 58 58" role="img" aria-label="คะแนนความพร้อม ${score} จาก 100">`+
+  `<circle cx="29" cy="29" r="${R}" fill="none" stroke="#e6ecf3" stroke-width="6"></circle>`+
+  `<circle cx="29" cy="29" r="${R}" fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round"`+
+  ` stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 29 29)"></circle>`+
+  `<text x="29" y="33" text-anchor="middle" font-size="17" font-weight="900" fill="var(--navy)">${score}</text></svg>`;
+}
+
+/** แถบผลลัพธ์สดที่อัปเดตทุกครั้งที่กด +/- */
+function updateLiveBar(){
+ const bar=document.getElementById('liveBar');if(!bar)return;
+ const c=state.calc,r=state.readiness;
+ if(!c||typeof c.dscr!=='number'){bar.innerHTML='';return}
+ if(r.noLoan){bar.innerHTML=`<div class="livebar"><div class="livebar-top"><div><div class="livebar-title">คะแนนความพร้อม (อัปเดตทันที)</div><b style="font-size:17px;color:var(--navy)">ยังไม่มีวงเงินให้ประเมิน</b></div><span class="statuschip watch">! กรอกราคารถและเงินดาวน์</span></div><div style="margin-top:9px;font-size:13px;color:var(--muted);line-height:1.7">วงเงินสินเชื่อ = ราคารถ − เงินดาวน์ ขณะนี้เท่ากับ 0 บาท จึงยังไม่มีภาระหนี้ให้คำนวณ DSCR หรือคะแนนความพร้อม</div></div>`;return}
+ const risk=r.riskLevel||'risk';
+ const label=risk==='good'?'อยู่ในเกณฑ์ดี พร้อมเข้าสู่การพิจารณา':risk==='watch'?(r.route==='OWN READY'?'ผ่านเกณฑ์ แต่ภาระหนี้เริ่มสูง':'ควรสะสมความพร้อมก่อน'):'ภาระหนี้สูงเกินไป ยังไม่ควรสร้างหนี้ใหม่';
+ const icon=risk==='good'?'✓':risk==='watch'?'!':'✕';
+ const open=liveBarOpen||window.innerWidth>720;
+ bar.innerHTML=`<div class="livebar ${risk} ${open?'':'is-collapsed'}">
+  <button type="button" class="livebar-toggle" aria-expanded="${open}" aria-controls="liveBarBody" onclick="toggleLiveBar()">
+   <span class="livebar-brief"><span class="statusdot"></span><b>${r.route}</b><em>${r.readinessScore}/100 • DSCR ${c.dscr.toFixed(2)}x</em></span>
+   <span class="chev" aria-hidden="true">▾</span>
+  </button>
+  <div class="livebar-body" id="liveBarBody">
+  <div class="livebar-top">
+   <div class="scorewrap">${scoreDial(r.readinessScore,risk)}
+    <div><div class="livebar-title">คะแนนความพร้อม (อัปเดตทันที)</div><b style="font-size:17px;color:var(--navy)">${r.route}</b></div></div>
+   <span class="statuschip ${risk}">${icon} ${label}</span>
+  </div>
+  <div class="livemini">DSCR <b>${c.dscr.toFixed(2)}x</b> <em>•</em> ค่างวด <b>฿${money0(c.pmt)}</b>/เดือน <em>•</em> เหลือ <b>฿${money0(c.breakEven.marginDaily)}</b>/วัน</div>
+  <div class="livebar-stats">
+   <div class="livestat"><span>DSCR Base</span><b>${c.dscr.toFixed(2)}x</b></div>
+   <div class="livestat"><span>PAI</span><b>${c.pai.toFixed(2)}</b></div>
+   <div class="livestat"><span>ค่างวด/เดือน</span><b>฿${money0(c.pmt)}</b></div>
+   <div class="livestat"><span>เหลือ/วัน</span><b>฿${money0(c.breakEven.marginDaily)}</b></div>
+  </div></div></div>`;
+}
+
+/* ---------- กราฟ ---------- */
+function allocationChart(c){
+ const be=c.breakEven,margin=be.marginDaily;
+ const segs=[
+  {k:'ต้นทุนเดินรถ + BaaS',v:c.dailyOpEx,col:'var(--v4-s1)'},
+  {k:'Protected Cash ครัวเรือน',v:c.protectedDaily,col:'var(--v4-s2)'},
+  {k:'ค่างวด (PAYD Reference)',v:c.requiredDebtDaily,col:'var(--v4-s3)'},
+  {k:'RBP + Monitoring',v:c.customerRbpDay+c.monitoring,col:'var(--v4-s4)'}
+ ];
+ if(margin>=0)segs.push({k:'เหลือเป็นส่วนต่างของผู้ขับ',v:margin,col:'var(--v4-s5)'});
+ const scale=Math.max(c.verified,be.dailyObligation,1);
+ const W=520,H=42,gap=2;let x=0;
+ const rects=segs.map(sg=>{
+  const w=Math.max(0,(sg.v/scale)*W-gap);
+  const rect=`<rect x="${x.toFixed(1)}" y="0" width="${w.toFixed(1)}" height="${H}" fill="${sg.col}"><title>${sg.k}: ${money0(sg.v)} บาท/วัน</title></rect>`;
+  x+=(sg.v/scale)*W;return rect;
+ }).join('');
+ const deficit=margin<0?`<rect x="${((c.verified/scale)*W).toFixed(1)}" y="0" width="${Math.min(W-(c.verified/scale)*W,(Math.abs(margin)/scale)*W).toFixed(1)}" height="${H}" fill="url(#v4hatch)"><title>ขาด ${money0(Math.abs(margin))} บาท/วัน</title></rect>`:'';
+ const legend=segs.map(sg=>`<span><i style="background:${sg.col}"></i>${sg.k} <small>฿${money0(sg.v)}</small></span>`).join('');
+ const note=margin>=0
+  ?`<div class="breakeven-note good"><b>คุ้มทุนแล้ว</b> — ต้องมีรายได้ก่อนหักอย่างน้อย <b>฿${money0(be.requiredGrossDaily)}/วัน</b> ปัจจุบันทำได้ ฿${money0(c.gross)}/วัน จึงเหลือ <b>฿${money0(margin)}/วัน</b> (${(be.marginPct*100).toFixed(1)}% ของรายได้ที่ Verify ได้) • BaaS ${money0(be.baasDaily)} บาท คิดเป็น ${(be.baasShareOfVerified*100).toFixed(1)}% ของรายได้ที่ Verify ได้</div>`
+  :`<div class="breakeven-note risk"><b>ยังไม่ถึงจุดคุ้มทุน</b> — ต้องมีรายได้ก่อนหัก <b>฿${money0(be.requiredGrossDaily)}/วัน</b> แต่ปัจจุบัน ฿${money0(c.gross)}/วัน จึงขาดอยู่ <b>฿${money0(Math.abs(margin))}/วัน</b> • BaaS ${money0(be.baasDaily)} บาท คิดเป็น ${(be.baasShareOfObligation*100).toFixed(1)}% ของภาระรายวันทั้งหมด</div>`;
+ return `<div class="chartcard"><h4>รายได้ 1 วันถูกใช้ไปกับอะไร</h4>
+  <p class="hint">ฐาน = รายได้ที่ Verify ได้ ฿${money0(c.verified)}/วัน • เทียบกับภาระรวม ฿${money0(be.dailyObligation)}/วัน</p>
+  <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="height:42px" role="img" aria-label="สัดส่วนการใช้รายได้ต่อวัน">
+   <defs><pattern id="v4hatch" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="7" height="7" fill="#fbd9d9"></rect><line x1="0" y="0" x2="0" y2="7" stroke="var(--v4-risk)" stroke-width="3"></line></pattern>
+   <clipPath id="v4clip"><rect x="0" y="0" width="${W}" height="${H}" rx="5"></rect></clipPath></defs>
+   <g clip-path="url(#v4clip)">${rects}${deficit}</g></svg>
+  <div class="legend">${legend}${margin<0?'<span><i style="background:var(--v4-risk)"></i>ส่วนที่ยังขาด <small>฿'+money0(Math.abs(margin))+'</small></span>':''}</div>
+  ${note}</div>`;
+}
+
+function amortChart(c,withTable){
+ if(withTable===undefined)withTable=true;
+ const rows=c.schedule||[];if(!rows.length)return '';
+ const max=Math.max(...rows.map(r=>r.payment),1);
+ const W=520,H=190,pad=26,bw=Math.min(46,(W-pad)/rows.length-10);
+ const bars=rows.map((r,i)=>{
+  const x=pad+i*((W-pad)/rows.length)+((W-pad)/rows.length-bw)/2;
+  const hP=(r.principal/max)*(H-30),hI=(r.interest/max)*(H-30);
+  const yI=H-20-hI,yP=yI-hP-2;
+  return `<g><rect x="${x.toFixed(1)}" y="${yP.toFixed(1)}" width="${bw}" height="${Math.max(0,hP).toFixed(1)}" fill="var(--v4-s1)" rx="3"><title>ปีที่ ${r.year} — เงินต้น ฿${money0(r.principal)}</title></rect>`+
+   `<rect x="${x.toFixed(1)}" y="${yI.toFixed(1)}" width="${bw}" height="${Math.max(0,hI).toFixed(1)}" fill="var(--v4-s2)" rx="3"><title>ปีที่ ${r.year} — ดอกเบี้ย ฿${money0(r.interest)}</title></rect>`+
+   `<text x="${(x+bw/2).toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="11" fill="#667085">ปี ${r.year}</text></g>`;
+ }).join('');
+ const grid=[0,.5,1].map(f=>{const y=H-20-f*(H-30);return `<line x1="${pad}" y1="${y.toFixed(1)}" x2="${W}" y2="${y.toFixed(1)}" stroke="#eef2f6" stroke-width="1"></line><text x="0" y="${(y+4).toFixed(1)}" font-size="10" fill="#98a2b3">${money0(f*max/1000)}k</text>`}).join('');
+ return `<div class="chartcard"><h4>เงินต้น vs ดอกเบี้ย รายปี</h4>
+  <p class="hint">ตาม FI Contractual Schedule — ปีแรกจ่ายดอกเบี้ยสัดส่วนสูงสุด แล้วลดลงเมื่อเงินต้นลด</p>
+  <svg class="amortsvg" viewBox="0 0 ${W} ${H}" role="img" aria-label="กราฟแท่งเงินต้นและดอกเบี้ยรายปี">${grid}${bars}</svg>
+  <div class="legend"><span><i style="background:var(--v4-s1)"></i>เงินต้น</span><span><i style="background:var(--v4-s2)"></i>ดอกเบี้ย</span></div>
+  ${withTable?amortTable(c):''}</div>`;
+}
+
+function amortTable(c){
+ const rows=c.schedule||[];if(!rows.length)return '';
+ const tr=rows.map(r=>`<tr><td>ปีที่ ${r.year}</td><td>฿${money0(r.payment)}</td><td>฿${money0(r.principal)}</td><td>฿${money0(r.interest)}</td><td>฿${money0(r.closing)}</td></tr>`).join('');
+ return `<div class="tablewrap"><table class="datatable"><thead><tr><th>งวด</th><th>ชำระรวม</th><th>เงินต้น</th><th>ดอกเบี้ย</th><th>คงเหลือ</th></tr></thead>
+  <tbody>${tr}</tbody><tfoot><tr><td>รวมทั้งสัญญา</td><td>฿${money0(c.totalRepayment)}</td><td>฿${money0(c.totalRepayment-c.totalInterest)}</td><td>฿${money0(c.totalInterest)}</td><td>—</td></tr></tfoot></table></div>`;
+}
+
+/** สรุปวิเคราะห์แผนธุรกิจเชิงลึก */
+function renderBusiness(){
+ const host=document.getElementById('businessArea');if(!host)return;
+ const c=state.calc;if(!c||!c.breakEven){host.innerHTML='';return}
+ if(state.readiness.noLoan){host.innerHTML=`<div class="biz-head"><div><h3>📊 สรุปวิเคราะห์แผนธุรกิจเชิงลึก</h3><p>ยังไม่มีวงเงินสินเชื่อให้วิเคราะห์</p></div><span class="pill blue">Business Insights v1.4</span></div><div class="notice warn">กรุณาระบุ <b>ราคารถ EV</b> ให้มากกว่าเงินดาวน์ ในขั้นตอน “สร้างข้อมูลอาชีพ” เพื่อให้ระบบคำนวณยอดผ่อน ดอกเบี้ยรวม และจุดคุ้มทุนได้</div>`;return}
+ const be=c.breakEven;
+ host.innerHTML=`<div class="biz-head"><div><h3>📊 สรุปวิเคราะห์แผนธุรกิจเชิงลึก</h3>
+   <p>ตัวเลขทั้งหมดคำนวณจากค่าที่กรอกด้านบนด้วย Engine เดียวกับที่ FI Package ใช้ • ปรับตัวเลขแล้วส่วนนี้เปลี่ยนตามทันที</p></div>
+   <span class="pill blue">Business Insights v1.4</span></div>
+  <div class="biz-tiles">
+   <div class="biz-tile accent"><div class="lab">ยอดผ่อนชำระรวมตลอดสัญญา</div><div class="val">฿${money0(c.totalRepayment)}</div>
+    <div class="sub">${money0(c.pmt)} บาท × ${c.schedule.reduce((a,r)=>a+r.months,0)} งวด</div></div>
+   <div class="biz-tile"><div class="lab">ดอกเบี้ยรวมที่ต้องจ่าย</div><div class="val">฿${money0(c.totalInterest)}</div>
+    <div class="sub">คิดเป็น ${(c.interestRatio*100).toFixed(1)}% ของเงินต้น ฿${money0(c.totalRepayment-c.totalInterest)}</div></div>
+   <div class="biz-tile"><div class="lab">จุดคุ้มทุนต่อวัน</div><div class="val">฿${money0(be.requiredGrossDaily)}</div>
+    <div class="sub">รายได้ก่อนหักขั้นต่ำ/วัน • เฉพาะค่าเดินรถ+ค่างวด ฿${money0(be.requiredGrossOperating)}</div></div>
+  </div>
+  <div class="biz-grid">${allocationChart(c)}${amortChart(c)}</div>`;
+}
+
+/* ---------- รายงาน PDF ---------- */
+function buildReport(){
+ const host=document.getElementById('reportArea');if(!host)return;
+ if(!state.calc||!state.calc.breakEven)calculateRoute();
+ const c=state.calc,r=state.readiness,be=c.breakEven;
+ const ref=reportRef();
+ const d=new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+ const kv=(k,v)=>`<div><span>${k}</span><b>${v}</b></div>`;
+ host.innerHTML=`<div class="report-page" style="padding:16px">
+  <div class="report-head"><div><h1>Route2Own Readiness &amp; Business Plan Report</h1>
+   <div style="font-size:12px;color:var(--muted)">ใบรายงานความพร้อมและแผนธุรกิจ v1.4 — โดย บสย.</div></div>
+   <div class="meta"><b>${ref}</b><br>วันที่ออกรายงาน ${d}<br>Working Scenario 800K / BaaS 400</div></div>
+
+  <div class="report-section"><h2>1. ข้อมูลผู้ขับและผลการประเมิน</h2><div class="report-kv">
+   ${kv('ผู้ขับ',state.lead.fullName||'ผู้สมัครตัวอย่าง')}
+   ${kv('Ownership Route',r.route)}
+   ${kv('คะแนนความพร้อม',r.readinessScore+' / 100')}
+   ${kv('Indicative Guarantee Tier',r.tier)}
+   ${kv('Data Confidence',r.dataConfidence)}
+   ${kv('Certificate Status',r.route==='OWN READY'?'READY FOR FI REVIEW':'ADVICE / BUILD READINESS')}
+  </div></div>
+
+  <div class="report-section"><h2>2. ความสามารถในการชำระ</h2><div class="report-kv">
+   ${kv('รายได้ที่ Verify ได้ / วัน','฿'+money0(c.verified))}
+   ${kv('Available Cash / วัน','฿'+money0(c.rawAvailDaily))}
+   ${kv('DSCR Base',c.dscr.toFixed(2)+'x')}
+   ${kv('DSCR −15% / −30%',c.dscr15.toFixed(2)+'x / '+c.dscr30.toFixed(2)+'x')}
+   ${kv('PAI',c.pai.toFixed(2))}
+   ${kv('Principal Maturity',c.maturity<=1000?'CLOSE':'GAP ฿'+money0(c.maturity))}
+  </div></div>
+
+  <div class="report-section"><h2>3. โครงสร้างสินเชื่อและแผนธุรกิจ</h2><div class="report-kv">
+   ${kv('ราคารถ EV','฿'+money0(state.passport.vehiclePrice))}
+   ${kv('เงินดาวน์','฿'+money0(state.passport.downPayment))}
+   ${kv('วงเงินสินเชื่อ','฿'+money0(c.loanNeed))}
+   ${kv('ดอกเบี้ย / ระยะเวลา',(state.passport.interest||0)+'% p.a. / '+(state.passport.tenor||0)+' เดือน')}
+   ${kv('ค่างวดต่อเดือน','฿'+money0(c.pmt))}
+   ${kv('ยอดผ่อนชำระรวม','฿'+money0(c.totalRepayment))}
+   ${kv('ดอกเบี้ยรวมตลอดสัญญา','฿'+money0(c.totalInterest))}
+   ${kv('จุดคุ้มทุน / วัน','฿'+money0(be.requiredGrossDaily))}
+   ${kv('ส่วนต่างคงเหลือ / วัน','฿'+money0(be.marginDaily))}
+   ${kv('TCO เทียบเช่ารถเดิม / เดือน',(c.tcoDelta>=0?'+':'−')+'฿'+money0(Math.abs(c.tcoDelta)))}
+  </div></div>
+
+  <div class="report-section"><h2>4. ตารางผ่อนชำระรายปี</h2>${amortTable(c)}</div>
+  <div class="report-section"><h2>5. การวิเคราะห์เชิงลึก</h2>${allocationChart(c)}${amortChart(c,false)}</div>
+  <div class="report-section"><h2>6. เหตุผลประกอบของระบบ</h2>
+   <ul style="margin:0;padding-left:18px;font-size:12px;line-height:1.9;color:#344054">${(state.reasons||[]).map(x=>`<li>${x}</li>`).join('')}</ul></div>
+
+  <div class="report-foot"><b>ข้อจำกัด:</b> เอกสารนี้เป็นผลประเมินความพร้อมเบื้องต้นเพื่อประกอบการพิจารณาเข้าร่วมโครงการค้ำประกัน
+   ไม่ใช่การอนุมัติสินเชื่อ ไม่ใช่ Pre-approved Loan และไม่ผูกพันสถาบันการเงิน วงเงินจริง อัตราดอกเบี้ย ระยะเวลา
+   และเงื่อนไขสินเชื่อเป็นอำนาจของสถาบันการเงิน • ตัวเลข Threshold ยังต้องผ่าน Real Data Replay / Risk / FI Validation ก่อน Pilot</div>
+ </div>`;
+}
+/* ---------- ดาวน์โหลด PDF คลิกเดียว ---------- */
+/* สลับไปใช้ CDN ได้โดยเปลี่ยนค่านี้เป็น
+   'https://cdn.jsdelivr.net/npm/html2pdf.js@0.14.0/dist/html2pdf.bundle.min.js' */
+const PDF_LIB_URL='/vendor/html2pdf.bundle.min.js';
+const PDF_LIB_TIMEOUT_MS=12000;   // เน็ตช้าเกินนี้ถือว่าไม่ไหว ตกไป fallback แทนการค้าง
+const PDF_LIB_SLOW_MS=3000;       // เกินนี้บอกผู้ใช้ว่ากำลังโหลดอยู่ ไม่ได้ค้าง
+const CANVAS_MAX_DIM=4096;        // เพดานต่อด้านที่ปลอดภัยกับ iOS Safari รุ่นเก่า
+const CANVAS_MAX_AREA=16.7e6;     // เพดานพื้นที่รวม
+const PDF_APP_VERSION='v1.4';
+
+/** log กลางสำหรับ guard ทุกตัว — เขียน console + เก็บใน sessionStorage ให้เปิดดูย้อนหลังได้ */
+function logPdfEvent(tag,data){
+ const entry=Object.assign({tag,version:PDF_APP_VERSION,path:location.pathname,
+   userAgent:navigator.userAgent,timestamp:new Date().toISOString()},data||{});
+ try{console.warn('[Route2Own][PDF]',tag,entry)}catch(e){}
+ try{
+  const key='r2o_pdf_log';
+  const log=JSON.parse(sessionStorage.getItem(key)||'[]');
+  log.push(entry);
+  sessionStorage.setItem(key,JSON.stringify(log.slice(-20)));
+ }catch(e){/* private mode หรือ storage เต็ม — ไม่ให้ล้มการสร้าง PDF */}
+}
+
+let __pdfLib=null,__pdfAttempt=0;
+/** โหลด html2pdf เฉพาะตอนกดปุ่ม เพื่อไม่ให้ bundle ~950KB ถ่วงเวลาโหลดหน้าเว็บ */
+function loadPdfLib(onSlow){
+ if(window.html2pdf)return Promise.resolve(window.html2pdf);
+ if(__pdfLib)return __pdfLib;
+ // ครั้งที่ 2 เป็นต้นไปต่อท้าย query ใหม่ มิฉะนั้นเบราว์เซอร์จะยุบคำขอเข้ากับคำขอเดิมที่ยังค้างอยู่
+ // ทำให้ retry หลัง timeout ไม่เป็นอิสระจากคำขอที่ค้าง
+ const url=__pdfAttempt===0?PDF_LIB_URL:PDF_LIB_URL+(PDF_LIB_URL.indexOf('?')<0?'?':'&')+'retry='+__pdfAttempt;
+ __pdfAttempt++;
+ __pdfLib=new Promise((resolve,reject)=>{
+  const t0=Date.now();
+  const sc=document.createElement('script');
+  let done=false;
+  const slowTimer=setTimeout(()=>{
+   if(done)return;
+   logPdfEvent('PDF_LIB_LOAD_SLOW',{elapsedMs:Date.now()-t0});
+   if(typeof onSlow==='function')onSlow();
+  },PDF_LIB_SLOW_MS);
+  const finish=(fn,arg)=>{if(done)return;done=true;clearTimeout(slowTimer);clearTimeout(hardTimer);fn(arg)};
+  const hardTimer=setTimeout(()=>{
+   if(done)return;
+   sc.onload=sc.onerror=null;
+   if(sc.parentNode)sc.parentNode.removeChild(sc);
+   __pdfLib=null;                      // ปล่อยให้กดใหม่แล้วลองใหม่ได้
+   logPdfEvent('PDF_LIB_LOAD_TIMEOUT',{elapsedMs:Date.now()-t0,url});
+   finish(reject,new Error('timeout loading '+url));
+  },PDF_LIB_TIMEOUT_MS);
+  sc.src=url;sc.async=true;
+  sc.onload=()=>{
+   if(window.html2pdf)return finish(resolve,window.html2pdf);
+   __pdfLib=null;
+   finish(reject,new Error('html2pdf not exposed'));
+  };
+  sc.onerror=()=>{__pdfLib=null;finish(reject,new Error('cannot load '+url))};
+  document.head.appendChild(sc);
+ });
+ return __pdfLib;
+}
+
+/** เลือก scale ที่ใหญ่ที่สุดที่ยังไม่ชนเพดาน canvas ของเบราว์เซอร์ */
+function safeScale(w,h,preferred){
+ if(!(w>0&&h>0))return preferred;
+ const byDim=Math.min(CANVAS_MAX_DIM/w,CANVAS_MAX_DIM/h);
+ const byArea=Math.sqrt(CANVAS_MAX_AREA/(w*h));
+ const limit=Math.min(byDim,byArea);
+ return {scale:Math.min(preferred,limit),limit,reason:byDim<=byArea?'dimension':'area'};
+}
+
+/** ตรวจว่า canvas ที่ได้ไม่ใช่ภาพเปล่า (html2canvas คืน canvas ว่างโดยไม่ throw เมื่อชนเพดาน) */
+function assertCanvasHasInk(canvas){
+ const W=canvas.width,H=canvas.height;
+ const s=document.createElement('canvas');s.width=64;s.height=64;
+ const ctx=s.getContext('2d');
+ ctx.fillStyle='#ffffff';ctx.fillRect(0,0,64,64);
+ ctx.drawImage(canvas,0,0,64,64);
+ const d=ctx.getImageData(0,0,64,64).data;
+ let ink=0;
+ for(let i=0;i<d.length;i+=4){
+  if(d[i]<245||d[i+1]<245||d[i+2]<245)ink++;
+ }
+ const inkRatio=ink/(64*64);
+ if(inkRatio<0.005){
+  logPdfEvent('PDF_CANVAS_BLANK_DETECTED',{canvasW:W,canvasH:H,inkRatio:Number(inkRatio.toFixed(5))});
+  throw new Error('blank canvas ('+W+'x'+H+')');
+ }
+ return canvas;
+}
+
+function reportRef(){
+ if(!state.reportRef)state.reportRef='R2O-'+new Date().getFullYear()+'-'+String(Math.floor(Math.random()*900000)+100000);
+ return state.reportRef;
+}
+function reportFilename(){
+ const d=new Date(),pad=n=>String(n).padStart(2,'0');
+ return `Route2Own-Readiness-${reportRef()}-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}.pdf`;
+}
+
+/** การ์ดทางหนี — ถ้าเบราว์เซอร์บล็อกดาวน์โหลดเงียบ ๆ ผู้ใช้ยังแตะเปิดไฟล์ได้ */
+function showPdfReadyCard(url,filename){
+ const old=document.getElementById('pdfReadyCard');if(old)old.remove();
+ const card=document.createElement('div');
+ card.id='pdfReadyCard';card.className='pdf-ready-card';
+ card.innerHTML=`<div><b>สร้างไฟล์เรียบร้อย</b><small>${filename}</small></div>
+  <div class="pdf-ready-actions">
+   <a class="btn teal" href="${url}" target="_blank" rel="noopener">เปิดไฟล์ในแท็บใหม่</a>
+   <button class="btn ghost" type="button" aria-label="ปิด">ปิด</button>
+  </div>`;
+ card.querySelector('button').onclick=()=>card.remove();
+ document.body.appendChild(card);
+ setTimeout(()=>{if(card.isConnected)card.remove()},45000);
+}
+
+/** ส่งไฟล์ให้ผู้ใช้เอง แทนการใช้ .save() ของ html2pdf เพื่อคุมเส้นทางและมีทางหนีได้ */
+function deliverPdf(pdf,filename,meta){
+ const blob=pdf.output('blob');
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');
+ const canDownload=('download' in a);
+ if(canDownload){
+  a.href=url;a.download=filename;a.rel='noopener';
+  document.body.appendChild(a);a.click();a.remove();
+ }else{
+  window.open(url,'_blank');   // เบราว์เซอร์เก่ามากที่ไม่รองรับ download attribute
+ }
+ showPdfReadyCard(url,filename);
+ setTimeout(()=>URL.revokeObjectURL(url),60000);   // ต้องช้ากว่าอายุการ์ด ไม่งั้นลิงก์ตาย
+ logPdfEvent('PDF_DELIVERED',Object.assign({filename,bytes:blob.size,usedDownloadAttr:canDownload},meta||{}));
+}
+
+async function downloadReport(btn){
+ const host=document.getElementById('reportArea');if(!host)return;
+ const label=btn?btn.innerHTML:null;
+ const t0=Date.now();
+ if(btn){btn.disabled=true;btn.innerHTML='⏳ กำลังสร้าง PDF…'}
+ try{
+  const html2pdf=await loadPdfLib(()=>{if(btn&&btn.disabled)btn.innerHTML='⏳ กำลังโหลดตัวสร้าง PDF…'});
+  if(btn)btn.innerHTML='⏳ กำลังสร้าง PDF…';
+  buildReport();
+  host.classList.add('capturing');
+  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));  // รอ layout นิ่งก่อนถ่ายภาพ
+
+  const cssW=host.offsetWidth||794, cssH=host.scrollHeight;
+  const pick=safeScale(cssW,cssH,2);
+  let appliedScale=pick.scale;
+  if(appliedScale<1){
+   logPdfEvent('PDF_CANVAS_GUARD_TRIGGERED',{cssW,cssH,requestedScale:2,appliedScale,
+     canvasW:Math.round(cssW*appliedScale),canvasH:Math.round(cssH*appliedScale),reason:pick.reason,fatal:true});
+   throw new Error('report too tall to rasterise on this device ('+cssW+'x'+cssH+')');
+  }
+  if(appliedScale<2){
+   logPdfEvent('PDF_CANVAS_GUARD_TRIGGERED',{cssW,cssH,requestedScale:2,appliedScale:Number(appliedScale.toFixed(3)),
+     canvasW:Math.round(cssW*appliedScale),canvasH:Math.round(cssH*appliedScale),reason:pick.reason,fatal:false});
+  }
+
+  await html2pdf().set({
+   margin:[10,9,12,9],
+   filename:reportFilename(),
+   image:{type:'jpeg',quality:0.95},
+   html2canvas:{scale:appliedScale,backgroundColor:'#ffffff',useCORS:true,logging:false,width:794,windowWidth:794},
+   jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
+   pagebreak:{mode:['css','legacy']}
+  }).from(host)
+    .toCanvas().get('canvas',c=>assertCanvasHasInk(c))
+    .toPdf().get('pdf',pdf=>deliverPdf(pdf,reportFilename(),{elapsedMs:Date.now()-t0,appliedScale:Number(appliedScale.toFixed(3))}));
+  toast('ดาวน์โหลดไฟล์ '+reportFilename()+' แล้ว');
+ }catch(err){
+  // ถ้าโหลด library ไม่ได้ เน็ตช้าเกิน หรือแปลงไม่สำเร็จ ยังพิมพ์เป็น PDF ผ่านเบราว์เซอร์ได้
+  console.error('[Route2Own] PDF generation failed:',err);
+  logPdfEvent('PDF_FALLBACK_PRINT',{reason:String(err&&err.message||err),elapsedMs:Date.now()-t0});
+  toast('สร้าง PDF อัตโนมัติไม่สำเร็จ — เปิดหน้าต่างพิมพ์ให้แทน กรุณาเลือก “บันทึกเป็น PDF”');
+  buildReport();
+  setTimeout(()=>window.print(),400);
+ }finally{
+  host.classList.remove('capturing');
+  if(btn){btn.disabled=false;btn.innerHTML=label}
+ }
+}
+
 </script>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
@@ -417,5 +971,6 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 </script>
 
+<div id="reportStage" aria-hidden="true"><div id="reportArea"></div></div>
 </body>
 </html>
