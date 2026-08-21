@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from 'react';
 import {
+  RBP_DAY_COUNT_BASIS,
   RBP_RATE,
+  RBP_STATUS,
   SCENARIO_V13,
   type DataConfidence,
   type Route,
@@ -229,7 +231,7 @@ export default function Home() {
           <div className="statusRows">
             <div><span>Scenario</span><b>800K / BaaS 400</b></div>
             <div><span>Guarantee Coverage</span><b>100%</b></div>
-            <div><span>RBP A / B / C</span><b>1.20% / 1.50% / 2.50%</b></div>
+            <div><span>RBP A / B / C</span><b>1.20% / 1.50% / 1.80%</b></div>
           </div>
         </div>
       </section>
@@ -311,7 +313,7 @@ export default function Home() {
                 <select value={form.rbpTier} onChange={(e) => update('rbpTier', e.target.value as RbpTier)}>
                   <option value="A">A — 1.20% p.a.</option>
                   <option value="B">B — 1.50% p.a.</option>
-                  <option value="C">C — 2.50% p.a.</option>
+                  <option value="C">C — 1.80% p.a.</option>
                 </select>
               </label>
               <label>ปีของสัญญาค้ำ (Guarantee Year)
@@ -337,11 +339,18 @@ export default function Home() {
             {result ? (
               <>
                 <div className={routeClass(result.readiness.route)}>
-                  <span>Route2Own Credit Readiness</span>
-                  <h2>{routeText(result.readiness.route)}</h2>
+                  <span>Route2Own Explainable Pre-Score • {result.readiness.preScore.status}</span>
+                  <h2>Case {result.readiness.level.caseId} — {result.readiness.level.label}</h2>
                   <p>
                     คะแนนความพร้อม {result.readiness.readinessScore}/100 • Indicative Tier: {result.readiness.tier} •
                     Data Confidence: {result.readiness.dataConfidence}
+                  </p>
+                  <p>
+                    {result.readiness.level.fiHandoffEligible
+                      ? result.readiness.level.planDays === 30
+                        ? 'ส่ง FI ได้ พร้อมแผนเติมความพร้อม 30 วัน — FI ตัดสินสินเชื่อขั้นสุดท้าย'
+                        : 'ส่ง Readiness Package ให้ FI ได้ — FI ตัดสินสินเชื่อขั้นสุดท้าย'
+                      : 'สร้างฐานข้อมูลและความพร้อมก่อนส่งต่อ FI'}
                   </p>
                 </div>
 
@@ -369,10 +378,28 @@ export default function Home() {
                 </div>
 
                 <div className="kpiGrid">
+                  <div><span>Guaranteed Outstanding</span><b>{baht.format(result.calc.guaranteedOutstanding)}</b></div>
+                  <div><span>Annual RBP Rate</span><b>{(result.calc.rbpRate * 100).toFixed(2)}%</b></div>
+                  <div><span>RBP Reference / วัน</span><b>{baht.format(result.calc.rbpReferenceDay)}</b></div>
+                  <div><span>Day-count / Status</span><b>{RBP_DAY_COUNT_BASIS} วัน • {RBP_STATUS}</b></div>
+                </div>
+
+                <div className="kpiGrid">
                   <div><span>ยอดผ่อนชำระรวมตลอดสัญญา</span><b>{baht.format(result.calc.totalRepayment)}</b></div>
                   <div><span>ดอกเบี้ยรวมที่ต้องจ่าย</span><b>{baht.format(result.calc.totalInterest)}</b></div>
                   <div><span>จุดคุ้มทุน / วัน</span><b>{baht.format(result.calc.breakEven.requiredGrossDaily)}</b></div>
                   <div><span>ส่วนต่างคงเหลือ / วัน</span><b>{baht.format(result.calc.breakEven.marginDaily)}</b></div>
+                </div>
+
+                <div className="reasonBox">
+                  <h3>องค์ประกอบ Pre-Score — รวมจาก 5 หมวด</h3>
+                  <ul>
+                    {result.readiness.breakdown.map((component) => (
+                      <li key={component.id}>
+                        <b>{component.label}: {component.points}/{component.maxPoints}</b> — {component.explanation}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
                 <div className="reasonBox">

@@ -10,7 +10,11 @@
  */
 export {
   SCENARIO_V13,
+  DEMO_CASES,
+  FOLLOW_UP_QUESTIONS,
   RBP_RATE,
+  RBP_DAY_COUNT_BASIS,
+  RBP_STATUS,
   GUARANTEE_COVERAGE,
   MONITORING_DAILY,
   CURE_RESERVE_CAP,
@@ -23,7 +27,12 @@ export {
   deriveLoanNeed,
   normalize,
   buildSchedule,
+  readinessLevelOf,
+  fiHandoffDecisionOf,
+  readinessBreakdownOf,
   readinessScoreOf,
+  recommendationsOf,
+  followUpSubmissionOf,
   scoreRoute2Own,
   evaluate
 } from "../../public/route2own-engine.js";
@@ -34,11 +43,16 @@ export type {
   Route,
   DataConfidence,
   RiskLevel,
+  ReadinessLevelCode,
   ScoreInput,
   ScheduleRow,
   BreakEven,
   ScoreCalc,
   Readiness,
+  ReadinessComponent,
+  ReadinessLevel,
+  ReadinessRecommendation,
+  FollowUpQuestion,
   ScoreResult,
   EvaluateResult
 } from "../../public/route2own-engine.js";

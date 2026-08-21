@@ -7,7 +7,7 @@
  * แก้ที่นี่ที่เดียว ทุกช่องทางเปลี่ยนตาม — ไม่มีสำเนาตรรกะซ้ำอีกต่อไป
  *
  * Competition Working Scenario: Loan/Guarantee 800,000 บาท • BaaS 400 บาท/วัน
- * (Energy Included) • Guarantee Coverage 100% • RBP A/B/C = 1.20/1.50/2.50% p.a.
+ * (Energy Included) • Guarantee Coverage 100% • RBP A/B/C = 1.20/1.50/1.80% p.a.
  * • Proposed Fee Waiver ปี 1–3
  *
  * ตัวเลข Threshold ทั้งหมดยังต้องผ่าน Real Data Replay / Risk / FI Validation
@@ -46,7 +46,66 @@ export const SCENARIO_V13 = {
   guaranteeYear: 1
 };
 
-export const RBP_RATE = { A: 0.012, B: 0.015, C: 0.025 };
+/** เคสสาธิต Front Office — ทุกเคสต้องผ่าน Pre-Scoring ก่อนแสดงผล */
+export const DEMO_CASES = {
+  A: {
+    label: 'Case A — Ready to Own',
+    input: { ...SCENARIO_V13, grossDaily: 2050, workDays: 26, verifiedPct: 97, gpsComplete: 98, downtimeDays: 0 }
+  },
+  B: {
+    label: 'Case B — Build Readiness',
+    input: { ...SCENARIO_V13, grossDaily: 1750, workDays: 23, verifiedPct: 86, gpsComplete: 84, downtimeDays: 2 }
+  },
+  C: {
+    label: 'Case C — Need Support',
+    input: { ...SCENARIO_V13, grossDaily: 1450, workDays: 21, verifiedPct: 74, gpsComplete: 70, downtimeDays: 4, existingDebt: 2500 }
+  },
+  F: {
+    label: 'Case F — Start with Foundation',
+    input: { ...SCENARIO_V13, grossDaily: 950, workDays: 15, verifiedPct: 50, gpsComplete: 45, downtimeDays: 9, existingDebt: 6000 }
+  }
+};
+
+export const FOLLOW_UP_QUESTIONS = [
+  {
+    id: 'incomeOutlook',
+    question: 'รายได้ของคุณใน 30 วันข้างหน้าคาดว่าจะเปลี่ยนอย่างไร?',
+    options: ['เพิ่มขึ้น', 'ใกล้เคียงเดิม', 'ลดลง', 'ยังไม่แน่ใจ', 'ข้ามตอนนี้']
+  },
+  {
+    id: 'reserveDays',
+    question: 'คุณมีเงินสำรองสำหรับค่าใช้จ่ายจำเป็นได้กี่วัน?',
+    options: ['ยังไม่มี', '1–7 วัน', '8–14 วัน', 'มากกว่า 14 วัน', 'ข้ามตอนนี้']
+  },
+  {
+    id: 'continuityBarrier',
+    question: 'อะไรเป็นอุปสรรคหลักต่อการทำงานต่อเนื่อง?',
+    options: ['รถหรือการชาร์จ', 'สุขภาพ', 'ปริมาณผู้โดยสาร', 'ค่าใช้จ่าย', 'เอกสาร', 'อื่น ๆ', 'ข้ามตอนนี้']
+  },
+  {
+    id: 'faSupport',
+    question: 'คุณอยากให้ F.A. Center ช่วยเรื่องใดก่อน?',
+    options: ['วางแผนรายรับรายจ่าย', 'วางแผนภาระชำระ', 'รถหยุดวิ่ง', 'เพิ่มรายได้', 'ยังไม่ต้องการ', 'ข้ามตอนนี้']
+  },
+  {
+    id: 'followUpChannel',
+    question: 'คุณต้องการติดตามแผนผ่านช่องทางใด?',
+    options: ['ดูในระบบ', 'โทรศัพท์', 'LINE', 'นัดหมายออนไลน์', 'ข้ามตอนนี้']
+  }
+];
+
+export function followUpSubmissionOf(answers, consent) {
+  const values = Object.values(answers || {}).filter(
+    (value) => value !== undefined && value !== null && value !== '' && value !== 'ข้ามตอนนี้'
+  );
+  if (values.length === 0) return { status: 'SKIPPED', answerCount: 0 };
+  if (!consent) return { status: 'CONSENT_REQUIRED', answerCount: values.length };
+  return { status: 'READY', answerCount: values.length };
+}
+
+export const RBP_RATE = { A: 0.012, B: 0.015, C: 0.018 };
+export const RBP_DAY_COUNT_BASIS = 365;
+export const RBP_STATUS = 'Proposed – Calibration Required';
 
 export const GUARANTEE_COVERAGE = 1; // ค้ำ 100% ของวงเงินสินเชื่อ
 export const MONITORING_DAILY = 5; // Base Monitoring Proposal / Eligible Day
@@ -169,20 +228,144 @@ export function buildSchedule(principal, monthlyRate, months, payment) {
   return { rows, amortizes, finalBalance: balance };
 }
 
-/**
- * คะแนนความพร้อม 0–100 (Prototype Composite) — v1.4
- * ใช้เพื่อสื่อสารกับผู้ขับให้เห็นภาพรวมในตัวเลขเดียว ไม่ใช่ Credit Score
- *   DSCR 45 • Principal Sustainability 25 • Data Confidence 20 • Stress Buffer 10
- */
-export function readinessScoreOf({ dscr, dscr15, maturity, principal, dataConfidence }) {
-  const dscrPart = Math.min(dscr / 1.5, 1) * 45;
-  const maturityPart =
-    maturity <= MATURITY_TOLERANCE
-      ? 25
-      : Math.max(0, 25 * (1 - maturity / Math.max(1, principal)));
-  const confPart = dataConfidence === 'HIGH' ? 20 : dataConfidence === 'MEDIUM' ? 12 : 4;
-  const stressPart = Math.min(dscr15 / 1.2, 1) * 10;
-  return Math.max(0, Math.min(100, Math.round(dscrPart + maturityPart + confPart + stressPart)));
+export function readinessLevelOf(score) {
+  const value = clamp(Math.round(num(score, 0)), 0, 100);
+  if (value >= 80) {
+    return {
+      code: 'READY_TO_OWN',
+      label: 'Ready to Own',
+      caseId: 'A',
+      fiHandoffEligible: true,
+      planDays: 0,
+      supportReferral: false
+    };
+  }
+  if (value >= 60) {
+    return {
+      code: 'BUILD_READINESS',
+      label: 'Build Readiness',
+      caseId: 'B',
+      fiHandoffEligible: true,
+      planDays: 30,
+      supportReferral: false
+    };
+  }
+  if (value >= 40) {
+    return {
+      code: 'NEED_SUPPORT',
+      label: 'Need Support',
+      caseId: 'C',
+      fiHandoffEligible: true,
+      planDays: 0,
+      supportReferral: true
+    };
+  }
+  return {
+    code: 'START_WITH_FOUNDATION',
+    label: 'Start with Foundation',
+    caseId: 'F',
+    fiHandoffEligible: false,
+    planDays: 0,
+    supportReferral: true
+  };
+}
+
+export function fiHandoffDecisionOf(score, integrityVerified) {
+  const level = readinessLevelOf(score);
+  if (!integrityVerified) return { eligible: false, reason: 'INTEGRITY_REVIEW', level };
+  return {
+    eligible: level.fiHandoffEligible,
+    reason: level.fiHandoffEligible ? 'READINESS_PACKAGE_ALLOWED' : 'FOUNDATION_REQUIRED',
+    level
+  };
+}
+
+function scoreComponent(id, label, maxPoints, rawPoints, explanation, improvementActions) {
+  return {
+    id,
+    label,
+    maxPoints,
+    points: Math.round(clamp(rawPoints, 0, maxPoints)),
+    explanation,
+    improvementActions
+  };
+}
+
+/** คะแนน Pre-Score แบบเปิดเผยองค์ประกอบ รวมเต็ม 100 คะแนน */
+export function readinessBreakdownOf(input, metrics) {
+  const incomeCoverage = metrics.breakEven.requiredGrossDaily > 0
+    ? metrics.verified / metrics.breakEven.requiredGrossDaily
+    : 0;
+  const maturityRatio = metrics.principal > 0
+    ? 1 - metrics.maturity / metrics.principal
+    : 0;
+  const residualFactor = clamp(metrics.remaining / 100, 0, 1);
+
+  return [
+    scoreComponent(
+      'work_continuity',
+      'ความต่อเนื่องของงาน',
+      25,
+      clamp(input.workDays / 26, 0, 1) * 12 +
+        clamp(1 - input.downtimeDays / 8, 0, 1) * 7 +
+        clamp(input.gpsComplete / 100, 0, 1) * 6,
+      `ทำงาน ${input.workDays} วัน/เดือน • Downtime ${input.downtimeDays} วัน • หลักฐานการวิ่ง ${input.gpsComplete.toFixed(0)}%`,
+      ['บันทึกวันให้บริการต่อเนื่อง 30 วัน', 'ลดวันหยุดวิ่งที่ไม่จำเป็น', 'เพิ่มความครบถ้วนของข้อมูล GPS/งาน']
+    ),
+    scoreComponent(
+      'income_quality',
+      'คุณภาพและเสถียรภาพรายได้',
+      25,
+      clamp(input.verifiedPct / 100, 0, 1) * 15 + clamp(incomeCoverage / 1.1, 0, 1) * 10,
+      `รายได้ตรวจสอบได้ ${input.verifiedPct.toFixed(0)}% • ครอบคลุมจุดคุ้มทุน ${(incomeCoverage * 100).toFixed(0)}%`,
+      ['บันทึกรายได้ต่อเนื่องอย่างน้อย 30 วัน', 'เพิ่มสัดส่วนรายได้ที่ตรวจสอบย้อนกลับได้', 'ทบทวนช่วงเวลาหรือพื้นที่ทำรายได้']
+    ),
+    scoreComponent(
+      'cashflow_capacity',
+      'กระแสเงินสดและความสามารถรับภาระ',
+      25,
+      clamp(metrics.dscr / 1.5, 0, 1) * 12 +
+        clamp((1.5 - metrics.pai) / 0.7, 0, 1) * 6 +
+        clamp(maturityRatio, 0, 1) * 7,
+      `DSCR ${metrics.dscr.toFixed(2)}x • PAI ${metrics.pai.toFixed(2)} • Principal ${metrics.maturity <= MATURITY_TOLERANCE ? 'CLOSE' : 'GAP'}`,
+      ['ลดภาระชำระเดิมหรือเพิ่มเงินดาวน์', 'ปรับราคารถ/วงเงินให้เหมาะกับ Available Cash', 'สร้างเงินสำรองรายสัปดาห์ให้ถึงเป้าหมาย']
+    ),
+    scoreComponent(
+      'documents_partner',
+      'ความพร้อมเอกสารและพันธมิตร',
+      15,
+      ((input.verifiedPct + input.gpsComplete) / 200) * 15,
+      `หลักฐานรายได้ ${input.verifiedPct.toFixed(0)}% • ข้อมูลการทำงาน ${input.gpsComplete.toFixed(0)}% (Prototype Data Proxy)`,
+      ['ตรวจสอบเอกสาร Co-op/Fleet และใบอนุญาต', 'เชื่อมหลักฐานรายได้กับแหล่งข้อมูลที่ยืนยันได้', 'ปิดรายการเอกสารที่ยังไม่ครบก่อน FI Review']
+    ),
+    scoreComponent(
+      'continuous_readiness',
+      'ความพร้อมต่อเนื่องและการเรียนรู้',
+      10,
+      clamp(metrics.dscr15 / 1.2, 0, 1) * 6 + residualFactor * 4,
+      `Stress DSCR −15% = ${metrics.dscr15.toFixed(2)}x • เงินคงเหลือ ${Math.round(metrics.remaining).toLocaleString('th-TH')} บาท/วัน (Prototype Resilience Proxy)`,
+      ['จัดทำแผนบริหารเงิน 30 วัน', 'ตอบแบบประเมินและทบทวนแผนทุกสัปดาห์', 'เข้ารับคำปรึกษาเมื่อรายได้หรือค่าใช้จ่ายเปลี่ยน']
+    )
+  ];
+}
+
+export function readinessScoreOf({ breakdown }) {
+  return clamp(
+    (breakdown || []).reduce((total, component) => total + num(component.points, 0), 0),
+    0,
+    100
+  );
+}
+
+export function recommendationsOf(breakdown) {
+  return [...breakdown]
+    .sort((a, b) => a.points / a.maxPoints - b.points / b.maxPoints)
+    .slice(0, 3)
+    .map((component) => ({
+      componentId: component.id,
+      title: component.improvementActions[0],
+      reason: `${component.label}: ${component.points}/${component.maxPoints} คะแนน`
+    }));
 }
 
 export function scoreRoute2Own(input) {
@@ -235,7 +418,8 @@ export function scoreRoute2Own(input) {
   const rbpRate = RBP_RATE[input.rbpTier];
   const guaranteeYear = input.guaranteeYear;
   const guaranteedOutstanding = P * GUARANTEE_COVERAGE;
-  const rbpReferenceDay = (guaranteedOutstanding * rbpRate) / 365;
+  // Daily RBP = Guaranteed Outstanding × Annual RBP Rate ÷ 365 calendar days.
+  const rbpReferenceDay = (guaranteedOutstanding * rbpRate) / RBP_DAY_COUNT_BASIS;
   const customerRbpDay = guaranteeYear <= FEE_WAIVER_YEARS ? 0 : rbpReferenceDay;
   const monitoring = MONITORING_DAILY;
   const cure = Math.min(
@@ -307,7 +491,19 @@ export function scoreRoute2Own(input) {
         : Infinity
   };
 
-  const readinessScore = readinessScoreOf({ dscr, dscr15, maturity, principal: P, dataConfidence });
+  const breakdown = readinessBreakdownOf(input, {
+    verified,
+    dscr,
+    dscr15,
+    pai,
+    maturity,
+    principal: P,
+    remaining,
+    breakEven
+  });
+  const readinessScore = readinessScoreOf({ breakdown });
+  const level = readinessLevelOf(readinessScore);
+  const recommendations = recommendationsOf(breakdown);
   // ไม่มีวงเงินให้ประเมิน (ราคารถ − เงินดาวน์ = 0) ผลลัพธ์จึงไม่มีความหมายเชิงเครดิต
   const noLoan = !(P > 0);
 
@@ -324,6 +520,7 @@ export function scoreRoute2Own(input) {
     maturity,
     dataConfidence,
     route,
+    readinessLevel: level,
     rawAvailDaily,
     energyIncluded,
     existingDebtMonthly,
@@ -365,6 +562,8 @@ export function scoreRoute2Own(input) {
       coveragePct: GUARANTEE_COVERAGE * 100,
       guaranteedOutstanding,
       rbpRate,
+      rbpDayCountBasis: RBP_DAY_COUNT_BASIS,
+      rbpStatus: RBP_STATUS,
       rbpReferenceDay,
       rbpDay: customerRbpDay,
       customerRbpDay,
@@ -384,7 +583,22 @@ export function scoreRoute2Own(input) {
       amortizes: schedule.amortizes,
       breakEven
     },
-    readiness: { route, tier, dataConfidence, readinessScore, riskLevel, noLoan },
+    readiness: {
+      route,
+      tier,
+      dataConfidence,
+      readinessScore,
+      riskLevel,
+      noLoan,
+      breakdown,
+      level,
+      recommendations,
+      preScore: {
+        status: 'COMPLETED',
+        score: readinessScore,
+        method: 'Explainable 5-Component Prototype Pre-Score'
+      }
+    },
     reasons
   };
 }
@@ -467,11 +681,13 @@ function buildReasons(x) {
   );
 
   reasons.push(
-    x.route === 'OWN READY'
-      ? 'สามารถจัดทำ Readiness Certificate และส่งต่อ FI ได้ โดยต้องยืนยันเอกสารและเงื่อนไข FI จริง'
-      : x.route === 'BUILD READINESS'
-        ? 'ยังไม่ควรเร่งสร้างหนี้ ควรเก็บข้อมูลเพิ่ม ลดภาระ/ราคาสินทรัพย์ หรือเพิ่มเงินดาวน์'
-        : 'ไม่ควรใช้ Guarantee Coverage เพื่อฝืน Affordability ควรคงเส้นทางเช่า/ไม่สร้างหนี้ใหม่และทบทวนภายหลัง'
+    x.readinessLevel.code === 'READY_TO_OWN'
+      ? 'Pre-Score ระดับ Ready to Own: สามารถจัดทำ Readiness Certificate และส่งต่อ FI ได้ โดย FI เป็นผู้ตัดสินใจขั้นสุดท้าย'
+      : x.readinessLevel.code === 'BUILD_READINESS'
+        ? 'Pre-Score ระดับ Build Readiness: ส่งต่อ FI ได้พร้อมแผนเตรียมความพร้อม 30 วัน และให้ FI พิจารณาเงื่อนไขจริง'
+        : x.readinessLevel.code === 'NEED_SUPPORT'
+          ? 'Pre-Score ระดับ Need Support: ยังส่งต่อ FI ได้พร้อมธงขอความช่วยเหลือ โดยอาจแนะนำ F.A. Center แบบ referral แยกจากระบบนี้'
+          : 'Pre-Score ระดับ Start with Foundation: ยังไม่ส่งต่อ FI ให้เริ่มสร้างฐานข้อมูลและทบทวนใหม่ภายหลัง'
   );
 
   return reasons;
@@ -488,7 +704,11 @@ export function evaluate(body) {
 if (typeof window !== 'undefined') {
   window.Route2OwnEngine = {
     SCENARIO_V13,
+    DEMO_CASES,
+    FOLLOW_UP_QUESTIONS,
     RBP_RATE,
+    RBP_DAY_COUNT_BASIS,
+    RBP_STATUS,
     GUARANTEE_COVERAGE,
     MONITORING_DAILY,
     CURE_RESERVE_CAP,
@@ -501,7 +721,12 @@ if (typeof window !== 'undefined') {
     deriveLoanNeed,
     normalize,
     buildSchedule,
+    readinessLevelOf,
+    fiHandoffDecisionOf,
+    readinessBreakdownOf,
     readinessScoreOf,
+    recommendationsOf,
+    followUpSubmissionOf,
     scoreRoute2Own,
     evaluate
   };

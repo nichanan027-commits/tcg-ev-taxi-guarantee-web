@@ -5,6 +5,11 @@ export type RbpTier = "A" | "B" | "C";
 export type Route = "OWN READY" | "BUILD READINESS" | "NO NEW DEBT";
 export type DataConfidence = "HIGH" | "MEDIUM" | "LOW";
 export type RiskLevel = "good" | "watch" | "risk";
+export type ReadinessLevelCode =
+  | "READY_TO_OWN"
+  | "BUILD_READINESS"
+  | "NEED_SUPPORT"
+  | "START_WITH_FOUNDATION";
 
 export type ScoreInput = {
   grossDaily: number;
@@ -91,6 +96,8 @@ export type ScoreCalc = {
   coveragePct: number;
   guaranteedOutstanding: number;
   rbpRate: number;
+  rbpDayCountBasis: number;
+  rbpStatus: "Proposed – Calibration Required";
   rbpReferenceDay: number;
   rbpDay: number;
   customerRbpDay: number;
@@ -117,6 +124,44 @@ export type Readiness = {
   readinessScore: number;
   riskLevel: RiskLevel;
   noLoan: boolean;
+  breakdown: ReadinessComponent[];
+  level: ReadinessLevel;
+  recommendations: ReadinessRecommendation[];
+  preScore: {
+    status: "COMPLETED";
+    score: number;
+    method: string;
+  };
+};
+
+export type ReadinessComponent = {
+  id: string;
+  label: string;
+  maxPoints: number;
+  points: number;
+  explanation: string;
+  improvementActions: string[];
+};
+
+export type ReadinessLevel = {
+  code: ReadinessLevelCode;
+  label: string;
+  caseId: "A" | "B" | "C" | "F";
+  fiHandoffEligible: boolean;
+  planDays: number;
+  supportReferral: boolean;
+};
+
+export type ReadinessRecommendation = {
+  componentId: string;
+  title: string;
+  reason: string;
+};
+
+export type FollowUpQuestion = {
+  id: string;
+  question: string;
+  options: string[];
 };
 
 export type ScoreResult = {
@@ -128,7 +173,11 @@ export type ScoreResult = {
 export type EvaluateResult = ScoreResult & { input: ScoreInput };
 
 export declare const SCENARIO_V13: ScoreInput;
+export declare const DEMO_CASES: Record<"A" | "B" | "C" | "F", { label: string; input: ScoreInput }>;
+export declare const FOLLOW_UP_QUESTIONS: FollowUpQuestion[];
 export declare const RBP_RATE: Record<RbpTier, number>;
+export declare const RBP_DAY_COUNT_BASIS: 365;
+export declare const RBP_STATUS: "Proposed – Calibration Required";
 export declare const GUARANTEE_COVERAGE: number;
 export declare const MONITORING_DAILY: number;
 export declare const CURE_RESERVE_CAP: number;
@@ -147,12 +196,30 @@ export declare function buildSchedule(
   months: number,
   payment: number
 ): { rows: ScheduleRow[]; amortizes: boolean; finalBalance: number };
-export declare function readinessScoreOf(args: {
+export declare function readinessLevelOf(score: unknown): ReadinessLevel;
+export declare function fiHandoffDecisionOf(
+  score: unknown,
+  integrityVerified: boolean
+): {
+  eligible: boolean;
+  reason: "INTEGRITY_REVIEW" | "READINESS_PACKAGE_ALLOWED" | "FOUNDATION_REQUIRED";
+  level: ReadinessLevel;
+};
+export declare function readinessBreakdownOf(input: ScoreInput, metrics: {
+  verified: number;
   dscr: number;
   dscr15: number;
+  pai: number;
   maturity: number;
   principal: number;
-  dataConfidence: DataConfidence;
-}): number;
+  remaining: number;
+  breakEven: BreakEven;
+}): ReadinessComponent[];
+export declare function readinessScoreOf(args: { breakdown: ReadinessComponent[] }): number;
+export declare function recommendationsOf(breakdown: ReadinessComponent[]): ReadinessRecommendation[];
+export declare function followUpSubmissionOf(
+  answers: Record<string, string> | null | undefined,
+  consent: boolean
+): { status: "SKIPPED" | "CONSENT_REQUIRED" | "READY"; answerCount: number };
 export declare function scoreRoute2Own(input: ScoreInput): ScoreResult;
 export declare function evaluate(body: Partial<ScoreInput> | null | undefined): EvaluateResult;
