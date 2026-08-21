@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
-import { evaluate, type ScoreInput } from "../../lib/route2own";
+import {
+  evaluate,
+  RBP_DAY_COUNT_BASIS,
+  RBP_RATE,
+  RBP_STATUS,
+  type ScoreInput
+} from "../../lib/route2own";
 
 /**
  * POST /api/score — Route2Own Credit Readiness v1.4
@@ -20,6 +26,11 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     scenario: "Route2Own Competition Working Scenario v1.4 (800K / BaaS 400)",
+    rbpPolicy: {
+      rates: RBP_RATE,
+      dayCountBasis: RBP_DAY_COUNT_BASIS,
+      status: RBP_STATUS
+    },
     disclaimer:
       "ผลลัพธ์นี้เป็นการประเมินความพร้อมเบื้องต้น ไม่ใช่การอนุมัติสินเชื่อ ไม่ใช่ Pre-approved Loan " +
       "และไม่ผูกพันสถาบันการเงิน — FI เป็นผู้อนุมัติวงเงิน ดอกเบี้ย Tenor และเงื่อนไขสินเชื่อขั้นสุดท้าย",
