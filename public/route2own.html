@@ -142,20 +142,33 @@ a{text-decoration:none;color:inherit}.hidden{display:none!important}.screen{min-
 #reportArea .datatable th:first-child,#reportArea .datatable td:first-child{width:17%}
 #reportArea .report-kv div{font-size:12px}
 #reportArea .report-kv b{overflow-wrap:anywhere;text-align:right}
-/* ความหนาแน่นเฉพาะในรายงาน PDF — รักษาให้จบใน 2 หน้า A4 โดยไม่ตัดเนื้อหาออก */
+/* ความหนาแน่นเฉพาะในรายงาน PDF — เผื่อที่ว่างในแต่ละหน้าไว้รองรับฟอนต์ไทยที่กว้างต่างกัน */
 #reportArea .report-kv div{padding:4px 0}
 #reportArea .report-section{margin-top:12px}
+#reportArea .report-section:first-child{margin-top:0}
 #reportArea .report-kv .kv-wide{grid-column:1/-1;display:block}
 #reportArea .report-kv .kv-wide span{display:block;margin-bottom:2px}
 #reportArea .report-kv .kv-wide b{display:block;text-align:left;line-height:1.6}
 #reportArea .chartcard{padding:13px}
 #reportArea .amortsvg{height:156px}
-#reportArea{padding:18px}
 #reportArea .report-head{padding-bottom:10px;margin-bottom:12px}
 #reportArea .report-section h2{margin:0 0 6px;padding-bottom:3px}
 #reportArea .datatable th,#reportArea .datatable td{padding:5px 5px}
-/* เว้นช่องก่อนหมวด 5 ให้รอยตัดหน้าลงในที่ว่าง ไม่เฉือนหัวข้อกราฟ (html2pdf ตัดตามความสูงพิกเซล) */
-#reportArea .report-section-deep{margin-top:44px}
+#reportArea .reasonlist{margin:0;padding-left:18px;font-size:12px;line-height:1.9;color:#344054}
+#reportArea .reasonlist li{break-inside:avoid}
+
+/* ---- รายงานถูกล็อกเป็น 3 หน้า ----
+   .report-sheet สูงเท่าพื้นที่พิมพ์ของ A4 พอดี (ตั้งผ่าน --sheet-h ใน JS ให้ตรงกับที่
+   html2pdf ใช้หั่นหน้า) จำนวนหน้าจึงมาจากโครงสร้าง ไม่ได้ขึ้นกับความสูงของข้อความ
+   เครื่องที่ใช้ฟอนต์ไทยกว้างกว่าจะกินที่ว่างในหน้ามากขึ้น แต่ยังได้ 3 หน้าเท่าเดิม */
+#reportArea{padding:0}
+#reportArea .report-sheet{width:794px;height:var(--sheet-h,1137px);padding:17px 18px 14px;background:#fff;
+  break-after:page;page-break-after:always;break-inside:avoid;position:relative}
+#reportArea .report-sheet:last-child{break-after:auto;page-break-after:auto}
+/* ไม่ตรึงความสูงของ .sheet-body — ปล่อยให้สูงตามเนื้อหา จะได้วัดที่ว่างที่เหลือจริงได้ */
+#reportArea .sheet-body{height:auto}
+#reportArea .sheet-mark{font-size:10px;color:var(--muted);letter-spacing:.04em;
+  padding-bottom:7px;margin-bottom:11px;border-bottom:1px solid var(--line)}
 #reportArea .chartcard,#reportArea .legend,#reportArea .breakeven-note{max-width:100%}
 #reportArea .legend span{max-width:100%}
 
@@ -184,8 +197,10 @@ a{text-decoration:none;color:inherit}.hidden{display:none!important}.screen{min-
   #reportArea .amortsvg{height:190px}
   #reportArea .chartcard{padding:12px}
   body{background:#fff}
-  .report-page{page-break-after:always}
-  .report-page:last-child{page-break-after:auto}
+  /* ทางสำรอง "พิมพ์เป็น PDF" ใช้หน่วยกระดาษจริง ความสูงคงที่แบบพิกเซลจึงไม่ตรง
+     ปล่อยให้สูงตามเนื้อหาแล้วบังคับขึ้นหน้าใหม่ท้ายแต่ละ sheet แทน — ยังได้ 3 หน้าเท่ากัน */
+  #reportArea .report-sheet{height:auto;width:auto;padding:0;page-break-after:always;break-after:page}
+  #reportArea .report-sheet:last-child{page-break-after:auto;break-after:auto}
   .chartcard{border:1px solid #ccc;box-shadow:none}
   .biz-tile.accent{background:#fff!important;border:1px solid #ccc}
   .biz-tile.accent .val{color:var(--navy)!important}
@@ -848,10 +863,13 @@ function buildReport(){
  const kv=(k,v)=>`<div><span>${k}</span><b>${v}</b></div>`;
  // แถวข้อความยาว (breakdown / คำแนะนำ) กางเต็มความกว้าง จะได้ไม่ตัดบรรทัดถี่จนรายงานยาวเกิน 2 หน้า
  const kvWide=(k,v)=>`<div class="kv-wide"><span>${k}</span><b>${v}</b></div>`;
- host.innerHTML=`<div class="report-page" style="padding:16px">
+ // รายงานถูกล็อกไว้ที่ 3 หน้า — แต่ละ .report-sheet สูงเท่าพื้นที่พิมพ์ A4 พอดี
+ // จำนวนหน้าจึงมาจากโครงสร้าง ไม่ได้มาจากความสูงของข้อความ ฟอนต์ต่างเครื่องกันก็ยังได้ 3 หน้าเท่ากัน
+ host.style.setProperty('--sheet-h',PDF_SHEET_H+'px');
+ host.innerHTML=`<div class="report-sheet"><div class="sheet-body">
   <div class="report-head"><div class="report-brand"><img class="report-brand-logo" src="/assets/tcg-logo.png" alt="โลโก้ บสย." width="1280" height="1217"><div><h1>Route2Own Readiness &amp; Business Plan Report</h1>
    <div style="font-size:12px;color:var(--muted)">ใบรายงานความพร้อมและแผนธุรกิจ v1.4 — โดย บสย.</div></div></div>
-   <div class="meta"><b>${ref}</b><br>วันที่ออกรายงาน ${d}<br>Working Scenario 800K / BaaS 400</div></div>
+   <div class="meta"><b>${ref}</b><br>วันที่ออกรายงาน ${d}<br>Working Scenario 800K / BaaS 400<br>หน้า 1 / 3 — Pre-Score และโครงสร้างทางการเงิน</div></div>
 
   <div class="report-section"><h2>1. ข้อมูลผู้ขับและผลการประเมิน</h2><div class="report-kv">
    ${kv('ผู้ขับ',state.lead.fullName||'ผู้สมัครตัวอย่าง')}
@@ -892,15 +910,28 @@ function buildReport(){
    ${kv('TCO เทียบเช่ารถเดิม / เดือน',(c.tcoDelta>=0?'+':'−')+'฿'+money0(Math.abs(c.tcoDelta)))}
   </div></div>
 
+ </div></div>
+
+ <div class="report-sheet"><div class="sheet-body">
+  <div class="sheet-mark">${ref} • หน้า 2 / 3 — ตารางและการวิเคราะห์เชิงลึก</div>
   <div class="report-section"><h2>4. ตารางผ่อนชำระรายปี</h2>${amortTable(c)}</div>
-  <div class="report-section report-section-deep"><h2>5. การวิเคราะห์เชิงลึก</h2>${allocationChart(c)}${amortChart(c,false)}</div>
+  <div class="report-section"><h2>5. การวิเคราะห์เชิงลึก</h2>${allocationChart(c)}${amortChart(c,false)}</div>
+ </div></div>
+
+ <div class="report-sheet"><div class="sheet-body">
+  <div class="sheet-mark">${ref} • หน้า 3 / 3 — เหตุผลและข้อจำกัด</div>
   <div class="report-section"><h2>6. เหตุผลประกอบของระบบ</h2>
-   <ul style="margin:0;padding-left:18px;font-size:12px;line-height:1.9;color:#344054">${(state.reasons||[]).map(x=>`<li>${x}</li>`).join('')}</ul></div>
+   <ul class="reasonlist">${(state.reasons||[]).map(x=>`<li>${x}</li>`).join('')}</ul></div>
+
+  <div class="report-section"><h2>สถานะเอกสาร</h2><div class="report-kv">
+   ${kv('RBP Calibration Status',c.rbpStatus)}
+   ${kv('RBP Day-count Basis',c.rbpDayCountBasis+' วัน')}
+  </div></div>
 
   <div class="report-foot"><b>ข้อจำกัด:</b> เอกสารนี้เป็นผลประเมินความพร้อมเบื้องต้นเพื่อประกอบการพิจารณาเข้าร่วมโครงการค้ำประกัน
    ไม่ใช่การอนุมัติสินเชื่อ ไม่ใช่ Pre-approved Loan และไม่ผูกพันสถาบันการเงิน วงเงินจริง อัตราดอกเบี้ย ระยะเวลา
    และเงื่อนไขสินเชื่อเป็นอำนาจของสถาบันการเงิน • ตัวเลข Threshold ยังต้องผ่าน Real Data Replay / Risk / FI Validation ก่อน Pilot</div>
- </div>`;
+ </div></div>`;
 }
 /* ---------- ดาวน์โหลด PDF คลิกเดียว ---------- */
 /* สลับไปใช้ CDN ได้โดยเปลี่ยนค่านี้เป็น
@@ -911,6 +942,17 @@ const PDF_LIB_SLOW_MS=3000;       // เกินนี้บอกผู้ใ�
 const CANVAS_MAX_DIM=4096;        // เพดานต่อด้านที่ปลอดภัยกับ iOS Safari รุ่นเก่า
 const CANVAS_MAX_AREA=16.7e6;     // เพดานพื้นที่รวม
 const PDF_APP_VERSION='v1.4';
+
+/* ---- กระดาษของรายงาน ----
+   ทั้งความสูงของ .report-sheet และค่าที่ html2pdf ใช้หั่นหน้า คำนวณจากชุดตัวเลขเดียวกัน
+   จะได้ไม่มีทางหลุดจากกัน แก้ margin ที่นี่ที่เดียว ความสูง sheet ขยับตามเอง */
+const PDF_PAGE={w:210,h:297,mt:10,mr:9,mb:12,ml:9,contentPx:794};   // A4 มิลลิเมตร
+const PDF_MARGIN=[PDF_PAGE.mt,PDF_PAGE.mr,PDF_PAGE.mb,PDF_PAGE.ml];
+/** ความสูงพื้นที่พิมพ์ 1 หน้า คิดเป็น CSS px ที่ความกว้างเอกสาร 794px */
+const PDF_SHEET_H=Math.floor(
+  (PDF_PAGE.h-PDF_PAGE.mt-PDF_PAGE.mb)*(PDF_PAGE.contentPx/(PDF_PAGE.w-PDF_PAGE.ml-PDF_PAGE.mr))
+);
+const PDF_SHEET_COUNT=3;
 
 /** log กลางสำหรับ guard ทุกตัว — เขียน console + เก็บใน sessionStorage ให้เปิดดูย้อนหลังได้ */
 function logPdfEvent(tag,data){
@@ -993,6 +1035,29 @@ function assertCanvasHasInk(canvas){
  return canvas;
 }
 
+/**
+ * ตรวจว่าเนื้อหาในแต่ละ sheet ยังไม่ล้นกรอบหน้า และเหลือที่ว่างพอรับฟอนต์ไทยที่กว้างต่างกัน
+ * ไม่ throw เพราะรายงานที่แน่นไปยังใช้งานได้ แต่ log ไว้ให้ตามย้อนหลังได้ว่าเครื่องไหนเริ่มตึง
+ */
+const SHEET_MIN_HEADROOM=0.08;    // เผื่อที่ว่างอย่างน้อย 8% ของความสูงหน้า
+function auditSheetFit(host){
+ const sheets=[...host.querySelectorAll('.report-sheet')];
+ const report=sheets.map((sheet,i)=>{
+  const body=sheet.querySelector('.sheet-body')||sheet;
+  const cs=getComputedStyle(sheet);
+  const usable=sheet.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+  const used=body.scrollHeight;
+  return {sheet:i+1,usable:Math.round(usable),used:Math.round(used),
+    headroom:Number(((usable-used)/Math.max(1,sheet.clientHeight)).toFixed(4))};
+ });
+ const tight=report.filter(s=>s.headroom<SHEET_MIN_HEADROOM);
+ if(sheets.length!==PDF_SHEET_COUNT||tight.length){
+  logPdfEvent('PDF_SHEET_FIT_WARNING',{expectedSheets:PDF_SHEET_COUNT,actualSheets:sheets.length,
+    sheetHeightPx:PDF_SHEET_H,minHeadroom:SHEET_MIN_HEADROOM,sheets:report});
+ }
+ return report;
+}
+
 function reportRef(){
  if(!state.reportRef)state.reportRef='R2O-'+new Date().getFullYear()+'-'+String(Math.floor(Math.random()*900000)+100000);
  return state.reportRef;
@@ -1046,29 +1111,58 @@ async function downloadReport(btn){
   host.classList.add('capturing');
   await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));  // รอ layout นิ่งก่อนถ่ายภาพ
 
-  const cssW=host.offsetWidth||794, cssH=host.scrollHeight;
-  const pick=safeScale(cssW,cssH,2);
-  let appliedScale=pick.scale;
+  const sheets=[...host.querySelectorAll('.report-sheet')];
+  if(!sheets.length)throw new Error('report has no sheets to render');
+  auditSheetFit(host);
+
+  /* ถ่ายทีละหน้าแล้วค่อยประกอบเป็นไฟล์เดียว — ได้สองอย่างที่ถ่ายรวดเดียวไม่ได้:
+     จำนวนหน้าเท่ากับจำนวน sheet เสมอ ไม่ขึ้นกับความสูงข้อความ
+     และ canvas ต่อหน้าเล็กพอให้ใช้ scale เต็ม 2 เท่า ภาษาไทยจึงคมกว่าการถ่ายทั้งเอกสารรวดเดียว */
+  const sheetW=sheets[0].offsetWidth||794, sheetH=sheets[0].offsetHeight||PDF_SHEET_H;
+  const pick=safeScale(sheetW,sheetH,2);
+  const appliedScale=pick.scale;
   if(appliedScale<1){
-   logPdfEvent('PDF_CANVAS_GUARD_TRIGGERED',{cssW,cssH,requestedScale:2,appliedScale,
-     canvasW:Math.round(cssW*appliedScale),canvasH:Math.round(cssH*appliedScale),reason:pick.reason,fatal:true});
-   throw new Error('report too tall to rasterise on this device ('+cssW+'x'+cssH+')');
+   logPdfEvent('PDF_CANVAS_GUARD_TRIGGERED',{sheetW,sheetH,sheets:sheets.length,requestedScale:2,appliedScale,
+     canvasW:Math.round(sheetW*appliedScale),canvasH:Math.round(sheetH*appliedScale),reason:pick.reason,fatal:true});
+   throw new Error('sheet too large to rasterise on this device ('+sheetW+'x'+sheetH+')');
   }
   if(appliedScale<2){
-   logPdfEvent('PDF_CANVAS_GUARD_TRIGGERED',{cssW,cssH,requestedScale:2,appliedScale:Number(appliedScale.toFixed(3)),
-     canvasW:Math.round(cssW*appliedScale),canvasH:Math.round(cssH*appliedScale),reason:pick.reason,fatal:false});
+   logPdfEvent('PDF_CANVAS_GUARD_TRIGGERED',{sheetW,sheetH,sheets:sheets.length,requestedScale:2,
+     appliedScale:Number(appliedScale.toFixed(3)),canvasW:Math.round(sheetW*appliedScale),
+     canvasH:Math.round(sheetH*appliedScale),reason:pick.reason,fatal:false});
   }
 
-  await html2pdf().set({
-   margin:[10,9,12,9],
+  const opt={
+   margin:PDF_MARGIN,
    filename:reportFilename(),
    image:{type:'jpeg',quality:0.95},
    html2canvas:{scale:appliedScale,backgroundColor:'#ffffff',useCORS:true,logging:false,width:794,windowWidth:794},
    jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
-   pagebreak:{mode:['css','legacy']}
-  }).from(host)
-    .toCanvas().get('canvas',c=>assertCanvasHasInk(c))
-    .toPdf().get('pdf',pdf=>deliverPdf(pdf,reportFilename(),{elapsedMs:Date.now()-t0,appliedScale:Number(appliedScale.toFixed(3))}));
+   pagebreak:{mode:[]}                 // ไม่ต้องให้ library หาจุดตัดเอง หนึ่ง sheet คือหนึ่งหน้าอยู่แล้ว
+  };
+  const boxW=PDF_PAGE.w-PDF_PAGE.ml-PDF_PAGE.mr;
+  const boxH=PDF_PAGE.h-PDF_PAGE.mt-PDF_PAGE.mb;
+
+  let pdf=null;
+  for(let i=0;i<sheets.length;i++){
+   if(i===0){
+    pdf=await html2pdf().set(opt).from(sheets[i])
+      .toCanvas().get('canvas',c=>assertCanvasHasInk(c))
+      .toPdf().get('pdf');
+   }else{
+    const canvas=await html2pdf().set(opt).from(sheets[i]).toCanvas().get('canvas');
+    assertCanvasHasInk(canvas);
+    pdf.addPage();
+    pdf.addImage(canvas.toDataURL('image/jpeg',0.95),'JPEG',PDF_PAGE.ml,PDF_PAGE.mt,boxW,boxH);
+   }
+  }
+
+  const rendered=pdf.internal.getNumberOfPages();
+  if(rendered!==sheets.length){
+   logPdfEvent('PDF_PAGE_COUNT_MISMATCH',{expected:sheets.length,rendered});
+  }
+  deliverPdf(pdf,reportFilename(),{elapsedMs:Date.now()-t0,
+    appliedScale:Number(appliedScale.toFixed(3)),pages:rendered});
   toast('ดาวน์โหลดไฟล์ '+reportFilename()+' แล้ว');
  }catch(err){
   // ถ้าโหลด library ไม่ได้ เน็ตช้าเกิน หรือแปลงไม่สำเร็จ ยังพิมพ์เป็น PDF ผ่านเบราว์เซอร์ได้
