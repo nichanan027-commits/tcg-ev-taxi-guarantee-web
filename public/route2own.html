@@ -23,7 +23,7 @@ a{text-decoration:none;color:inherit}.hidden{display:none!important}.screen{min-
 @media print{.topbar,.sidebar,.mobile-progress,.actions,.no-print,.footer{display:none!important}.app-shell{display:block}.content{padding:0}.certificate{border:0;box-shadow:none}.screen{min-height:auto}.hidden.print-cert{display:block!important}.print-cert{display:block!important}}
 
 /* ================= v1.4 — Stepper / Live Readiness / Business Dashboard ================= */
-:root{--v4-s1:#2a78d6;--v4-s2:#eb6834;--v4-s3:#1baf7a;--v4-s4:#eda100;--v4-s5:#e87ba4;
+:root{--v4-s1:#2a78d6;--v4-s2:#eb6834;--v4-s3:#1baf7a;--v4-s4:#eda100;--v4-s5:#e87ba4;--v4-s6:#6d5bd0;
 --v4-good:#0f8a5f;--v4-goodbg:#eefaf4;--v4-goodline:#a9dcc6;
 --v4-watch:#b7791f;--v4-watchbg:#fff8ea;--v4-watchline:#f0d9a6;
 --v4-risk:#c83b3b;--v4-riskbg:#fff1f1;--v4-riskline:#f0c2c2}
@@ -819,23 +819,35 @@ function updateLiveBar(){
 
 /* ---------- กราฟ ---------- */
 function allocationChart(c){
- const be=c.breakEven,margin=be.marginDaily;
+ const be=c.breakEven;
+ /* กราฟนี้ต้องอ่านค่าจาก Engine ตรง ๆ ให้ตรงกับ Daily Financial X-Ray
+    Customer RBP และ Adaptive Payment Reserve เป็นคนละก้อน จึงแยกเป็นคนละ segment
+    เงินคงเหลือใช้ c.residualCash และส่วนที่ขาดใช้ c.affordabilityGap ไม่ใช่ be.marginDaily
+    (be.marginDaily ยังใช้ได้ในส่วน Break-even Analysis ด้านล่างตามเดิม) */
  const segs=[
   {k:'Eligible OpEx',v:c.dailyOpEx,col:'var(--v4-s1)'},
   {k:'Protected Cash ครัวเรือน',v:c.protectedDaily,col:'var(--v4-s2)'},
   {k:'PAYD Target Preview',v:c.paydTarget,col:'var(--v4-s3)'},
-  {k:'Adaptive Payment Reserve Preview',v:c.reserveContributionPreview+c.customerRbpDay,col:'var(--v4-s4)'}
+  {k:'Customer RBP',v:c.customerRbpDay,col:'var(--v4-s4)'},
+  {k:'Adaptive Payment Reserve Preview',v:c.reserveContributionPreview,col:'var(--v4-s5)'}
  ];
- if(margin>=0)segs.push({k:'Residual Cash ของผู้ขับ',v:margin,col:'var(--v4-s5)'});
- const scale=Math.max(c.verified,be.dailyObligation,1);
+ if(c.residualCash>0)segs.push({k:'Residual Cash ของผู้ขับ',v:c.residualCash,col:'var(--v4-s6)'});
+ const gapDaily=c.affordabilityGap;
+ const segsTotal=segs.reduce((t,sg)=>t+sg.v,0);
+ const scale=Math.max(c.verified,be.dailyObligation,segsTotal+gapDaily,1);
  const W=520,H=42,gap=2;let x=0;
  const rects=segs.map(sg=>{
   const w=Math.max(0,(sg.v/scale)*W-gap);
   const rect=`<rect x="${x.toFixed(1)}" y="0" width="${w.toFixed(1)}" height="${H}" fill="${sg.col}"><title>${sg.k}: ${money0(sg.v)} บาท/วัน</title></rect>`;
   x+=(sg.v/scale)*W;return rect;
  }).join('');
- const deficit=margin<0?`<rect x="${((c.verified/scale)*W).toFixed(1)}" y="0" width="${Math.min(W-(c.verified/scale)*W,(Math.abs(margin)/scale)*W).toFixed(1)}" height="${H}" fill="url(#v4hatch)"><title>ขาด ${money0(Math.abs(margin))} บาท/วัน</title></rect>`:'';
+ /* ส่วนที่ยังขาดวาดต่อท้าย segment สุดท้าย และเรียกชื่อว่า Affordability Gap ไม่ใช่ Residual */
+ const deficit=gapDaily>0?`<rect x="${((segsTotal/scale)*W).toFixed(1)}" y="0" width="${Math.max(0,Math.min(W-(segsTotal/scale)*W,(gapDaily/scale)*W)).toFixed(1)}" height="${H}" fill="url(#v4hatch)"><title>Affordability Gap: ขาด ${money0(gapDaily)} บาท/วัน</title></rect>`:'';
+ /* เส้นบอกตำแหน่งรายได้ที่ Verify ได้ เพื่อไม่ให้แท่งสีสื่อว่ารายได้ครอบคลุมทุกก้อนทั้งที่ยังขาด */
+ const incomeX=Math.min(W,(c.verified/scale)*W);
+ const incomeMark=`<line x1="${incomeX.toFixed(1)}" y1="0" x2="${incomeX.toFixed(1)}" y2="${H}" stroke="var(--text)" stroke-width="2" stroke-dasharray="4 3" opacity=".7"><title>รายได้ที่ Verify ได้ ${money0(c.verified)} บาท/วัน — ส่วนที่อยู่ขวาของเส้นนี้คือภาระที่รายได้ยังไปไม่ถึง</title></line>`;
  const legend=segs.map(sg=>`<span><i style="background:${sg.col}"></i>${sg.k} <small>฿${money0(sg.v)}</small></span>`).join('');
+ const margin=be.marginDaily;
  const note=margin>=0
   ?`<div class="breakeven-note good"><b>คุ้มทุนแล้ว</b> — ต้องมีรายได้ก่อนหักอย่างน้อย <b>฿${money0(be.requiredGrossDaily)}/วัน</b> ปัจจุบันทำได้ ฿${money0(c.gross)}/วัน จึงเหลือ <b>฿${money0(margin)}/วัน</b> (${(be.marginPct*100).toFixed(1)}% ของรายได้ที่ Verify ได้) • ค่าบริการแบตเตอรี่ ${money0(be.batteryServiceDaily)} บาท คิดเป็น ${(be.batteryShareOfVerified*100).toFixed(1)}% ของรายได้ที่ Verify ได้</div>`
   :`<div class="breakeven-note risk"><b>ยังไม่ถึงจุดคุ้มทุน</b> — ต้องมีรายได้ก่อนหัก <b>฿${money0(be.requiredGrossDaily)}/วัน</b> แต่ปัจจุบัน ฿${money0(c.gross)}/วัน จึงขาดอยู่ <b>฿${money0(Math.abs(margin))}/วัน</b> • ค่าบริการแบตเตอรี่ ${money0(be.batteryServiceDaily)} บาท คิดเป็น ${(be.batteryShareOfObligation*100).toFixed(1)}% ของภาระรายวันทั้งหมด</div>`;
@@ -844,8 +856,8 @@ function allocationChart(c){
   <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="height:42px" role="img" aria-label="สัดส่วนการใช้รายได้ต่อวัน">
    <defs><pattern id="v4hatch" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="7" height="7" fill="#fbd9d9"></rect><line x1="0" y="0" x2="0" y2="7" stroke="var(--v4-risk)" stroke-width="3"></line></pattern>
    <clipPath id="v4clip"><rect x="0" y="0" width="${W}" height="${H}" rx="5"></rect></clipPath></defs>
-   <g clip-path="url(#v4clip)">${rects}${deficit}</g></svg>
-  <div class="legend">${legend}${margin<0?'<span><i style="background:var(--v4-risk)"></i>ส่วนที่ยังขาด <small>฿'+money0(Math.abs(margin))+'</small></span>':''}</div>
+   <g clip-path="url(#v4clip)">${rects}${deficit}${incomeMark}</g></svg>
+  <div class="legend">${legend}${gapDaily>0?'<span><i style="background:var(--v4-risk)"></i>Affordability Gap — ยังขาด <small>฿'+money0(gapDaily)+'</small></span>':''}</div>
   ${note}</div>`;
 }
 

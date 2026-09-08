@@ -97,6 +97,34 @@ test('the public /api/score payload omits the internal raw diagnostic', () => {
   assert.match(engine, /cashShortfallBeforeObligations,/);
 });
 
+test('the allocation chart reads the same engine values as the Daily Financial X-Ray', () => {
+  const chart = html.slice(
+    html.indexOf('function allocationChart('),
+    html.indexOf('function ', html.indexOf('function allocationChart(') + 10)
+  );
+  assert.ok(chart.length > 0, 'allocationChart() must exist');
+
+  // Customer RBP และ Adaptive Payment Reserve ต้องเป็นคนละ segment
+  assert.match(chart, /\{k:'Customer RBP',v:c\.customerRbpDay,/);
+  assert.match(chart, /\{k:'Adaptive Payment Reserve Preview',v:c\.reserveContributionPreview,/);
+
+  // เงินคงเหลือและส่วนที่ขาดต้องมาจาก Engine SSOT ตัวเดียวกับ Waterfall
+  assert.match(chart, /c\.residualCash/);
+  assert.match(chart, /c\.affordabilityGap/);
+
+  // ห้ามยุบ RBP เข้าไปในก้อน Reserve และห้ามใช้ marginDaily เป็น Residual
+  assert.doesNotMatch(chart, /reserveContributionPreview\s*\+\s*c\.customerRbpDay/);
+  assert.doesNotMatch(chart, /customerRbpDay\s*\+\s*c\.reserveContributionPreview/);
+  assert.doesNotMatch(chart, /k:'Residual Cash[^}]*marginDaily/);
+  assert.doesNotMatch(chart, /marginDaily[^}]*k:'Residual Cash/);
+
+  // ส่วนที่ขาดต้องถูกเรียกว่า Affordability Gap ไม่ใช่ Residual
+  assert.match(chart, /Affordability Gap/);
+
+  // marginDaily ยังอยู่ได้ แต่ต้องใช้เฉพาะข้อความ Break-even
+  assert.match(chart, /breakeven-note/);
+});
+
 test('principal sustainability status comes from the engine boolean, not a local threshold', () => {
   assert.doesNotMatch(html, /maturity\s*<=?\s*1000/);
   assert.doesNotMatch(legacy, /maturity\s*<=?\s*1000/);
