@@ -64,16 +64,28 @@ test('the reference fee is charged on the eligible guarantee base, not the whole
 });
 
 test('fee waiver changes the customer charge but not the daily RBP reference', () => {
+  // Fee Waiver ปิดเป็นค่าตั้งต้น จึงต้องเปิดอย่างจงใจในฐานะ Scenario option
   const waived = evaluate({
+    ...SCENARIO_COMPETITION,
+    vehiclePrice: 900_000,
+    eligibleGuaranteedAmount: 900_000,
+    rbpTier: 'C',
+    guaranteeYear: 1,
+    feeWaiverEnabled: true
+  });
+
+  assert.equal(roundToSatang(waived.calc.rbpReferenceDay), 44.38);
+  assert.equal(waived.calc.customerRbpDay, 0);
+
+  const notWaived = evaluate({
     ...SCENARIO_COMPETITION,
     vehiclePrice: 900_000,
     eligibleGuaranteedAmount: 900_000,
     rbpTier: 'C',
     guaranteeYear: 1
   });
-
-  assert.equal(roundToSatang(waived.calc.rbpReferenceDay), 44.38);
-  assert.equal(waived.calc.customerRbpDay, 0);
+  assert.equal(roundToSatang(notWaived.calc.rbpReferenceDay), 44.38);
+  assert.equal(notWaived.calc.customerRbpDay, notWaived.calc.rbpReferenceDay);
 });
 
 test('RBP result exposes the 365-day basis and the competition parameter status', () => {

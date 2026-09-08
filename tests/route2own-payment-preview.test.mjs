@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  ACTIVITY_EVIDENCE_THRESHOLDS,
+  CALIBRATION_STATUS,
+  COMPETITION_DESIGN_PARAMETERS,
+  DSCR_GATE,
   ELIGIBLE_GUARANTEE_DESIGN_PARAMETER,
+  INCOME_EVIDENCE_THRESHOLDS,
   RESERVE_CONTRIBUTION_RATE,
   RESERVE_TARGET_DAYS,
   evaluate
@@ -131,4 +136,75 @@ test('residual cash never goes negative and the shortfall is reported separately
   const healthy = evaluate({ grossDaily: 2200, verifiedPct: 95, vehiclePrice: 800000 });
   assert.ok(healthy.calc.residualCash > 0);
   assert.equal(healthy.calc.affordabilityGap, 0);
+});
+
+test('available cash follows the frozen formula and never goes negative', () => {
+  const thin = evaluate({ grossDaily: 700, verifiedPct: 95, vehiclePrice: 800000 });
+  assert.equal(thin.calc.availableCash, 0);
+  assert.ok(thin.calc.cashShortfallBeforeObligations > 0);
+  assert.ok(thin.calc.rawAvailDaily < 0, 'raw diagnostic keeps the signed value');
+
+  const healthy = evaluate({ grossDaily: 2200, verifiedPct: 95, vehiclePrice: 800000 });
+  const c = healthy.calc;
+  assert.equal(
+    Math.round(c.availableCash * 100),
+    Math.round(Math.max(0, c.verified - c.dailyOpEx - c.protectedDaily) * 100)
+  );
+  assert.equal(c.cashShortfallBeforeObligations, 0);
+  assert.equal(c.paydCapacity, c.availableCash);
+});
+
+test('the RBP fee waiver is off by default and never changes the reference fee', () => {
+  const off = evaluate({ guaranteeYear: 1, rbpTier: 'B' });
+  assert.equal(off.input.feeWaiverEnabled, false);
+  assert.equal(off.calc.feeWaiverApplied, false);
+  assert.equal(off.calc.customerRbpDay, off.calc.rbpReferenceDay);
+  assert.match(off.calc.feeWaiverStatus, /Proposed \/ Not Frozen/);
+
+  const on = evaluate({ guaranteeYear: 1, rbpTier: 'B', feeWaiverEnabled: true });
+  assert.equal(on.calc.feeWaiverApplied, true);
+  assert.equal(on.calc.customerRbpDay, 0);
+  // ค่าธรรมเนียมอ้างอิงต้องเท่าเดิมไม่ว่าเปิดหรือปิด waiver
+  assert.equal(on.calc.rbpReferenceDay, off.calc.rbpReferenceDay);
+});
+
+test('design thresholds are exposed together with their calibration status', () => {
+  const p = COMPETITION_DESIGN_PARAMETERS;
+  assert.equal(p.status, CALIBRATION_STATUS);
+  assert.match(p.status, /Pilot Calibration after Selection/);
+  assert.equal(p.notFinalUnderwritingRule, true);
+  assert.equal(p.affordability.dscrGate, DSCR_GATE);
+  assert.deepEqual(p.incomeEvidence, INCOME_EVIDENCE_THRESHOLDS);
+  assert.deepEqual(p.activityEvidence, ACTIVITY_EVIDENCE_THRESHOLDS);
+  assert.equal(p.incomeEvidence.HIGH, 90);
+  assert.equal(p.incomeEvidence.MEDIUM, 70);
+  assert.equal(p.activityEvidence.CONSISTENT, 90);
+  assert.equal(p.activityEvidence.REVIEW, 70);
+  assert.equal(p.feeWaiver.enabledByDefault, false);
+  assert.equal(p.eligibleGuarantee.designParameter, ELIGIBLE_GUARANTEE_DESIGN_PARAMETER);
+});
+
+test('the pre-score breakdown sums to the total and every component explains itself', () => {
+  for (const scenario of [
+    { grossDaily: 2200, verifiedPct: 95 },
+    { grossDaily: 3200, verifiedPct: 50 },
+    { grossDaily: 900, verifiedPct: 95 }
+  ]) {
+    const r = evaluate({ ...scenario, vehiclePrice: 800000 }).readiness;
+    const sum = r.breakdown.reduce((total, c) => total + c.points, 0);
+    assert.equal(sum, r.readinessScore, `breakdown must sum to the score for ${JSON.stringify(scenario)}`);
+    assert.equal(r.preScore.score, r.readinessScore);
+    assert.equal(r.breakdown.length, 5);
+    assert.equal(
+      r.breakdown.reduce((total, c) => total + c.maxPoints, 0),
+      100,
+      'the five components must be worth 100 points in total'
+    );
+    for (const c of r.breakdown) {
+      assert.ok(c.explanation && c.explanation.length > 0, `${c.id} needs an explanation`);
+      assert.ok(c.improvementActions.length > 0, `${c.id} needs improvement actions`);
+      assert.ok(c.points >= 0 && c.points <= c.maxPoints, `${c.id} points out of range`);
+    }
+    assert.equal(r.recommendations.length, 3);
+  }
 });

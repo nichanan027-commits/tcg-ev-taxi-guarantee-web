@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import {
+  COMPETITION_DESIGN_PARAMETERS,
   evaluate,
+  FEE_WAIVER_ENABLED_DEFAULT,
+  FEE_WAIVER_STATUS,
   PRODUCT_NAME,
   PRODUCT_STATUS,
   RBP_DAY_COUNT_BASIS,
@@ -49,6 +52,12 @@ export async function POST(request: Request) {
       base: "Eligible Guaranteed Amount",
       status: RBP_STATUS
     },
+    feeWaiver: {
+      enabledByDefault: FEE_WAIVER_ENABLED_DEFAULT,
+      applied: calc.feeWaiverApplied,
+      status: FEE_WAIVER_STATUS
+    },
+    designParameters: COMPETITION_DESIGN_PARAMETERS,
     paymentPreview: {
       scope: "PREVIEW_ONLY",
       reserveContributionRate: RESERVE_CONTRIBUTION_RATE,

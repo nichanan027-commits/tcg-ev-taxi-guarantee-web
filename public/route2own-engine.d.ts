@@ -51,6 +51,8 @@ export type ScoreInput = {
   /** วงเงินค้ำที่เข้าเกณฑ์ใน Scenario — ไม่เกิน loanNeed */
   eligibleGuaranteedAmount: number;
   reserveBalance: number;
+  /** Proposed / Not Frozen — ปิดไว้เป็นค่าตั้งต้น เปิดได้เฉพาะเป็น Scenario option */
+  feeWaiverEnabled: boolean;
   interest: number;
   tenor: number;
   rbpTier: RbpTier;
@@ -96,8 +98,12 @@ export type ScoreCalc = {
   batteryService: number;
   dailyOpEx: number;
   protectedDaily: number;
+  /** Available Cash ตามนิยาม Frozen Spec — ไม่ติดลบ ใช้แสดงผลทุกช่องทาง */
+  availableCash: number;
+  /** ยังขาดอีกเท่าไรก่อนถึงภาระผ่อน ใช้แทนการแสดง Available Cash ติดลบ */
+  cashShortfallBeforeObligations: number;
+  /** ค่าดิบสำหรับวินิจฉัยภายใน ติดลบได้ — ห้ามแสดงในชื่อ Available Cash */
   rawAvailDaily: number;
-  availDaily: number;
   pmt: number;
   annualDebtService: number;
   paydRefDaily: number;
@@ -114,6 +120,9 @@ export type ScoreCalc = {
   rbpDay: number;
   customerRbpDay: number;
   guaranteeYear: number;
+  feeWaiverEnabled: boolean;
+  feeWaiverApplied: boolean;
+  feeWaiverStatus: string;
   /** PAYD และ Reserve ในระบบนี้เป็น Preview เท่านั้น การหักเงินจริงเกิดหลัง FI อนุมัติ */
   paydTarget: number;
   paydCapacity: number;
@@ -218,6 +227,24 @@ export declare const RESERVE_CONTRIBUTION_RATE: number;
 export declare const RESERVE_TARGET_DAYS: number;
 export declare const ELIGIBLE_GUARANTEE_DESIGN_PARAMETER: number;
 export declare const FEE_WAIVER_YEARS: number;
+export declare const FEE_WAIVER_ENABLED_DEFAULT: false;
+export declare const FEE_WAIVER_STATUS: "Proposed / Not Frozen";
+export declare const CALIBRATION_STATUS: "Pilot Calibration after Selection";
+export declare const INCOME_EVIDENCE_THRESHOLDS: { HIGH: number; MEDIUM: number };
+export declare const ACTIVITY_EVIDENCE_THRESHOLDS: { CONSISTENT: number; REVIEW: number };
+/** พารามิเตอร์เพื่อการแข่งขันทั้งหมด — ไม่ใช่กติกา Underwriting ขั้นสุดท้ายของ FI */
+export declare const COMPETITION_DESIGN_PARAMETERS: {
+  status: string;
+  notFinalUnderwritingRule: true;
+  note: string;
+  affordability: { dscrGate: number };
+  incomeEvidence: { HIGH: number; MEDIUM: number };
+  activityEvidence: { CONSISTENT: number; REVIEW: number };
+  rbp: { rates: Record<RbpTier, number>; dayCountBasis: 365 };
+  eligibleGuarantee: { designParameter: number };
+  reserve: { contributionRate: number; targetDays: number };
+  feeWaiver: { years: number; enabledByDefault: boolean; status: string };
+};
 export declare const DSCR_GATE: number;
 /** ค่าคลาดเคลื่อนจากการปัดเศษ ไม่ใช่ Policy Threshold */
 export declare const PRINCIPAL_CLOSE_EPSILON: number;

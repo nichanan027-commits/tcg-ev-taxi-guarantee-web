@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import {
+  CALIBRATION_STATUS,
+  FEE_WAIVER_STATUS,
+  COMPETITION_DESIGN_PARAMETERS,
   PRODUCT_STATUS,
   RBP_DAY_COUNT_BASIS,
   RBP_STATUS,
@@ -67,7 +70,7 @@ const examples: Record<string, Partial<FormState>> = {
 
 type NumericKey = Exclude<
   keyof ScoreInput,
-  'energyIncluded' | 'rbpTier' | 'guaranteeYear' | 'downPayment' | 'loanNeed'
+  'energyIncluded' | 'rbpTier' | 'guaranteeYear' | 'downPayment' | 'loanNeed' | 'feeWaiverEnabled'
 >;
 
 const fieldGroups: { title: string; fields: { key: NumericKey; label: string; step?: number }[] }[] = [
@@ -219,6 +222,12 @@ export default function Home() {
             การแยกหลักฐานรายได้ออกจากหลักฐานกิจกรรม และการจัดเส้นทางแบบ Affordability-first
             ไม่มีการรวมภาพพอร์ตหรือระบบหลังอนุมัติในหน้านี้
           </p>
+          <p style={{ fontSize: 13, opacity: 0.85 }}>
+            <b>Competition Design Parameters</b> — DSCR Gate {COMPETITION_DESIGN_PARAMETERS.affordability.dscrGate.toFixed(2)}x •
+            Income Evidence {COMPETITION_DESIGN_PARAMETERS.incomeEvidence.HIGH}/{COMPETITION_DESIGN_PARAMETERS.incomeEvidence.MEDIUM} •
+            Activity Evidence {COMPETITION_DESIGN_PARAMETERS.activityEvidence.CONSISTENT}/{COMPETITION_DESIGN_PARAMETERS.activityEvidence.REVIEW} •
+            สถานะ {CALIBRATION_STATUS} — ไม่ใช่กติกาการพิจารณาสินเชื่อขั้นสุดท้ายของสถาบันการเงิน
+          </p>
           <div className="actions">
             <a className="button" href="#demo">เริ่มทดลอง</a>
           </div>
@@ -238,6 +247,7 @@ export default function Home() {
             <div><span>Base Product</span><b>เงินดาวน์ 0%</b></div>
             <div><span>ฐานคิด RBP</span><b>วงเงินค้ำที่เข้าเกณฑ์</b></div>
             <div><span>RBP A / B / C</span><b>1.20% / 1.50% / 1.80%</b></div>
+            <div><span>Design Parameters</span><b>{CALIBRATION_STATUS}</b></div>
           </div>
         </div>
       </section>
@@ -333,6 +343,15 @@ export default function Home() {
                   <option value="C">C — 1.80% p.a.</option>
                 </select>
               </label>
+              <label>RBP Fee Waiver ปี 1–3 ({FEE_WAIVER_STATUS})
+                <select
+                  value={form.feeWaiverEnabled ? 'on' : 'off'}
+                  onChange={(e) => update('feeWaiverEnabled', e.target.value === 'on')}
+                >
+                  <option value="off">ปิด — ตามค่าตั้งต้น</option>
+                  <option value="on">เปิดเป็น Scenario option</option>
+                </select>
+              </label>
               <label>ปีของสัญญาค้ำ (Guarantee Year)
                 <select
                   value={form.guaranteeYear}
@@ -366,12 +385,16 @@ export default function Home() {
                 </div>
 
                 <div className="kpiGrid">
-                  <div><span>Available Cash / วัน</span><b>{baht.format(result.calc.rawAvailDaily)}</b></div>
+                  <div><span>Available Cash / วัน</span><b>{baht.format(result.calc.availableCash)}</b></div>
                   <div><span>DSCR Base</span><b>{result.calc.dscr.toFixed(2)}x</b></div>
                   <div><span>PAI</span><b>{result.calc.pai.toFixed(2)}</b></div>
                   <div>
                     <span>Principal Sustainability</span>
-                    <b>{result.calc.maturity <= 1000 ? 'CLOSE' : baht.format(result.calc.maturity)}</b>
+                    <b>
+                      {result.calc.principalSustainabilityPassed
+                        ? 'CLOSE'
+                        : `GAP ${baht.format(result.calc.maturity)}`}
+                    </b>
                   </div>
                 </div>
 
@@ -403,6 +426,10 @@ export default function Home() {
                   <div><span>Annual RBP Rate</span><b>{(result.calc.rbpRate * 100).toFixed(2)}%</b></div>
                   <div><span>RBP Reference / วัน</span><b>{baht.format(result.calc.rbpReferenceDay)}</b></div>
                   <div><span>Day-count / Status</span><b>{RBP_DAY_COUNT_BASIS} วัน • {RBP_STATUS}</b></div>
+                  <div>
+                    <span>RBP Fee Waiver</span>
+                    <b>{result.calc.feeWaiverApplied ? 'เปิดใช้ใน Scenario นี้' : 'ปิด'} • {result.calc.feeWaiverStatus}</b>
+                  </div>
                 </div>
 
                 <div className="kpiGrid">

@@ -95,7 +95,41 @@ Reference Daily RBP = Eligible Guaranteed Amount × Annual RBP Rate ÷ 365
   ที่ประกาศไว้ตรง ๆ **ไม่ได้ default เป็น `loanNeed`** เพื่อไม่ให้เกิดสมมติฐานค้ำเต็มวงเงินโดยปริยาย
   แล้วจึง cap ไม่ให้เกินวงเงินสินเชื่อ
 - สถานะ: **Competition Design Parameter — Pilot Calibration after Selection**
-- เสนอ Fee Waiver ปี 1–3
+
+### RBP Fee Waiver ปี 1–3 — ปิดเป็นค่าตั้งต้น
+
+Fee Waiver **ยังไม่อยู่ใน Frozen Product Spec** จึงตั้งเป็น `feeWaiverEnabled = false`
+เปิดได้เฉพาะเป็น Scenario option และติดป้าย **Proposed / Not Frozen** ทุกจุดที่แสดงผล
+ไม่ว่าเปิดหรือปิด **ค่าธรรมเนียมอ้างอิง (Reference Daily RBP) คำนวณเหมือนเดิมเสมอ**
+มีเพียงยอดที่เรียกเก็บจากผู้ขับเท่านั้นที่เปลี่ยน
+
+## Competition Design Parameters
+
+พารามิเตอร์ทุกตัวที่ตั้งขึ้นเพื่อการแข่งขันรวมอยู่ใน `COMPETITION_DESIGN_PARAMETERS`
+และเปิดผ่าน `/api/score` ในฟิลด์ `designParameters`
+
+| พารามิเตอร์ | ค่า |
+| --- | --- |
+| DSCR Gate (Affordability) | 1.00x |
+| Income Evidence — HIGH / MEDIUM | 90 / 70 |
+| Activity Evidence — CONSISTENT / REVIEW | 90 / 70 |
+| Reserve Contribution / Target | 10% / 5 วัน |
+| Eligible Guarantee Design Parameter | 800,000 บาท |
+| RBP Fee Waiver | ปิดเป็นค่าตั้งต้น (Proposed / Not Frozen) |
+
+สถานะของทุกตัวคือ **Pilot Calibration after Selection** — ต้องสอบเทียบกับข้อมูลจริง
+หลังได้รับคัดเลือก และ **ไม่ใช่กติกาการพิจารณาสินเชื่อขั้นสุดท้ายของสถาบันการเงิน**
+
+## Data Provenance
+
+| ประเภท | ความหมาย | ตัวอย่าง |
+| --- | --- | --- |
+| **Observed Input** | ค่าที่มาจากการเก็บข้อมูลจริงของโครงการ | รายได้ 1,850.52 บาท/วัน — ค่าเฉลี่ยรายได้รายบุคคลจากชุดสำรวจภาคสนามของโครงการ ใช้เป็น observed input ของ Scenario **ไม่ใช่ค่าเฉลี่ยแท็กซี่ทั้งตลาด** |
+| **Illustrative / Competition Simulation** | ตัวเลขจำลองเพื่อสาธิตระบบ | เคสสาธิตทั้งสามเส้นทาง ผลการคำนวณบนหน้าจอ |
+| **Competition Design Parameter** | เกณฑ์ที่ตั้งขึ้นเพื่อการแข่งขัน ต้องสอบเทียบภายหลัง | DSCR Gate, เกณฑ์หลักฐาน, อัตรา RBP, Reserve |
+
+สามประเภทนี้แยกจากกัน — ห้ามนำ Observed Input ไปสื่อว่าเป็นค่าเฉลี่ยตลาด และห้ามนำ
+Design Parameter ไปสื่อว่าเป็นกติกา Underwriting
 
 หลังอนุมัติ ระบบหลังบ้านจึงคิด `Actual Guarantee Fee = Actual Guaranteed Outstanding × Fee Rate × Time`
 

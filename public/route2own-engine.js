@@ -30,6 +30,50 @@ export const SIMULATION_LABEL = 'Illustrative / Competition Simulation';
  */
 export const ELIGIBLE_GUARANTEE_DESIGN_PARAMETER = 800000;
 
+export const RBP_RATE = { A: 0.012, B: 0.015, C: 0.018 };
+export const RBP_DAY_COUNT_BASIS = 365;
+
+/** สถานะกำกับพารามิเตอร์ทุกตัวที่ยังต้องสอบเทียบหลังได้รับคัดเลือก */
+export const CALIBRATION_STATUS = 'Pilot Calibration after Selection';
+export const RBP_STATUS = `Competition Design Parameter — ${CALIBRATION_STATUS}`;
+
+/** Adaptive Payment Reserve — สะสม 10% ของ PAYD Target จนถึงเป้าหมาย 5 วัน */
+export const RESERVE_CONTRIBUTION_RATE = 0.1;
+export const RESERVE_TARGET_DAYS = 5;
+
+/**
+ * Proposed RBP Fee Waiver ปี 1–3
+ * ยังไม่อยู่ใน Frozen Product Spec จึง "ปิดไว้เป็นค่าตั้งต้น"
+ * เปิดได้เฉพาะเป็น Scenario option และต้องติดป้าย Proposed / Not Frozen เสมอ
+ */
+export const FEE_WAIVER_YEARS = 3;
+export const FEE_WAIVER_ENABLED_DEFAULT = false;
+export const FEE_WAIVER_STATUS = 'Proposed / Not Frozen';
+
+export const DSCR_GATE = 1.0; // Gate ขั้นต่ำของ Affordability ใน Working Model
+
+/** เกณฑ์แบ่งระดับความน่าเชื่อถือของหลักฐานรายได้ */
+export const INCOME_EVIDENCE_THRESHOLDS = { HIGH: 90, MEDIUM: 70 };
+/** เกณฑ์แบ่งสถานะหลักฐานกิจกรรม */
+export const ACTIVITY_EVIDENCE_THRESHOLDS = { CONSISTENT: 90, REVIEW: 70 };
+
+/**
+ * พารามิเตอร์ทั้งหมดที่ตั้งขึ้นเพื่อการแข่งขัน รวมไว้ที่เดียวเพื่อให้ตรวจสอบได้
+ * ทุกตัวเป็น Competition Design Parameter ไม่ใช่กติกา Underwriting ขั้นสุดท้ายของ FI
+ */
+export const COMPETITION_DESIGN_PARAMETERS = {
+  status: CALIBRATION_STATUS,
+  notFinalUnderwritingRule: true,
+  note: 'ค่าเหล่านี้ตั้งขึ้นเพื่อสาธิตในการประกวด ต้องสอบเทียบกับข้อมูลจริงหลังได้รับคัดเลือก และไม่ใช่กติกาการพิจารณาสินเชื่อขั้นสุดท้ายของสถาบันการเงิน',
+  affordability: { dscrGate: DSCR_GATE },
+  incomeEvidence: INCOME_EVIDENCE_THRESHOLDS,
+  activityEvidence: ACTIVITY_EVIDENCE_THRESHOLDS,
+  rbp: { rates: RBP_RATE, dayCountBasis: RBP_DAY_COUNT_BASIS },
+  eligibleGuarantee: { designParameter: ELIGIBLE_GUARANTEE_DESIGN_PARAMETER },
+  reserve: { contributionRate: RESERVE_CONTRIBUTION_RATE, targetDays: RESERVE_TARGET_DAYS },
+  feeWaiver: { years: FEE_WAIVER_YEARS, enabledByDefault: FEE_WAIVER_ENABLED_DEFAULT, status: FEE_WAIVER_STATUS }
+};
+
 /** ค่าตั้งต้นของ Competition Scenario — ตัวเลขสาธิต ไม่ใช่ค่าเฉลี่ยตลาด */
 export const SCENARIO_COMPETITION = {
   grossDaily: 1850.52,
@@ -58,6 +102,7 @@ export const SCENARIO_COMPETITION = {
   downPayment: 0,
   eligibleGuaranteedAmount: ELIGIBLE_GUARANTEE_DESIGN_PARAMETER,
   reserveBalance: 0,
+  feeWaiverEnabled: FEE_WAIVER_ENABLED_DEFAULT,
   interest: 6,
   tenor: 84,
   rbpTier: 'B',
@@ -139,16 +184,6 @@ export function followUpSubmissionOf(answers, consent) {
   return { status: 'READY', answerCount: values.length };
 }
 
-export const RBP_RATE = { A: 0.012, B: 0.015, C: 0.018 };
-export const RBP_DAY_COUNT_BASIS = 365;
-export const RBP_STATUS = 'Competition Design Parameter — Pilot Calibration after Selection';
-
-/** Adaptive Payment Reserve — สะสม 10% ของ PAYD Target จนถึงเป้าหมาย 5 วัน */
-export const RESERVE_CONTRIBUTION_RATE = 0.1;
-export const RESERVE_TARGET_DAYS = 5;
-
-export const FEE_WAIVER_YEARS = 3; // Proposed RBP Fee Waiver ปี 1–3
-export const DSCR_GATE = 1.0; // Gate ขั้นต่ำของ Affordability ใน Working Model
 /**
  * ค่าคลาดเคลื่อนจากการปัดเศษทศนิยมเท่านั้น ไม่ใช่ Policy Threshold
  * ใช้ตัดสินว่ายอดเงินต้นคงเหลือ ณ งวดสุดท้ายถือว่าปิดได้แล้วหรือไม่
@@ -193,16 +228,16 @@ export function deriveLoanNeed(vehiclePrice, downPayment) {
  */
 export function incomeEvidenceReliabilityOf(verifiedPct) {
   const value = clamp(num(verifiedPct, 0), 0, 100);
-  if (value >= 90) return 'HIGH';
-  if (value >= 70) return 'MEDIUM';
+  if (value >= INCOME_EVIDENCE_THRESHOLDS.HIGH) return 'HIGH';
+  if (value >= INCOME_EVIDENCE_THRESHOLDS.MEDIUM) return 'MEDIUM';
   return 'LOW';
 }
 
 /** สถานะหลักฐานกิจกรรม — ใช้ Cross-Validation และดูความต่อเนื่องของอาชีพ ไม่ใช่รายได้ */
 export function activityEvidenceStatusOf(gpsComplete) {
   const value = clamp(num(gpsComplete, 0), 0, 100);
-  if (value >= 90) return 'CONSISTENT';
-  if (value >= 70) return 'REVIEW';
+  if (value >= ACTIVITY_EVIDENCE_THRESHOLDS.CONSISTENT) return 'CONSISTENT';
+  if (value >= ACTIVITY_EVIDENCE_THRESHOLDS.REVIEW) return 'REVIEW';
   return 'LIMITED';
 }
 
@@ -273,6 +308,8 @@ export function normalize(body) {
     loanNeed,
     eligibleGuaranteedAmount,
     reserveBalance: nonNegative(b.reserveBalance, 0),
+    // Fee Waiver ยังไม่อยู่ใน Frozen Spec — ต้องเปิดโดยตั้งใจเท่านั้น
+    feeWaiverEnabled: b.feeWaiverEnabled === true,
     interest: nonNegative(b.interest, d.interest),
     tenor: Math.max(1, Math.round(nonNegative(b.tenor, d.tenor)) || d.tenor),
     rbpTier: tier === 'A' || tier === 'B' || tier === 'C' ? tier : d.rbpTier,
@@ -425,7 +462,15 @@ export function scoreRoute2Own(input) {
   const other = input.otherOpEx / wd;
   const dailyOpEx = batteryService + energy + maint + tire + ins + other;
   const protectedDaily = input.householdMonthly / wd + input.nextShiftDaily;
+  /**
+   * Available Cash ตามนิยามของ Frozen Spec — ไม่ติดลบ
+   *   availableCash = max(0, Verified Revenue − Eligible OpEx − Protected Cash)
+   * rawAvailDaily เก็บค่าดิบที่ติดลบได้ไว้ใช้วินิจฉัยภายในเท่านั้น
+   * ห้ามนำ rawAvailDaily ไปแสดงต่อผู้ใช้ในชื่อ Available Cash
+   */
   const rawAvailDaily = verified - dailyOpEx - protectedDaily;
+  const availableCash = Math.max(0, rawAvailDaily);
+  const cashShortfallBeforeObligations = Math.max(0, -rawAvailDaily);
 
   // --- FI Contractual Schedule (Scenario) ---
   const annualRate = input.interest / 100;
@@ -445,38 +490,41 @@ export function scoreRoute2Own(input) {
   const requiredDebtDaily = paydRefDaily + existingDebtDaily;
 
   // --- DSCR / PAI ---
-  const dscr = requiredDebtDaily > 0 ? Math.max(0, rawAvailDaily) / requiredDebtDaily : 99;
-  const rawAvail15 = verified * 0.85 - dailyOpEx - protectedDaily;
-  const rawAvail30 = verified * 0.7 - dailyOpEx - protectedDaily;
-  const dscr15 = requiredDebtDaily > 0 ? Math.max(0, rawAvail15) / requiredDebtDaily : 99;
-  const dscr30 = requiredDebtDaily > 0 ? Math.max(0, rawAvail30) / requiredDebtDaily : 99;
-  const pai = rawAvailDaily > 0 ? requiredDebtDaily / rawAvailDaily : 9.99;
+  const dscr = requiredDebtDaily > 0 ? availableCash / requiredDebtDaily : 99;
+  const availableCash15 = Math.max(0, verified * 0.85 - dailyOpEx - protectedDaily);
+  const availableCash30 = Math.max(0, verified * 0.7 - dailyOpEx - protectedDaily);
+  const dscr15 = requiredDebtDaily > 0 ? availableCash15 / requiredDebtDaily : 99;
+  const dscr30 = requiredDebtDaily > 0 ? availableCash30 / requiredDebtDaily : 99;
+  const pai = availableCash > 0 ? requiredDebtDaily / availableCash : 9.99;
 
   // --- RBP Reference: คิดจากวงเงินค้ำที่เข้าเกณฑ์ ไม่ใช่วงเงินสินเชื่อทั้งก้อน ---
   const rbpRate = RBP_RATE[input.rbpTier];
   const guaranteeYear = input.guaranteeYear;
   const eligibleGuaranteedAmount = input.eligibleGuaranteedAmount;
+  // ค่าธรรมเนียมอ้างอิงคิดจากวงเงินค้ำที่เข้าเกณฑ์เสมอ ไม่ขึ้นกับ Fee Waiver
   const rbpReferenceDay = (eligibleGuaranteedAmount * rbpRate) / RBP_DAY_COUNT_BASIS;
-  const customerRbpDay = guaranteeYear <= FEE_WAIVER_YEARS ? 0 : rbpReferenceDay;
+  const feeWaiverEnabled = input.feeWaiverEnabled === true;
+  const feeWaiverApplied = feeWaiverEnabled && guaranteeYear <= FEE_WAIVER_YEARS;
+  const customerRbpDay = feeWaiverApplied ? 0 : rbpReferenceDay;
 
   // --- PAYD / Adaptive Payment Reserve — Preview เท่านั้น ไม่มีการหักเงินจริงในระบบนี้ ---
   const paydTarget = paydRefDaily;
-  const paydCapacity = Math.max(0, rawAvailDaily);
-  const postPaydResidual = Math.max(0, rawAvailDaily - paydTarget);
+  const paydCapacity = availableCash;
+  const postPaydResidual = Math.max(0, availableCash - paydTarget);
   const reserveTarget = paydTarget * RESERVE_TARGET_DAYS;
   const remainingReserveNeed = Math.max(0, reserveTarget - input.reserveBalance);
   const reserveContributionPreview =
-    rawAvailDaily >= paydTarget
+    availableCash >= paydTarget
       ? Math.min(paydTarget * RESERVE_CONTRIBUTION_RATE, postPaydResidual, remainingReserveNeed)
       : 0;
   // เงินคงเหลือหลังจัดสรร แยกเป็นสองค่า: ส่วนที่เหลือจริง กับส่วนที่ยังขาด
   // ค่าที่นำไปแสดงผลจึงไม่ติดลบ และ "ขาดเท่าไร" ถูกสื่อสารเป็นตัวเลขของตัวเอง
-  const netAfterAllocation = rawAvailDaily - paydTarget - reserveContributionPreview;
+  const netAfterAllocation = availableCash - paydTarget - reserveContributionPreview;
   const residualCash = Math.max(0, netAfterAllocation);
   const affordabilityGap = Math.max(0, -netAfterAllocation);
 
   // --- Principal Sustainability: จำลองยอดคงเหลือถึงงวดสุดท้าย ---
-  const cfadsMonthly = Math.max(0, rawAvailDaily) * wd;
+  const cfadsMonthly = availableCash * wd;
   const actualNewLoanCapacity = Math.max(0, cfadsMonthly - existingDebtMonthly);
   let bal = P;
   for (let m = 0; m < n; m++) {
@@ -562,6 +610,9 @@ export function scoreRoute2Own(input) {
     dscr30,
     pai,
     maturity,
+    availableCash,
+    cashShortfallBeforeObligations,
+    feeWaiverApplied,
     affordabilityPassed,
     principalSustainabilityPassed,
     incomeEvidenceReliability,
@@ -601,8 +652,12 @@ export function scoreRoute2Own(input) {
       batteryService,
       dailyOpEx,
       protectedDaily,
+      /** ค่าที่นำไปแสดงผลทุกช่องทาง — ไม่ติดลบ */
+      availableCash,
+      /** ขาดอยู่เท่าไรก่อนถึงภาระผ่อน (แสดงแทนการโชว์ Available Cash ติดลบ) */
+      cashShortfallBeforeObligations,
+      /** ค่าดิบสำหรับวินิจฉัยภายในเท่านั้น ติดลบได้ ห้ามแสดงในชื่อ Available Cash */
       rawAvailDaily,
-      availDaily: rawAvailDaily,
       pmt,
       annualDebtService,
       paydRefDaily,
@@ -620,6 +675,9 @@ export function scoreRoute2Own(input) {
       rbpDay: customerRbpDay,
       customerRbpDay,
       guaranteeYear,
+      feeWaiverEnabled,
+      feeWaiverApplied,
+      feeWaiverStatus: FEE_WAIVER_STATUS,
       // PAYD / Reserve preview
       paydTarget,
       paydCapacity,
@@ -666,9 +724,9 @@ function buildReasons(x) {
   const reasons = [];
 
   reasons.push(
-    x.rawAvailDaily > 0
-      ? `Available Cash หลัง Eligible OpEx และ Protected Cash = ${baht(x.rawAvailDaily)} บาท/วัน`
-      : `Available Cash ติดลบ (${baht(x.rawAvailDaily)} บาท/วัน) — รายได้ยังไม่พอหลังหักต้นทุนและ Protected Cash`
+    x.cashShortfallBeforeObligations > 0
+      ? `Available Cash = 0 บาท/วัน — รายได้ยังขาดอีก ${baht(x.cashShortfallBeforeObligations)} บาท/วัน จึงจะครอบคลุม Eligible OpEx และ Protected Cash`
+      : `Available Cash หลัง Eligible OpEx และ Protected Cash = ${baht(x.availableCash)} บาท/วัน`
   );
 
   reasons.push(
@@ -742,9 +800,9 @@ function buildReasons(x) {
   );
 
   reasons.push(
-    x.guaranteeYear <= FEE_WAIVER_YEARS
-      ? `ปีที่ ${x.guaranteeYear} อยู่ใน Proposed RBP Fee Waiver ปี 1–${FEE_WAIVER_YEARS} — ผู้ขับยังไม่ถูกเรียกเก็บ RBP`
-      : `ปีที่ ${x.guaranteeYear} พ้นช่วง Fee Waiver — เริ่มเก็บ RBP ตาม Risk Tier`
+    x.feeWaiverApplied
+      ? `ปีที่ ${x.guaranteeYear} เปิดใช้ Proposed RBP Fee Waiver ปี 1–${FEE_WAIVER_YEARS} (${FEE_WAIVER_STATUS}) — ผู้ขับยังไม่ถูกเรียกเก็บ RBP ใน Scenario นี้`
+      : `RBP Fee Waiver ปิดอยู่ (${FEE_WAIVER_STATUS} — ยังไม่อยู่ใน Frozen Product Spec) ผู้ขับจึงถูกคิดค่าธรรมเนียมอ้างอิงตาม Risk Tier`
   );
 
   reasons.push(
