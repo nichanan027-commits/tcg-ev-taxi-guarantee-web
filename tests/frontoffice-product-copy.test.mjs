@@ -125,6 +125,32 @@ test('the allocation chart reads the same engine values as the Daily Financial X
   assert.match(chart, /breakeven-note/);
 });
 
+test('the affordability gap is an overlay on the uncovered obligations, never an extra segment', () => {
+  const chart = html.slice(
+    html.indexOf('function allocationChart('),
+    html.indexOf('function ', html.indexOf('function allocationChart(') + 10)
+  );
+
+  // segsTotal รวม PAYD + RBP + Reserve อยู่แล้ว การบวก gap เข้าไปในสเกลคือการนับซ้ำ
+  assert.doesNotMatch(chart, /segsTotal\s*\+\s*gapDaily/);
+  assert.match(chart, /const scale=Math\.max\(c\.verified,be\.dailyObligation,segsTotal,1\)/);
+
+  // hatch ต้องเริ่มที่จุดที่เงินของผู้ขับหมด ไม่ใช่ต่อท้าย segment สุดท้าย
+  assert.match(
+    chart,
+    /const affordabilityStart=c\.dailyOpEx\+c\.protectedDaily\+c\.availableCash;/
+  );
+  assert.match(chart, /x="\$\{\(\(affordabilityStart\/scale\)\*W\)\.toFixed\(1\)\}"/);
+  assert.doesNotMatch(chart, /x="\$\{\(\(segsTotal\/scale\)\*W\)/);
+
+  // ความกว้างของ hatch ต้องเท่ากับ affordabilityGap ตรง ๆ
+  assert.match(chart, /width="\$\{\(\(gapDaily\/scale\)\*W\)\.toFixed\(1\)\}"/);
+
+  // เส้นบอกรายได้ที่ Verify ได้ต้องยังอยู่
+  assert.match(chart, /stroke-dasharray/);
+  assert.match(chart, /incomeMark/);
+});
+
 test('principal sustainability status comes from the engine boolean, not a local threshold', () => {
   assert.doesNotMatch(html, /maturity\s*<=?\s*1000/);
   assert.doesNotMatch(legacy, /maturity\s*<=?\s*1000/);

@@ -236,6 +236,43 @@ test('the daily waterfall reconciles to residual cash minus the affordability ga
   }
 });
 
+test('the allocation geometry closes: the gap overlay ends exactly where obligations end', () => {
+  // เอกลักษณ์เชิงเรขาคณิตของกราฟ: จุดเริ่ม hatch + ความกว้าง hatch ต้องเท่ากับปลายแท่ง obligations
+  // ถ้าไม่จริง แปลว่ากราฟนับช่องว่างซ้ำ และผู้อ่านจะเห็นช่องว่างใหญ่เกินความจริง
+  for (const scenario of [
+    { grossDaily: 2200, verifiedPct: 95 }, // residual > 0
+    { grossDaily: 1400, verifiedPct: 90 },
+    { grossDaily: 1150, verifiedPct: 90, existingDebt: 2500 }, // gap > 0
+    { grossDaily: 700, verifiedPct: 95 } // available cash ถูก clamp ที่ 0
+  ]) {
+    const c = evaluate({ ...scenario, vehiclePrice: 800000, reserveBalance: 0 }).calc;
+
+    const segsTotal =
+      c.dailyOpEx +
+      c.protectedDaily +
+      c.paydTarget +
+      c.customerRbpDay +
+      c.reserveContributionPreview +
+      (c.residualCash > 0 ? c.residualCash : 0);
+    const affordabilityStart = c.dailyOpEx + c.protectedDaily + c.availableCash;
+
+    assert.equal(
+      Math.round((affordabilityStart + c.affordabilityGap) * 100),
+      Math.round(segsTotal * 100),
+      `gap overlay must end at the obligations edge for ${JSON.stringify(scenario)}`
+    );
+    assert.ok(
+      affordabilityStart + c.affordabilityGap <= segsTotal + 0.01,
+      'the gap must never extend past the obligations'
+    );
+
+    // เมื่อไม่ขาด แท่งต้อง reconcile เต็มกับรายได้ที่ Verify ได้
+    if (c.affordabilityGap === 0) {
+      assert.equal(Math.round(segsTotal * 100), Math.round(c.verified * 100));
+    }
+  }
+});
+
 test('design thresholds are exposed together with their calibration status', () => {
   const p = COMPETITION_DESIGN_PARAMETERS;
   assert.equal(p.status, CALIBRATION_STATUS);
