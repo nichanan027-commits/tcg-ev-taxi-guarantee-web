@@ -37,6 +37,11 @@ export async function POST(request: Request) {
 
   const { input, calc, readiness, reasons } = evaluate(body);
 
+  // rawAvailDaily เป็นค่าวินิจฉัยภายในที่ติดลบได้ จึงถูกตัดออกก่อน serialize
+  // ผู้เรียก API ต้องใช้ availableCash (ไม่ติดลบ) คู่กับ cashShortfallBeforeObligations
+  const { rawAvailDaily, ...publicCalc } = calc;
+  void rawAvailDaily;
+
   return NextResponse.json({
     product: PRODUCT_NAME,
     status: PRODUCT_STATUS,
@@ -71,7 +76,7 @@ export async function POST(request: Request) {
     disclaimer:
       "ผลลัพธ์นี้เป็นการประเมินความพร้อมเบื้องต้น ไม่ใช่การอนุมัติสินเชื่อ และไม่ผูกพันสถาบันการเงิน",
     input,
-    calc,
+    calc: publicCalc,
     readiness,
     reasons
   });

@@ -519,7 +519,10 @@ export function scoreRoute2Own(input) {
       : 0;
   // เงินคงเหลือหลังจัดสรร แยกเป็นสองค่า: ส่วนที่เหลือจริง กับส่วนที่ยังขาด
   // ค่าที่นำไปแสดงผลจึงไม่ติดลบ และ "ขาดเท่าไร" ถูกสื่อสารเป็นตัวเลขของตัวเอง
-  const netAfterAllocation = availableCash - paydTarget - reserveContributionPreview;
+  // ต้องหัก Customer RBP ด้วย เพราะเป็นเงินที่ผู้ขับจ่ายจริงต่อวัน จึงจะ reconcile กับ Waterfall
+  // หมายเหตุ: DSCR ยังคงเป็น FI debt-service-only ไม่รวม RBP ตามสถาปัตยกรรมที่ Freeze ไว้
+  const netAfterAllocation =
+    availableCash - paydTarget - customerRbpDay - reserveContributionPreview;
   const residualCash = Math.max(0, netAfterAllocation);
   const affordabilityGap = Math.max(0, -netAfterAllocation);
 

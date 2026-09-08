@@ -168,6 +168,74 @@ test('the RBP fee waiver is off by default and never changes the reference fee',
   assert.equal(on.calc.rbpReferenceDay, off.calc.rbpReferenceDay);
 });
 
+test('the residual/gap allocation deducts the customer RBP the driver actually pays', () => {
+  const base = {
+    grossDaily: 2200,
+    verifiedPct: 95,
+    vehiclePrice: 800000,
+    eligibleGuaranteedAmount: 800000,
+    rbpTier: 'B',
+    guaranteeYear: 1,
+    reserveBalance: 0
+  };
+
+  // Fee Waiver ปิด — ผู้ขับจ่าย RBP จริง เงินคงเหลือจึงต้องลดลงเท่ากับ customerRbpDay
+  const charged = evaluate(base).calc;
+  assert.ok(charged.customerRbpDay > 0, 'the default scenario must actually charge RBP');
+  assert.equal(
+    Math.round(charged.residualCash * 100),
+    Math.round(
+      (charged.availableCash -
+        charged.paydTarget -
+        charged.customerRbpDay -
+        charged.reserveContributionPreview) *
+        100
+    )
+  );
+
+  // Fee Waiver เปิด — เมื่อ input อื่นเท่ากัน เงินคงเหลือต้องเพิ่มขึ้นเท่ากับ RBP ที่ถูกยกเว้น
+  const waived = evaluate({ ...base, feeWaiverEnabled: true }).calc;
+  assert.equal(waived.customerRbpDay, 0);
+  assert.equal(waived.reserveContributionPreview, charged.reserveContributionPreview);
+  assert.equal(
+    Math.round((waived.residualCash - charged.residualCash) * 100),
+    Math.round(charged.customerRbpDay * 100),
+    'waiving the RBP must return exactly that amount to the driver'
+  );
+});
+
+test('the daily waterfall reconciles to residual cash minus the affordability gap', () => {
+  for (const scenario of [
+    { grossDaily: 2200, verifiedPct: 95 },
+    { grossDaily: 1400, verifiedPct: 90 },
+    { grossDaily: 900, verifiedPct: 95 }
+  ]) {
+    const c = evaluate({
+      ...scenario,
+      vehiclePrice: 800000,
+      eligibleGuaranteedAmount: 800000,
+      rbpTier: 'C',
+      guaranteeYear: 4,
+      reserveBalance: 0
+    }).calc;
+
+    // เอกลักษณ์ของ Waterfall: Available Cash − PAYD − RBP − Reserve = Residual − Gap
+    assert.equal(
+      Math.round(
+        (c.availableCash - c.paydTarget - c.customerRbpDay - c.reserveContributionPreview) * 100
+      ),
+      Math.round((c.residualCash - c.affordabilityGap) * 100),
+      `waterfall must reconcile for ${JSON.stringify(scenario)}`
+    );
+    assert.ok(c.residualCash >= 0);
+    assert.ok(c.affordabilityGap >= 0);
+    assert.ok(
+      c.residualCash === 0 || c.affordabilityGap === 0,
+      'residual and gap can never both be positive'
+    );
+  }
+});
+
 test('design thresholds are exposed together with their calibration status', () => {
   const p = COMPETITION_DESIGN_PARAMETERS;
   assert.equal(p.status, CALIBRATION_STATUS);

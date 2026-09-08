@@ -6,6 +6,7 @@ const html = readFileSync(new URL('../public/route2own.html', import.meta.url), 
 const engine = readFileSync(new URL('../public/route2own-engine.js', import.meta.url), 'utf8');
 const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
 const legacy = readFileSync(new URL('../app/legacy-score/page.tsx', import.meta.url), 'utf8');
+const scoreApi = readFileSync(new URL('../app/api/score/route.ts', import.meta.url), 'utf8');
 
 test('front office drops the retired four-outcome vocabulary', () => {
   assert.doesNotMatch(html, /Ready to Own/);
@@ -84,6 +85,16 @@ test('the UI never renders a negative Available Cash from the raw diagnostic', (
   assert.doesNotMatch(legacy, /rawAvailDaily/);
   assert.match(html, /money\(availableCash\)|money0\(c\.availableCash\)|'฿'\+money0\(c\.availableCash\)/);
   assert.match(legacy, /result\.calc\.availableCash/);
+});
+
+test('the public /api/score payload omits the internal raw diagnostic', () => {
+  // rawAvailDaily ต้องถูกถอดออกก่อน serialize และต้องไม่ถูกส่งกลับใน calc
+  assert.match(scoreApi, /const \{ rawAvailDaily, \.\.\.publicCalc \} = calc;/);
+  assert.match(scoreApi, /calc: publicCalc/);
+  assert.doesNotMatch(scoreApi, /^\s*calc,\s*$/m);
+  // ค่าที่ใช้แสดงผลต้องยังอยู่ครบใน publicCalc ผ่าน engine
+  assert.match(engine, /availableCash,/);
+  assert.match(engine, /cashShortfallBeforeObligations,/);
 });
 
 test('principal sustainability status comes from the engine boolean, not a local threshold', () => {
