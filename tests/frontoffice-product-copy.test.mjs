@@ -149,6 +149,13 @@ test('the affordability gap is an overlay on the uncovered obligations, never an
   // เส้นบอกรายได้ที่ Verify ได้ต้องยังอยู่
   assert.match(chart, /stroke-dasharray/);
   assert.match(chart, /incomeMark/);
+
+  // metadata สำหรับ browser test — ต้องผูกกับ data-role ไม่ใช่สีหรือ <title>
+  assert.match(chart, /data-role="affordability-gap"/);
+  assert.match(chart, /data-role="verified-income-marker"/);
+  // hatch ต้องถูกวาดเฉพาะเมื่อขาดจริง จึงอยู่ในฝั่ง truthy ของ gapDaily>0 เท่านั้น
+  assert.match(chart, /const deficit=gapDaily>0\?`<rect data-role="affordability-gap"/);
+  assert.match(chart, /height="\$\{H\}" fill="url\(#v4hatch\)"><title>Affordability Gap:[^`]*`:''/);
 });
 
 test('principal sustainability status comes from the engine boolean, not a local threshold', () => {

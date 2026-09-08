@@ -846,10 +846,10 @@ function allocationChart(c){
   x+=(sg.v/scale)*W;return rect;
  }).join('');
  /* hatch ทับ obligations ส่วนที่ยังไม่ถูก cover — เรียกว่า Affordability Gap ไม่ใช่ Residual */
- const deficit=gapDaily>0?`<rect x="${((affordabilityStart/scale)*W).toFixed(1)}" y="0" width="${((gapDaily/scale)*W).toFixed(1)}" height="${H}" fill="url(#v4hatch)"><title>Affordability Gap: ขาด ${money0(gapDaily)} บาท/วัน</title></rect>`:'';
+ const deficit=gapDaily>0?`<rect data-role="affordability-gap" x="${((affordabilityStart/scale)*W).toFixed(1)}" y="0" width="${((gapDaily/scale)*W).toFixed(1)}" height="${H}" fill="url(#v4hatch)"><title>Affordability Gap: ขาด ${money0(gapDaily)} บาท/วัน</title></rect>`:'';
  /* เส้นบอกตำแหน่งรายได้ที่ Verify ได้ เพื่อไม่ให้แท่งสีสื่อว่ารายได้ครอบคลุมทุกก้อนทั้งที่ยังขาด */
  const incomeX=Math.min(W,(c.verified/scale)*W);
- const incomeMark=`<line x1="${incomeX.toFixed(1)}" y1="0" x2="${incomeX.toFixed(1)}" y2="${H}" stroke="var(--text)" stroke-width="2" stroke-dasharray="4 3" opacity=".7"><title>รายได้ที่ Verify ได้ ${money0(c.verified)} บาท/วัน — ส่วนที่อยู่ขวาของเส้นนี้คือภาระที่รายได้ยังไปไม่ถึง</title></line>`;
+ const incomeMark=`<line data-role="verified-income-marker" x1="${incomeX.toFixed(1)}" y1="0" x2="${incomeX.toFixed(1)}" y2="${H}" stroke="var(--text)" stroke-width="2" stroke-dasharray="4 3" opacity=".7"><title>รายได้ที่ Verify ได้ ${money0(c.verified)} บาท/วัน — ส่วนที่อยู่ขวาของเส้นนี้คือภาระที่รายได้ยังไปไม่ถึง</title></line>`;
  const legend=segs.map(sg=>`<span><i style="background:${sg.col}"></i>${sg.k} <small>฿${money0(sg.v)}</small></span>`).join('');
  const margin=be.marginDaily;
  const note=margin>=0
