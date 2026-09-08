@@ -1,15 +1,24 @@
-/** Type declarations for the shared Route2Own engine (public/route2own-engine.js) */
+/** Type declarations for the shared Route to Own engine (public/route2own-engine.js) */
 
 export type EnergyMode = "included" | "excluded";
 export type RbpTier = "A" | "B" | "C";
-export type Route = "OWN READY" | "BUILD READINESS" | "NO NEW DEBT";
-export type DataConfidence = "HIGH" | "MEDIUM" | "LOW";
+
+/** ผลลัพธ์สาธารณะของ Front Office มีเพียงสามเส้นทาง */
+export type Route = "READY FOR FI" | "BUILD READINESS" | "NO NEW DEBT";
+
+/** ข้อความสาธารณะของแต่ละเส้นทาง — ต่างจากรหัสภายในโดยเจตนา */
+export type RouteLabel =
+  | "READY FOR FI"
+  | "BUILD READINESS / CONTINUE TO LEASE"
+  | "NO NEW DEBT";
+
+/** คิดจากสัดส่วนรายได้ที่ตรวจสอบย้อนกลับได้เท่านั้น */
+export type IncomeEvidenceReliability = "HIGH" | "MEDIUM" | "LOW";
+/** Cross-Validation ของข้อมูลกิจกรรม — ไม่ใช่หลักฐานรายได้ */
+export type ActivityEvidenceStatus = "CONSISTENT" | "REVIEW" | "LIMITED";
+
 export type RiskLevel = "good" | "watch" | "risk";
-export type ReadinessLevelCode =
-  | "READY_TO_OWN"
-  | "BUILD_READINESS"
-  | "NEED_SUPPORT"
-  | "START_WITH_FOUNDATION";
+export type DemoCaseId = "READY" | "BUILD" | "NODEBT";
 
 export type ScoreInput = {
   grossDaily: number;
@@ -23,7 +32,8 @@ export type ScoreInput = {
   chargingKm: number;
   downtimeDays: number;
   gpsComplete: number;
-  baasDaily: number;
+  /** ค่าบริการแบตเตอรี่ / การสลับ — แยกจากสินเชื่อซื้อรถ */
+  batteryServiceDaily: number;
   energyIncluded: EnergyMode;
   electricityRate: number;
   kwhKm: number;
@@ -35,8 +45,12 @@ export type ScoreInput = {
   householdMonthly: number;
   nextShiftDaily: number;
   vehiclePrice: number;
-  downPayment: number;
+  /** แบบผลิตภัณฑ์หลักล็อกไว้ที่ 0 เสมอ */
+  downPayment: 0;
   loanNeed: number;
+  /** วงเงินค้ำที่เข้าเกณฑ์ใน Scenario — ไม่เกิน loanNeed */
+  eligibleGuaranteedAmount: number;
+  reserveBalance: number;
   interest: number;
   tenor: number;
   rbpTier: RbpTier;
@@ -61,9 +75,9 @@ export type BreakEven = {
   marginDaily: number;
   marginPct: number;
   marginMonthly: number;
-  baasDaily: number;
-  baasShareOfVerified: number;
-  baasShareOfObligation: number;
+  batteryServiceDaily: number;
+  batteryShareOfVerified: number;
+  batteryShareOfObligation: number;
   breakEvenWorkDays: number;
 };
 
@@ -79,12 +93,11 @@ export type ScoreCalc = {
   tire: number;
   ins: number;
   other: number;
-  baas: number;
+  batteryService: number;
   dailyOpEx: number;
   protectedDaily: number;
   rawAvailDaily: number;
   availDaily: number;
-  sweepableCash: number;
   pmt: number;
   annualDebtService: number;
   paydRefDaily: number;
@@ -93,19 +106,27 @@ export type ScoreCalc = {
   dscr15: number;
   dscr30: number;
   pai: number;
-  coveragePct: number;
-  guaranteedOutstanding: number;
+  eligibleGuaranteedAmount: number;
   rbpRate: number;
-  rbpDayCountBasis: number;
-  rbpStatus: "Proposed – Calibration Required";
+  rbpDayCountBasis: 365;
+  rbpStatus: string;
   rbpReferenceDay: number;
   rbpDay: number;
   customerRbpDay: number;
   guaranteeYear: number;
-  monitoring: number;
-  cure: number;
-  remaining: number;
+  /** PAYD และ Reserve ในระบบนี้เป็น Preview เท่านั้น การหักเงินจริงเกิดหลัง FI อนุมัติ */
+  paydTarget: number;
+  paydCapacity: number;
+  reserveTarget: number;
+  reserveBalance: number;
+  reserveContributionPreview: number;
+  /** เหลือหลังจัดสรรแล้ว — ไม่ติดลบเสมอ */
+  residualCash: number;
+  /** ยังขาดเท่าไรจึงจะรองรับ PAYD Target และเงินสำรอง — ไม่ติดลบเสมอ */
+  affordabilityGap: number;
   maturity: number;
+  affordabilityPassed: boolean;
+  principalSustainabilityPassed: boolean;
   currentCost: number;
   evExpense: number;
   tcoDelta: number;
@@ -117,23 +138,6 @@ export type ScoreCalc = {
   breakEven: BreakEven;
 };
 
-export type Readiness = {
-  route: Route;
-  tier: RbpTier | "—";
-  dataConfidence: DataConfidence;
-  readinessScore: number;
-  riskLevel: RiskLevel;
-  noLoan: boolean;
-  breakdown: ReadinessComponent[];
-  level: ReadinessLevel;
-  recommendations: ReadinessRecommendation[];
-  preScore: {
-    status: "COMPLETED";
-    score: number;
-    method: string;
-  };
-};
-
 export type ReadinessComponent = {
   id: string;
   label: string;
@@ -143,25 +147,46 @@ export type ReadinessComponent = {
   improvementActions: string[];
 };
 
-export type ReadinessLevel = {
-  code: ReadinessLevelCode;
-  label: string;
-  caseId: "A" | "B" | "C" | "F";
-  fiHandoffEligible: boolean;
-  planDays: number;
-  supportReferral: boolean;
-};
-
 export type ReadinessRecommendation = {
   componentId: string;
   title: string;
   reason: string;
 };
 
+export type Readiness = {
+  route: Route;
+  /** เสนอ Indicative Tier เฉพาะเมื่อเส้นทางเป็น READY FOR FI */
+  tier: RbpTier | "—";
+  incomeEvidenceReliability: IncomeEvidenceReliability;
+  activityEvidenceStatus: ActivityEvidenceStatus;
+  /** คะแนนอธิบายได้ 0–100 — ประกอบการสื่อสาร ไม่ใช่ตัวกำหนดเส้นทาง */
+  readinessScore: number;
+  riskLevel: RiskLevel;
+  noLoan: boolean;
+  breakdown: ReadinessComponent[];
+  recommendations: ReadinessRecommendation[];
+  preScore: {
+    status: "COMPLETED";
+    score: number;
+    method: string;
+  };
+};
+
 export type FollowUpQuestion = {
   id: string;
   question: string;
   options: string[];
+};
+
+export type DemoCase = {
+  label: string;
+  route: Route;
+  input: ScoreInput;
+};
+
+export type FiHandoffDecision = {
+  eligible: boolean;
+  reason: "INTEGRITY_REVIEW" | "READY_FOR_FI" | "BUILD_READINESS" | "NO_NEW_DEBT";
 };
 
 export type ScoreResult = {
@@ -172,18 +197,30 @@ export type ScoreResult = {
 
 export type EvaluateResult = ScoreResult & { input: ScoreInput };
 
-export declare const SCENARIO_V13: ScoreInput;
-export declare const DEMO_CASES: Record<"A" | "B" | "C" | "F", { label: string; input: ScoreInput }>;
+export declare const PRODUCT_NAME: string;
+export declare const PRODUCT_STATUS: "FINAL / FROZEN FOR COMPETITION";
+export declare const SIMULATION_LABEL: string;
+export declare const SCENARIO_COMPETITION: ScoreInput;
+export declare const ROUTES: {
+  READY_FOR_FI: "READY FOR FI";
+  BUILD_READINESS: "BUILD READINESS";
+  NO_NEW_DEBT: "NO NEW DEBT";
+};
+/** ข้อความที่แสดงต่อผู้ใช้ แยกจากรหัสเส้นทางภายใน */
+export declare const ROUTE_LABELS: Record<Route, RouteLabel>;
+export declare function routeLabelOf(route: Route): RouteLabel | "";
+export declare const DEMO_CASES: Record<DemoCaseId, DemoCase>;
 export declare const FOLLOW_UP_QUESTIONS: FollowUpQuestion[];
 export declare const RBP_RATE: Record<RbpTier, number>;
 export declare const RBP_DAY_COUNT_BASIS: 365;
-export declare const RBP_STATUS: "Proposed – Calibration Required";
-export declare const GUARANTEE_COVERAGE: number;
-export declare const MONITORING_DAILY: number;
-export declare const CURE_RESERVE_CAP: number;
+export declare const RBP_STATUS: string;
+export declare const RESERVE_CONTRIBUTION_RATE: number;
+export declare const RESERVE_TARGET_DAYS: number;
+export declare const ELIGIBLE_GUARANTEE_DESIGN_PARAMETER: number;
 export declare const FEE_WAIVER_YEARS: number;
 export declare const DSCR_GATE: number;
-export declare const MATURITY_TOLERANCE: number;
+/** ค่าคลาดเคลื่อนจากการปัดเศษ ไม่ใช่ Policy Threshold */
+export declare const PRINCIPAL_CLOSE_EPSILON: number;
 export declare const RISK_LEVELS: { GOOD: "good"; WATCH: "watch"; RISK: "risk" };
 
 export declare function num(value: unknown, fallback: number): number;
@@ -196,15 +233,14 @@ export declare function buildSchedule(
   months: number,
   payment: number
 ): { rows: ScheduleRow[]; amortizes: boolean; finalBalance: number };
-export declare function readinessLevelOf(score: unknown): ReadinessLevel;
-export declare function fiHandoffDecisionOf(
-  score: unknown,
-  integrityVerified: boolean
-): {
-  eligible: boolean;
-  reason: "INTEGRITY_REVIEW" | "READINESS_PACKAGE_ALLOWED" | "FOUNDATION_REQUIRED";
-  level: ReadinessLevel;
-};
+export declare function incomeEvidenceReliabilityOf(verifiedPct: unknown): IncomeEvidenceReliability;
+export declare function activityEvidenceStatusOf(gpsComplete: unknown): ActivityEvidenceStatus;
+export declare function appropriateRouteOf(args: {
+  affordabilityPassed: boolean;
+  principalSustainabilityPassed: boolean;
+  incomeEvidenceReliability: IncomeEvidenceReliability;
+}): Route;
+export declare function fiHandoffDecisionOf(route: Route, integrityVerified: boolean): FiHandoffDecision;
 export declare function readinessBreakdownOf(input: ScoreInput, metrics: {
   verified: number;
   dscr: number;
