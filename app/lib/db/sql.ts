@@ -101,9 +101,18 @@ export function createSqlClient(): SqlClient {
   const url = process.env.DATABASE_URL;
   if (url) return createNeonClient(url);
 
-  if (process.env.NODE_ENV === "production" && process.env.ALLOW_EPHEMERAL_DB !== "true") {
+  // อันตรายจริงคือดิสก์ของ serverless ที่ไม่คงอยู่ข้าม request ไม่ใช่ค่า NODE_ENV
+  // การรัน `next start` ในเครื่องจึงยังใช้ PGlite ได้ ส่วนการ deploy จริงต้องมี DATABASE_URL
+  const isServerlessDeploy = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+  if (isServerlessDeploy && process.env.ALLOW_EPHEMERAL_DB !== "true") {
     throw new Error(
-      "DATABASE_URL is required in production. PGlite เขียนลงดิสก์ชั่วคราวของ serverless ซึ่งไม่คงอยู่ข้าม request"
+      "DATABASE_URL is required on a serverless deployment. PGlite เขียนลงดิสก์ชั่วคราวซึ่งไม่คงอยู่ข้าม request"
+    );
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    console.warn(
+      "[route2own] DATABASE_URL ไม่ได้ตั้งไว้ — กำลังใช้ PGlite ในเครื่อง ข้อมูลจะอยู่เท่าที่โปรเซสนี้ยังทำงาน"
     );
   }
 

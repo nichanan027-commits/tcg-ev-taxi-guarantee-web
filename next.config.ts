@@ -8,7 +8,10 @@ import type { NextConfig } from "next";
  * ในฐานะ reference implementation ที่ไม่ถูกแก้
  */
 const nextConfig: NextConfig = {
-  reactStrictMode: true
+  reactStrictMode: true,
+  // PGlite โหลด WASM ของตัวเอง จึงต้องอยู่นอก bundle ของเซิร์ฟเวอร์
+  // ไม่กระทบ production ที่ใช้ DATABASE_URL เพราะไดรเวอร์นั้นถูก import แบบ lazy
+  serverExternalPackages: ["@electric-sql/pglite"]
 };
 
 export default nextConfig;
