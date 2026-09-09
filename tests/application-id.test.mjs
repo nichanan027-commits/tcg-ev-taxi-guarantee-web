@@ -11,6 +11,14 @@ import {
 import { listConsents, recordCompetitionConsent } from "../app/lib/registration/consent-service.ts";
 
 const registrationInput = {
+  eligibility: {
+    taxiOccupationStatus: "ACTIVE_TAXI_DRIVER",
+    publicDriverLicenseStatus: "TO_VERIFY",
+    currentVehicleRelationship: "RENT",
+    yearsProfessionalDriving: 6,
+    serviceProvince: "กรุงเทพมหานคร",
+    occupationalEvidenceStatus: "DECLARED"
+  },
   profile: {
     displayName: "ผู้ทดลอง",
     phone: "0812345678",
@@ -20,10 +28,11 @@ const registrationInput = {
     ownershipGoal: "OWN_WITHIN_5_YEARS"
   },
   financial: {
-    averageDailyIncome: 1850.52,
-    incomeChannels: ["APP_TRANSFER", "CASH"],
+    incomeEntries: [
+      { channel: "PLATFORM", dailyAmount: 1200, hasTransactionEvidence: true },
+      { channel: "CASH", dailyAmount: 650.52, hasTransactionEvidence: false }
+    ],
     workingDaysPerMonth: 26,
-    verifiedPct: 85,
     currentRentDaily: 700,
     fuelDaily: 300,
     batteryServiceDaily: 0,
@@ -101,12 +110,12 @@ test("saving registration data persists profile and financial inputs and advance
   assert.equal(updated.status, "DATA_COMPLETE");
   assert.equal(updated.profile.displayName, "ผู้ทดลอง");
   assert.equal(updated.profile.province, "กรุงเทพมหานคร");
-  assert.equal(updated.financial.averageDailyIncome, 1850.52);
+  assert.equal(updated.financial.incomeEntries.length, 2);
   assert.equal(updated.financial.vehicleId, "AION_ES");
   assert.equal(updated.financial.workingDaysPerMonth, 26);
 
   const reloaded = await getApplication(application.id);
-  assert.equal(reloaded.financial.averageDailyIncome, 1850.52, "money survives the round trip exactly");
+  assert.equal(reloaded.financial.incomeEntries[0].dailyAmount, 1200, "money survives the round trip exactly");
   assert.equal(reloaded.profile.yearsDriving, 6);
 });
 
@@ -114,11 +123,12 @@ test("saving rejects unknown and sensitive fields instead of storing them", asyn
   const application = await createApplication();
   const updated = await updateApplication(application.id, {
     profile: { ...registrationInput.profile, nationalId: "1234567890123" },
+    eligibility: { ...registrationInput.eligibility, licenseNumber: "ก-1234" },
     financial: { ...registrationInput.financial, bankAccountNumber: "1234567890" }
   });
 
   const serialized = JSON.stringify(updated);
-  assert.doesNotMatch(serialized, /nationalId|bankAccountNumber|1234567890123/);
+  assert.doesNotMatch(serialized, /nationalId|bankAccountNumber|licenseNumber|1234567890123|ก-1234/);
 });
 
 test("invalid registration data is rejected and nothing is persisted", async () => {
@@ -126,7 +136,8 @@ test("invalid registration data is rejected and nothing is persisted", async () 
   await assert.rejects(() =>
     updateApplication(application.id, {
       profile: registrationInput.profile,
-      financial: { ...registrationInput.financial, averageDailyIncome: -100 }
+      eligibility: registrationInput.eligibility,
+      financial: { ...registrationInput.financial, workingDaysPerMonth: 0 }
     })
   );
 

@@ -23,11 +23,19 @@ const baseProfile = {
   ownershipGoal: "OWN_WITHIN_5_YEARS"
 };
 
+const baseEligibility = {
+  taxiOccupationStatus: "ACTIVE_TAXI_DRIVER",
+  publicDriverLicenseStatus: "TO_VERIFY",
+  currentVehicleRelationship: "RENT",
+  yearsProfessionalDriving: 6,
+  serviceProvince: "กรุงเทพมหานคร",
+  occupationalEvidenceStatus: "DECLARED"
+};
+
+// เคสฐาน: รายได้เกือบทั้งหมดมีหลักฐานธุรกรรมรองรับ
 const baseFinancial = {
-  averageDailyIncome: 2200,
-  incomeChannels: ["APP_TRANSFER"],
+  incomeEntries: [{ channel: "PLATFORM", dailyAmount: 2200, hasTransactionEvidence: true }],
   workingDaysPerMonth: 26,
-  verifiedPct: 95,
   currentRentDaily: 700,
   fuelDaily: 300,
   batteryServiceDaily: 0,
@@ -46,6 +54,7 @@ async function applicationWith(financial) {
   await recordCompetitionConsent(application.id);
   await updateApplication(application.id, {
     profile: baseProfile,
+    eligibility: baseEligibility,
     financial: { ...baseFinancial, ...financial }
   });
   return application.id;
@@ -65,7 +74,7 @@ test("a healthy applicant is routed READY FOR FI and the snapshot records it", a
 });
 
 test("an evidence-poor but affordable applicant is routed BUILD READINESS", async () => {
-  const id = await applicationWith({ averageDailyIncome: 3000, verifiedPct: 55, activityConsistency: 60 });
+  const id = await applicationWith({ incomeEntries: [{ channel: "PLATFORM", dailyAmount: 1650, hasTransactionEvidence: true }, { channel: "CASH", dailyAmount: 1350, hasTransactionEvidence: false }], activityConsistency: 60 });
   const snapshot = await evaluateApplication(id);
 
   // Snapshot เก็บรหัสภายในของ engine ส่วนป้ายสาธารณะเป็นคนละค่า
@@ -75,7 +84,7 @@ test("an evidence-poor but affordable applicant is routed BUILD READINESS", asyn
 });
 
 test("the applicant never sees the raw NO NEW DEBT code", async () => {
-  const id = await applicationWith({ averageDailyIncome: 1150, existingDebtMonthly: 2500 });
+  const id = await applicationWith({ incomeEntries: [{ channel: "PLATFORM", dailyAmount: 1150, hasTransactionEvidence: true }], existingDebtMonthly: 2500 });
   const snapshot = await evaluateApplication(id);
 
   assert.equal(snapshot.route, "NO NEW DEBT", "รหัสภายในต้องไม่เปลี่ยน");
@@ -90,7 +99,7 @@ test("only READY FOR FI may hand off, and both other routes may ask F.A Center",
   assert.equal(canRequestFaAdvisory(ready.route), false);
 
   const build = await evaluateApplication(
-    await applicationWith({ averageDailyIncome: 3000, verifiedPct: 55, activityConsistency: 60 })
+    await applicationWith({ incomeEntries: [{ channel: "PLATFORM", dailyAmount: 1650, hasTransactionEvidence: true }, { channel: "CASH", dailyAmount: 1350, hasTransactionEvidence: false }], activityConsistency: 60 })
   );
   assert.equal(canHandoffToFi(build.route), false);
   assert.equal(canRequestFaAdvisory(build.route), true);
@@ -98,8 +107,7 @@ test("only READY FOR FI may hand off, and both other routes may ask F.A Center",
 
 test("a failed affordability is NO NEW DEBT and a high pre-score cannot override it", async () => {
   const id = await applicationWith({
-    averageDailyIncome: 1150,
-    verifiedPct: 90,
+    incomeEntries: [{ channel: "PLATFORM", dailyAmount: 1150, hasTransactionEvidence: true }],
     activityConsistency: 100,
     existingDebtMonthly: 2500
   });
@@ -116,7 +124,7 @@ test("a failed affordability is NO NEW DEBT and a high pre-score cannot override
 
 test("no tier is offered unless the applicant is READY FOR FI", async () => {
   const noDebt = await evaluateApplication(
-    await applicationWith({ averageDailyIncome: 1150, existingDebtMonthly: 2500 })
+    await applicationWith({ incomeEntries: [{ channel: "PLATFORM", dailyAmount: 1150, hasTransactionEvidence: true }], existingDebtMonthly: 2500 })
   );
   assert.equal(noDebt.tier, null);
 
@@ -145,11 +153,11 @@ test("each evaluation appends an immutable snapshot instead of updating the prev
 });
 
 test("reassessment after improving the inputs creates a new snapshot and keeps the old one", async () => {
-  const id = await applicationWith({ averageDailyIncome: 1150, existingDebtMonthly: 2500 });
+  const id = await applicationWith({ incomeEntries: [{ channel: "PLATFORM", dailyAmount: 1150, hasTransactionEvidence: true }], existingDebtMonthly: 2500 });
   const before = await evaluateApplication(id);
   assert.equal(before.route, "NO NEW DEBT");
 
-  await updateApplication(id, { profile: baseProfile, financial: baseFinancial });
+  await updateApplication(id, { profile: baseProfile, eligibility: baseEligibility, financial: baseFinancial });
   const after = await evaluateApplication(id);
 
   assert.equal(after.route, "READY FOR FI");
@@ -167,7 +175,7 @@ test("the snapshot carries the financial passport identity the screen will displ
   // Verified Revenue − Eligible OpEx − Protected Cash = Available Cash
   assert.equal(
     Math.round(s.availableCash * 100),
-    Math.round(Math.max(0, s.verifiedRevenue - s.eligibleOpEx - s.protectedCash) * 100)
+    Math.round(Math.max(0, s.assessmentRevenue - s.eligibleOpEx - s.protectedCash) * 100)
   );
   assert.ok(s.availableCash >= 0);
   assert.ok(s.estimatedObligation > 0);
@@ -177,7 +185,7 @@ test("the snapshot carries the financial passport identity the screen will displ
 });
 
 test("reason codes are structured and explain the route", async () => {
-  const id = await applicationWith({ averageDailyIncome: 1150, existingDebtMonthly: 2500 });
+  const id = await applicationWith({ incomeEntries: [{ channel: "PLATFORM", dailyAmount: 1150, hasTransactionEvidence: true }], existingDebtMonthly: 2500 });
   const s = await evaluateApplication(id);
 
   assert.ok(Array.isArray(s.reasonCodes));

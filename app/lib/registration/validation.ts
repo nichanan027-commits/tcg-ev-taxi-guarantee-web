@@ -1,7 +1,11 @@
 import { z } from "zod";
 
 import { competitionConfig } from "../config/competition.ts";
-import { DRIVER_STATUSES, INCOME_CHANNELS, OWNERSHIP_GOALS, VEHICLE_IDS } from "./types.ts";
+import { BasicEligibilitySchema } from "../eligibility/types.ts";
+import { assessRevenue, engineVerifiedPct } from "../evidence/revenue-assessment.ts";
+import { INCOME_CHANNELS } from "../evidence/types.ts";
+import type { RevenueAssessment } from "../evidence/types.ts";
+import { DRIVER_STATUSES, OWNERSHIP_GOALS, VEHICLE_IDS } from "./types.ts";
 import type { RegistrationInput } from "./types.ts";
 
 /**
@@ -40,10 +44,20 @@ export const ProfileInputSchema = z.object({
 });
 
 export const FinancialInputSchema = z.object({
-  averageDailyIncome: money("รายได้เฉลี่ยต่อวัน"),
-  incomeChannels: z.array(z.enum(INCOME_CHANNELS)).min(1, "เลือกช่องทางรายได้อย่างน้อย 1 ช่องทาง"),
+  /**
+   * รายได้รายช่องทางพร้อมสถานะหลักฐาน
+   * นี่คือแหล่งข้อมูลจริงของรายได้ ไม่ใช่ตัวเลขรวมที่พิมพ์มาลอย ๆ
+   */
+  incomeEntries: z
+    .array(
+      z.object({
+        channel: z.enum(INCOME_CHANNELS),
+        dailyAmount: money("รายได้ต่อวันของช่องทาง"),
+        hasTransactionEvidence: z.boolean().default(false)
+      })
+    )
+    .min(1, "ระบุรายได้อย่างน้อย 1 ช่องทาง"),
   workingDaysPerMonth: z.number().int().min(1, "วันทำงานต่อเดือนต้องมากกว่า 0").max(31),
-  verifiedPct: percent("สัดส่วนรายได้ที่ตรวจสอบย้อนกลับได้"),
   currentRentDaily: money("ค่าเช่ารถปัจจุบันต่อวัน"),
   fuelDaily: money("ค่าเชื้อเพลิงต่อวัน"),
   batteryServiceDaily: money("ค่าบริการแบตเตอรี่ต่อวัน"),
@@ -59,13 +73,23 @@ export const FinancialInputSchema = z.object({
 
 export const RegistrationInputSchema = z.object({
   profile: ProfileInputSchema,
+  eligibility: BasicEligibilitySchema,
   financial: FinancialInputSchema
 });
 
 export const PartialRegistrationInputSchema = z.object({
   profile: ProfileInputSchema.optional(),
+  eligibility: BasicEligibilitySchema.optional(),
   financial: FinancialInputSchema.optional()
 });
+
+/** ประเมินหลักฐานรายได้จากข้อมูลที่บันทึกไว้ */
+export function revenueAssessmentOf(input: RegistrationInput): RevenueAssessment {
+  return assessRevenue({
+    entries: input.financial.incomeEntries,
+    activityConsistency: input.financial.activityConsistency
+  });
+}
 
 export type ParsedRegistrationInput = z.infer<typeof RegistrationInputSchema>;
 
@@ -76,11 +100,14 @@ export type ParsedRegistrationInput = z.infer<typeof RegistrationInputSchema>;
  * เพื่อไม่ให้สนามใหม่ในอนาคตหลุดเข้าไปถึง Engine โดยไม่ตั้งใจ
  * เงินดาวน์ผู้ขับถูกตรึงไว้ที่ 0 ตามแบบผลิตภัณฑ์หลัก
  */
-export function toEngineInput(input: RegistrationInput) {
+export function toEngineInput(input: RegistrationInput, assessment?: RevenueAssessment) {
   const f = input.financial;
+  const revenue = assessment ?? revenueAssessmentOf(input);
   return {
-    grossDaily: f.averageDailyIncome,
-    verifiedPct: f.verifiedPct,
+    // ตัวเลขที่นำไปประเมิน = จำนวนที่ผู้สมัครระบุ แต่ไม่ได้ถูกเรียกว่า Verified
+    grossDaily: revenue.assessmentDailyRevenue,
+    // สัดส่วนหลักฐานคำนวณจากหลักฐานจริง ผู้สมัครพิมพ์เองไม่ได้อีกต่อไป
+    verifiedPct: engineVerifiedPct(revenue),
     workingDays: f.workingDaysPerMonth,
     rentDaily: f.currentRentDaily,
     fuelDaily: f.fuelDaily,

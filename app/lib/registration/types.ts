@@ -1,4 +1,6 @@
 import type { ApplicationStatus, CanonicalRoute, FaCaseStatus, FiSourceStatus } from "../config/competition.ts";
+import type { BasicEligibility } from "../eligibility/types.ts";
+import type { IncomeChannelEntry, RevenueAssessment, RevenueEvidenceStatus } from "../evidence/types.ts";
 
 /** รหัสรถที่รองรับในโหมดการแข่งขัน */
 export const VEHICLE_IDS = ["AION_ES", "AION_Y_PLUS", "AION_UT", "AION_V", "OTHER"] as const;
@@ -9,9 +11,6 @@ export type DriverStatus = (typeof DRIVER_STATUSES)[number];
 
 export const OWNERSHIP_GOALS = ["OWN_WITHIN_3_YEARS", "OWN_WITHIN_5_YEARS", "STILL_DECIDING"] as const;
 export type OwnershipGoal = (typeof OWNERSHIP_GOALS)[number];
-
-export const INCOME_CHANNELS = ["APP_TRANSFER", "CASH", "BANK_TRANSFER", "CORPORATE_CONTRACT"] as const;
-export type IncomeChannel = (typeof INCOME_CHANNELS)[number];
 
 export type ProfileInput = {
   displayName: string;
@@ -24,10 +23,9 @@ export type ProfileInput = {
 };
 
 export type FinancialInput = {
-  averageDailyIncome: number;
-  incomeChannels: IncomeChannel[];
+  /** รายได้รายช่องทางพร้อมสถานะหลักฐาน — แหล่งข้อมูลจริงของรายได้ */
+  incomeEntries: IncomeChannelEntry[];
   workingDaysPerMonth: number;
-  verifiedPct: number;
   currentRentDaily: number;
   fuelDaily: number;
   batteryServiceDaily: number;
@@ -43,8 +41,12 @@ export type FinancialInput = {
 
 export type RegistrationInput = {
   profile: ProfileInput;
+  eligibility: BasicEligibilityLike;
   financial: FinancialInput;
 };
+
+/** Basic Eligibility ที่ยังไม่ผ่านการ derive สถานะข้อความ */
+export type BasicEligibilityLike = Omit<BasicEligibility, "verified" | "statusCopy" | "identityState">;
 
 export type ApplicationRecord = {
   id: string;
@@ -53,6 +55,7 @@ export type ApplicationRecord = {
   updatedAt: string;
   piiAnonymizedAt: string | null;
   profile: ProfileInput | null;
+  eligibility: BasicEligibilityLike | null;
   financial: FinancialInput | null;
 };
 
@@ -93,9 +96,18 @@ export type EvaluationSnapshot = {
   id: string;
   applicationId: string;
   inputVersion: number;
+  basicEligibility: BasicEligibility | null;
+  /** สามชั้นของรายได้ที่ต้องไม่ถูกยุบรวมกัน */
+  revenue: {
+    declaredDailyRevenue: number;
+    assessmentDailyRevenue: number;
+    verifiedDailyRevenue: number | null;
+    evidenceStatus: RevenueEvidenceStatus;
+  };
   vehicleScenario: VehicleScenario;
   financingScenario: FinancingScenario;
-  verifiedRevenue: number;
+  /** ตัวเลขที่ engine ใช้ประเมิน — ดู revenue.evidenceStatus ประกอบเสมอ */
+  assessmentRevenue: number;
   eligibleOpEx: number;
   protectedCash: number;
   availableCash: number;
@@ -112,7 +124,7 @@ export type EvaluationSnapshot = {
   reasonCodes: ReasonCode[];
   rbpTier: string | null;
   rbpRate: number | null;
-  eligibleGuaranteedAmount: number | null;
+  indicativeGuaranteeEligibleBase: number | null;
   engineStatus: string;
   specVersion: string;
   evaluatedAt: string;

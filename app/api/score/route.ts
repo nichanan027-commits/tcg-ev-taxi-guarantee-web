@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     rbpPolicy: {
       rates: RBP_RATE,
       dayCountBasis: RBP_DAY_COUNT_BASIS,
-      base: "Eligible Guaranteed Amount",
+      base: "Indicative Guarantee-Eligible Base",
       status: RBP_STATUS
     },
     feeWaiver: {

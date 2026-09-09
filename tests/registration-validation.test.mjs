@@ -19,10 +19,11 @@ const validProfile = {
 };
 
 const validFinancial = {
-  averageDailyIncome: 1850.52,
-  incomeChannels: ["APP_TRANSFER", "CASH"],
+  incomeEntries: [
+    { channel: "PLATFORM", dailyAmount: 1200, hasTransactionEvidence: true },
+    { channel: "CASH", dailyAmount: 650.52, hasTransactionEvidence: false }
+  ],
   workingDaysPerMonth: 26,
-  verifiedPct: 85,
   currentRentDaily: 700,
   fuelDaily: 300,
   batteryServiceDaily: 0,
@@ -36,7 +37,16 @@ const validFinancial = {
   annualRatePct: 4.5
 };
 
-const valid = { profile: validProfile, financial: validFinancial };
+const validEligibility = {
+  taxiOccupationStatus: "ACTIVE_TAXI_DRIVER",
+  publicDriverLicenseStatus: "TO_VERIFY",
+  currentVehicleRelationship: "RENT",
+  yearsProfessionalDriving: 6,
+  serviceProvince: "กรุงเทพมหานคร",
+  occupationalEvidenceStatus: "DECLARED"
+};
+
+const valid = { profile: validProfile, eligibility: validEligibility, financial: validFinancial };
 
 test("a complete registration input parses and carries competition-mode phone status", () => {
   const parsed = RegistrationInputSchema.parse(valid);
@@ -49,7 +59,7 @@ test("negative money and negative experience are rejected, not coerced", () => {
   assert.throws(() =>
     RegistrationInputSchema.parse({
       ...valid,
-      financial: { ...validFinancial, averageDailyIncome: -1 }
+      financial: { ...validFinancial, workingDaysPerMonth: 0 }
     })
   );
   assert.throws(() =>
@@ -67,9 +77,15 @@ test("the default vehicle id is accepted and unknown vehicles are rejected", () 
 });
 
 test("percentage fields stay inside 0-100", () => {
-  assert.throws(() => FinancialInputSchema.parse({ ...validFinancial, verifiedPct: 101 }));
+  assert.throws(() => FinancialInputSchema.parse({ ...validFinancial, activityConsistency: 101 }));
   assert.throws(() => FinancialInputSchema.parse({ ...validFinancial, activityConsistency: -5 }));
-  assert.doesNotThrow(() => FinancialInputSchema.parse({ ...validFinancial, verifiedPct: 0 }));
+  assert.doesNotThrow(() => FinancialInputSchema.parse({ ...validFinancial, activityConsistency: 0 }));
+});
+
+test("the applicant can no longer type the verified share directly", () => {
+  // ช่องนี้เคยเป็นค่าที่พิมพ์เอง ซึ่งทำให้ตัวเลขที่พิมพ์กลายเป็น Verified Revenue ทันที
+  const parsed = FinancialInputSchema.parse({ ...validFinancial, verifiedPct: 100 });
+  assert.equal(parsed.verifiedPct, undefined, "verifiedPct ต้องถูกตัดทิ้ง ไม่ใช่รับเข้ามา");
 });
 
 test("the phone must look like a Thai mobile number", () => {
@@ -96,8 +112,9 @@ test("the engine input is built only from allow-listed registration fields", () 
   const engineInput = toEngineInput(parsed);
 
   // ค่าเหล่านี้คือ input ที่ Frozen Engine รู้จัก
-  assert.equal(engineInput.grossDaily, 1850.52);
-  assert.equal(engineInput.verifiedPct, 85);
+  assert.equal(engineInput.grossDaily, 1850.52, "ยอดรวมที่ผู้สมัครระบุ");
+  // 1,200 จาก 1,850.52 มีหลักฐาน — คำนวณจากข้อมูลจริง ไม่ใช่ค่าที่พิมพ์
+  assert.equal(Math.round(engineInput.verifiedPct * 100) / 100, 64.85);
   assert.equal(engineInput.vehiclePrice, 800000);
   assert.equal(engineInput.downPayment, 0, "การแข่งขันใช้เงินดาวน์ผู้ขับ 0% เสมอ");
   assert.equal(engineInput.workingDays, 26);

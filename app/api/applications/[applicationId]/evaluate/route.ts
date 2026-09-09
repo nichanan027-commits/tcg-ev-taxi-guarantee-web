@@ -10,6 +10,9 @@ import {
   evaluateApplication,
   getLatestEvaluationSnapshot
 } from "../../../../lib/evaluation/evaluate-application.ts";
+import { GUARANTEE_COPY } from "../../../../lib/evaluation/guarantee-wording.ts";
+import { REVENUE_ASSESSMENT_LABEL } from "../../../../lib/evidence/revenue-assessment.ts";
+import { REVENUE_EVIDENCE_STATUS_COPY } from "../../../../lib/evidence/types.ts";
 import type { EvaluationSnapshot } from "../../../../lib/registration/types.ts";
 
 type Context = { params: Promise<{ applicationId: string }> };
@@ -30,8 +33,21 @@ function toDto(snapshot: EvaluationSnapshot) {
     canHandoffToFi: canHandoffToFi(snapshot.route),
     canRequestFaAdvisory: canRequestFaAdvisory(snapshot.route),
 
+    // สามชั้นของรายได้ต้องแยกกันบนหน้าจอ ห้ามยุบเป็นตัวเลขเดียวชื่อ Verified
+    revenue: {
+      declaredDailyRevenue: snapshot.revenue.declaredDailyRevenue,
+      assessmentDailyRevenue: snapshot.revenue.assessmentDailyRevenue,
+      verifiedDailyRevenue: snapshot.revenue.verifiedDailyRevenue,
+      evidenceStatus: snapshot.revenue.evidenceStatus,
+      evidenceStatusCopy: REVENUE_EVIDENCE_STATUS_COPY[snapshot.revenue.evidenceStatus],
+      label:
+        snapshot.revenue.verifiedDailyRevenue === null
+          ? REVENUE_ASSESSMENT_LABEL
+          : "รายได้ที่มีหลักฐานธุรกรรมรองรับ"
+    },
+    basicEligibility: snapshot.basicEligibility,
     financialPassport: {
-      verifiedRevenue: snapshot.verifiedRevenue,
+      assessmentRevenue: snapshot.assessmentRevenue,
       eligibleOpEx: snapshot.eligibleOpEx,
       protectedCash: snapshot.protectedCash,
       availableCash: snapshot.availableCash
@@ -55,7 +71,10 @@ function toDto(snapshot: EvaluationSnapshot) {
     guarantee: {
       rbpTier: snapshot.rbpTier,
       rbpRate: snapshot.rbpRate,
-      eligibleGuaranteedAmount: snapshot.eligibleGuaranteedAmount
+      indicativeGuaranteeEligibleBase: snapshot.indicativeGuaranteeEligibleBase,
+      label: GUARANTEE_COPY.label,
+      labelTh: GUARANTEE_COPY.labelTh,
+      disclaimer: GUARANTEE_COPY.disclaimer
     },
     engineStatus: snapshot.engineStatus,
     specVersion: snapshot.specVersion,

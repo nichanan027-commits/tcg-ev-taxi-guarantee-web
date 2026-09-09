@@ -12,21 +12,26 @@ export async function insertSnapshot(snapshot: EvaluationSnapshot): Promise<Eval
   const sql = await ensureSchema();
   await sql`
     insert into evaluation_snapshots (
-      id, application_id, input_version, vehicle_scenario, financing_scenario,
+      id, application_id, input_version, basic_eligibility,
+      declared_daily_revenue, assessment_daily_revenue, verified_daily_revenue, revenue_evidence_status,
+      vehicle_scenario, financing_scenario,
       verified_revenue, eligible_opex, protected_cash, available_cash, estimated_obligation,
       residual, affordability_gap, affordability_passed, principal_sustainability_passed,
       income_evidence_reliability, activity_evidence_status, pre_score, tier, route,
-      reason_codes, rbp_tier, rbp_rate, eligible_guaranteed_amount, engine_status, spec_version
+      reason_codes, rbp_tier, rbp_rate, indicative_guarantee_eligible_base, engine_status, spec_version
     ) values (
       ${snapshot.id}, ${snapshot.applicationId}, ${snapshot.inputVersion},
+      ${JSON.stringify(snapshot.basicEligibility)},
+      ${snapshot.revenue.declaredDailyRevenue}, ${snapshot.revenue.assessmentDailyRevenue},
+      ${snapshot.revenue.verifiedDailyRevenue}, ${snapshot.revenue.evidenceStatus},
       ${JSON.stringify(snapshot.vehicleScenario)}, ${JSON.stringify(snapshot.financingScenario)},
-      ${snapshot.verifiedRevenue}, ${snapshot.eligibleOpEx}, ${snapshot.protectedCash},
+      ${snapshot.assessmentRevenue}, ${snapshot.eligibleOpEx}, ${snapshot.protectedCash},
       ${snapshot.availableCash}, ${snapshot.estimatedObligation},
       ${snapshot.residual}, ${snapshot.affordabilityGap}, ${snapshot.affordabilityPassed},
       ${snapshot.principalSustainabilityPassed}, ${snapshot.incomeEvidenceReliability},
       ${snapshot.activityEvidenceStatus}, ${snapshot.preScore}, ${snapshot.tier}, ${snapshot.route},
       ${JSON.stringify(snapshot.reasonCodes)}, ${snapshot.rbpTier}, ${snapshot.rbpRate},
-      ${snapshot.eligibleGuaranteedAmount}, ${snapshot.engineStatus}, ${snapshot.specVersion}
+      ${snapshot.indicativeGuaranteeEligibleBase}, ${snapshot.engineStatus}, ${snapshot.specVersion}
     )
   `;
   return snapshot;
@@ -83,7 +88,14 @@ export function hydrateSnapshot(row: Record<string, unknown>): EvaluationSnapsho
     inputVersion: num(row.input_version),
     vehicleScenario: parseJson<VehicleScenario>(row.vehicle_scenario, {} as VehicleScenario),
     financingScenario: parseJson<FinancingScenario>(row.financing_scenario, {} as FinancingScenario),
-    verifiedRevenue: num(row.verified_revenue),
+    basicEligibility: parseJson(row.basic_eligibility, null) as EvaluationSnapshot["basicEligibility"],
+    revenue: {
+      declaredDailyRevenue: num(row.declared_daily_revenue),
+      assessmentDailyRevenue: num(row.assessment_daily_revenue),
+      verifiedDailyRevenue: numOrNull(row.verified_daily_revenue),
+      evidenceStatus: str(row.revenue_evidence_status) as EvaluationSnapshot["revenue"]["evidenceStatus"]
+    },
+    assessmentRevenue: num(row.verified_revenue),
     eligibleOpEx: num(row.eligible_opex),
     protectedCash: num(row.protected_cash),
     availableCash: num(row.available_cash),
@@ -101,7 +113,7 @@ export function hydrateSnapshot(row: Record<string, unknown>): EvaluationSnapsho
     reasonCodes: parseJson<ReasonCode[]>(row.reason_codes, []),
     rbpTier: strOrNull(row.rbp_tier),
     rbpRate: numOrNull(row.rbp_rate),
-    eligibleGuaranteedAmount: numOrNull(row.eligible_guaranteed_amount),
+    indicativeGuaranteeEligibleBase: numOrNull(row.indicative_guarantee_eligible_base),
     engineStatus: str(row.engine_status),
     specVersion: str(row.spec_version),
     evaluatedAt: iso(row.evaluated_at)

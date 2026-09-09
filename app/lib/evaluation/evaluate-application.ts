@@ -1,6 +1,7 @@
 import { evaluate, PRODUCT_STATUS } from "../route2own.ts";
 import { getApplication, setStatus } from "../registration/application-service.ts";
-import { toEngineInput } from "../registration/validation.ts";
+import { revenueAssessmentOf, toEngineInput } from "../registration/validation.ts";
+import { basicEligibilityOf } from "../eligibility/types.ts";
 import { financingScenarioOf } from "../financing/estimate.ts";
 import { vehicleScenarioOf } from "../financing/vehicle-catalogue.ts";
 import { rowId } from "../db/schema.ts";
@@ -27,8 +28,19 @@ export async function evaluateApplication(applicationId: string): Promise<Evalua
     throw new Error("ยังไม่มีข้อมูลรายได้และค่าใช้จ่ายเพียงพอสำหรับการประเมิน");
   }
 
+  if (!application.eligibility) {
+    throw new Error("ยังไม่มีข้อมูลคุณสมบัติเบื้องต้นสำหรับการประเมิน");
+  }
+
   const financial = application.financial;
-  const engineResult = evaluate(toEngineInput({ profile: application.profile, financial }));
+  const registration = {
+    profile: application.profile,
+    eligibility: application.eligibility,
+    financial
+  };
+  // หลักฐานรายได้ถูกประเมินก่อน แล้วจึงส่งสัดส่วนที่มีหลักฐานจริงให้ engine
+  const revenue = revenueAssessmentOf(registration);
+  const engineResult = evaluate(toEngineInput(registration, revenue));
   const calc = engineResult.calc;
   const readiness = engineResult.readiness;
 
@@ -50,9 +62,16 @@ export async function evaluateApplication(applicationId: string): Promise<Evalua
     id: rowId("snap"),
     applicationId,
     inputVersion: (await countSnapshots(applicationId)) + 1,
+    basicEligibility: basicEligibilityOf(application.eligibility),
+    revenue: {
+      declaredDailyRevenue: revenue.declaredDailyRevenue,
+      assessmentDailyRevenue: revenue.assessmentDailyRevenue,
+      verifiedDailyRevenue: revenue.verifiedDailyRevenue,
+      evidenceStatus: revenue.evidenceStatus
+    },
     vehicleScenario,
     financingScenario,
-    verifiedRevenue: calc.verified,
+    assessmentRevenue: calc.verified,
     eligibleOpEx: calc.dailyOpEx,
     protectedCash: calc.protectedDaily,
     availableCash: calc.availableCash,
@@ -70,7 +89,7 @@ export async function evaluateApplication(applicationId: string): Promise<Evalua
     reasonCodes: reasonCodesOf(engineResult),
     rbpTier: tier,
     rbpRate: tier ? calc.rbpRate : null,
-    eligibleGuaranteedAmount: calc.eligibleGuaranteedAmount,
+    indicativeGuaranteeEligibleBase: calc.eligibleGuaranteedAmount,
     engineStatus: PRODUCT_STATUS,
     specVersion: SPEC_VERSION,
     evaluatedAt: new Date().toISOString()

@@ -76,6 +76,7 @@ test('the competition schema has no System B table', () => {
     [
       'application_profiles',
       'applications',
+      'basic_eligibility',
       'consent_records',
       'evaluation_snapshots',
       'fa_case_events',
@@ -84,6 +85,7 @@ test('the competition schema has no System B table', () => {
       'fi_consent_records',
       'fi_selections',
       'financial_inputs',
+      'income_evidence',
       'status_history'
     ].sort()
   );

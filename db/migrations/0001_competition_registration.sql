@@ -31,6 +31,31 @@ create table if not exists application_profiles (
   updated_at         timestamptz not null default now()
 );
 
+create table if not exists basic_eligibility (
+  application_id               text primary key references applications (id) on delete cascade,
+  taxi_occupation_status       text not null,
+  public_driver_license_status text not null,
+  current_vehicle_relationship text not null,
+  cooperative_or_operator      text,
+  years_professional_driving   integer not null,
+  service_province             text not null,
+  occupational_evidence_status text not null,
+  updated_at                   timestamptz not null default now()
+);
+
+-- หลักฐานรายได้รายช่องทาง เก็บเฉพาะจำนวนเงินและสถานะหลักฐาน
+-- ไม่เก็บเลขบัญชี ไม่เก็บ statement และไม่เก็บไฟล์ใด ๆ
+create table if not exists income_evidence (
+  id                      text primary key,
+  application_id          text not null references applications (id) on delete cascade,
+  channel                 text not null,
+  daily_amount            numeric(12, 2) not null,
+  has_transaction_evidence boolean not null default false,
+  updated_at              timestamptz not null default now()
+);
+
+create index if not exists income_evidence_application_idx on income_evidence (application_id);
+
 create table if not exists financial_inputs (
   application_id          text primary key references applications (id) on delete cascade,
   average_daily_income    numeric(12, 2),
@@ -67,6 +92,11 @@ create table if not exists evaluation_snapshots (
   id                              text primary key,
   application_id                  text not null references applications (id) on delete cascade,
   input_version                   integer not null default 1,
+  basic_eligibility               jsonb,
+  declared_daily_revenue          numeric(12, 2),
+  assessment_daily_revenue        numeric(12, 2),
+  verified_daily_revenue          numeric(12, 2),
+  revenue_evidence_status         text,
   vehicle_scenario                jsonb not null,
   financing_scenario              jsonb not null,
   verified_revenue                numeric(12, 2) not null,
@@ -86,7 +116,7 @@ create table if not exists evaluation_snapshots (
   reason_codes                    jsonb not null,
   rbp_tier                        text,
   rbp_rate                        numeric(6, 4),
-  eligible_guaranteed_amount      numeric(14, 2),
+  indicative_guarantee_eligible_base numeric(14, 2),
   engine_status                   text not null,
   spec_version                    text not null,
   evaluated_at                    timestamptz not null default now()
