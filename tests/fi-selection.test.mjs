@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-import { FI_CATALOGUE, listEnabledFi, getFiProduct } from "../app/lib/fi/catalogue.ts";
+import { FI_CATALOGUE, listEnabledFi, getFiProduct, isRouteToOwnSelectable } from "../app/lib/fi/catalogue.ts";
 import { matchFi, fiFitFor } from "../app/lib/fi/match.ts";
 import {
   MAX_FI_SELECTIONS,
@@ -87,8 +87,8 @@ function snapshot(overrides = {}) {
   };
 }
 
-const zeroDownFi = () => FI_CATALOGUE.find((fi) => fi.routeToOwnZeroDownCompatible);
-const downPaymentFi = () => FI_CATALOGUE.find((fi) => !fi.routeToOwnZeroDownCompatible);
+const zeroDownFi = () => FI_CATALOGUE.find((fi) => isRouteToOwnSelectable(fi));
+const downPaymentFi = () => FI_CATALOGUE.find((fi) => !isRouteToOwnSelectable(fi));
 
 /* ---------------- 1. catalogue is reference data, not product rule ---------------- */
 
@@ -131,7 +131,7 @@ test("no unverified source is ever presented as verified by the FI", () => {
 test("an FI whose public product needs a down payment is not a Route to Own handoff option", () => {
   const needsDown = downPaymentFi();
   assert.ok(needsDown, "แคตตาล็อกต้องมี FI ที่ผลิตภัณฑ์สาธารณะต้องมีเงินดาวน์");
-  assert.equal(needsDown.routeToOwnZeroDownCompatible, false);
+  assert.equal(needsDown.routeToOwnCompatibilityStatus, "NOT_CONFIRMED");
 
   const options = matchFi(snapshot());
   const option = options.find((o) => o.id === needsDown.id);
@@ -187,7 +187,7 @@ test("affordability fit is read from the snapshot, never recomputed", () => {
 test("zero, one and two selections are allowed but a third is rejected", () => {
   assert.equal(MAX_FI_SELECTIONS, 2);
   const ready = snapshot();
-  const ids = FI_CATALOGUE.filter((fi) => fi.routeToOwnZeroDownCompatible).map((fi) => fi.id);
+  const ids = FI_CATALOGUE.filter((fi) => isRouteToOwnSelectable(fi)).map((fi) => fi.id);
   assert.ok(ids.length >= 3, "ต้องมี FI ที่รองรับ 0% down อย่างน้อย 3 รายเพื่อทดสอบ");
 
   assert.doesNotThrow(() => assertSelectionAllowed(ready, []));
@@ -197,7 +197,7 @@ test("zero, one and two selections are allowed but a third is rejected", () => {
 });
 
 test("a duplicate FI cannot be counted twice to bypass the limit", () => {
-  const ids = FI_CATALOGUE.filter((fi) => fi.routeToOwnZeroDownCompatible).map((fi) => fi.id);
+  const ids = FI_CATALOGUE.filter((fi) => isRouteToOwnSelectable(fi)).map((fi) => fi.id);
   assert.throws(() => assertSelectionAllowed(snapshot(), [ids[0], ids[0]]), /ซ้ำ/);
 });
 
@@ -215,7 +215,7 @@ test("BUILD may browse but cannot select or hand off", () => {
   assert.ok(options.length > 0, "ดู scenario ได้");
   assert.ok(options.every((o) => o.selectableForHandoff === false), "แต่เลือกเพื่อส่งต่อไม่ได้");
 
-  const ids = FI_CATALOGUE.filter((fi) => fi.routeToOwnZeroDownCompatible).map((fi) => fi.id);
+  const ids = FI_CATALOGUE.filter((fi) => isRouteToOwnSelectable(fi)).map((fi) => fi.id);
   assert.throws(() => assertSelectionAllowed(build, [ids[0]]), /READY/);
   assert.equal(handoffDecisionFor(build, { consented: true }).allowed, false);
 });
@@ -224,7 +224,7 @@ test("NO NEW DEBT cannot select or hand off and gets no bank list", () => {
   const noDebt = snapshot({ route: "NO NEW DEBT", tier: null, affordabilityPassed: false, affordabilityGap: 400 });
 
   assert.deepEqual(matchFi(noDebt), [], "ไม่มีรายการธนาคารให้เลือก");
-  const ids = FI_CATALOGUE.filter((fi) => fi.routeToOwnZeroDownCompatible).map((fi) => fi.id);
+  const ids = FI_CATALOGUE.filter((fi) => isRouteToOwnSelectable(fi)).map((fi) => fi.id);
   assert.throws(() => assertSelectionAllowed(noDebt, [ids[0]]), /READY/);
   assert.equal(handoffDecisionFor(noDebt, { consented: true }).allowed, false);
 });
@@ -233,7 +233,7 @@ test("NO NEW DEBT cannot select or hand off and gets no bank list", () => {
 
 test("each FI produces its own illustrative financing scenario", () => {
   const base = snapshot();
-  const compatible = FI_CATALOGUE.filter((fi) => fi.routeToOwnZeroDownCompatible);
+  const compatible = FI_CATALOGUE.filter((fi) => isRouteToOwnSelectable(fi));
 
   const a = fiFinancingScenarioFor(compatible[0], base);
   const b = fiFinancingScenarioFor(compatible[1], base);
@@ -306,7 +306,7 @@ test("a heavier FI scenario forces re-evaluation and a stale READY cannot author
     productName: "ทดสอบภาระสูง",
     indicativeRatePct: 26,
     termMonths: [24],
-    routeToOwnZeroDownCompatible: true
+    routeToOwnCompatibilityStatus: "COMPETITION_ASSUMPTION"
   };
 
   const outcome = await evaluateForFi(application.id, expensiveFi, reference);
@@ -342,7 +342,7 @@ test("an unchanged FI scenario reuses the latest snapshot rather than creating a
     id: "FI_SAME",
     indicativeRatePct: base.financingScenario.annualRatePct,
     termMonths: [base.financingScenario.termMonths],
-    routeToOwnZeroDownCompatible: true
+    routeToOwnCompatibilityStatus: "COMPETITION_ASSUMPTION"
   };
 
   assert.equal(shouldReevaluateForFi(sameFi, base), false);
@@ -490,4 +490,64 @@ test("fit dimensions reflect the applicant's own numbers", () => {
 
   assert.equal(rich.affordabilityFit, true);
   assert.equal(thin.affordabilityFit, false);
+});
+
+/* ---------------- A. source authority vs Route to Own participation ---------------- */
+
+test("source status and Route to Own compatibility are two independent fields", () => {
+  for (const fi of FI_CATALOGUE) {
+    assert.ok(
+      ["VERIFIED_BY_FI", "PUBLIC_SOURCE_REFERENCE", "COMPETITION_ILLUSTRATION"].includes(fi.sourceStatus),
+      `${fi.id} sourceStatus`
+    );
+    assert.ok(
+      ["VERIFIED_PARTNER", "COMPETITION_ASSUMPTION", "NOT_CONFIRMED"].includes(fi.routeToOwnCompatibilityStatus),
+      `${fi.id} routeToOwnCompatibilityStatus`
+    );
+  }
+});
+
+test("a public source reference is never inferred to be a verified Route to Own partner", () => {
+  const publicSource = FI_CATALOGUE.filter((fi) => fi.sourceStatus === "PUBLIC_SOURCE_REFERENCE");
+  assert.ok(publicSource.length > 0);
+
+  for (const fi of publicSource) {
+    assert.notEqual(
+      fi.routeToOwnCompatibilityStatus,
+      "VERIFIED_PARTNER",
+      `${fi.id}: การมีข้อมูลสาธารณะไม่ได้พิสูจน์ว่าเข้าร่วมโครงการ`
+    );
+  }
+});
+
+test("no FI defaults to VERIFIED_PARTNER while no participation evidence exists", () => {
+  assert.equal(
+    FI_CATALOGUE.filter((fi) => fi.routeToOwnCompatibilityStatus === "VERIFIED_PARTNER").length,
+    0,
+    "ยังไม่มีหลักฐานการเข้าร่วมโครงการของ FI รายใดในชุดข้อมูลรอบนี้"
+  );
+});
+
+test("a competition assumption is visibly labelled as a simulation", () => {
+  const assumed = matchFi(snapshot()).filter((o) => o.routeToOwnCompatibilityStatus === "COMPETITION_ASSUMPTION");
+  assert.ok(assumed.length > 0);
+
+  for (const option of assumed) {
+    assert.match(option.compatibilityStatusCopy, /สถานการณ์จำลองสำหรับการแข่งขัน/);
+    assert.match(option.compatibilityStatusCopy, /Competition Illustration/);
+    assert.match(option.compatibilityStatusCopy, /ไม่ใช่การยืนยันการเข้าร่วมโครงการ/);
+  }
+});
+
+test("a not-confirmed FI is never represented as a participating partner", () => {
+  const notConfirmed = FI_CATALOGUE.filter((fi) => fi.routeToOwnCompatibilityStatus === "NOT_CONFIRMED");
+  assert.ok(notConfirmed.length > 0, "แคตตาล็อกต้องมีอย่างน้อยหนึ่งรายที่ยังไม่ยืนยัน");
+
+  for (const fi of notConfirmed) {
+    const option = matchFi(snapshot()).find((o) => o.id === fi.id);
+    assert.equal(option.presentation, "MARKET_REFERENCE", `${fi.id} ต้องเป็นข้อมูลอ้างอิงตลาดเท่านั้น`);
+    assert.equal(option.selectableForHandoff, false);
+    assert.throws(() => assertSelectionAllowed(snapshot(), [fi.id]));
+    assert.doesNotMatch(option.compatibilityStatusCopy, /เข้าร่วมโครงการแล้ว|ยืนยันการเข้าร่วม/);
+  }
 });

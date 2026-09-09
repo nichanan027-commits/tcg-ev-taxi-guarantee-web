@@ -3,12 +3,13 @@ import { evaluateApplication } from "../evaluation/evaluate-application.ts";
 import { estimateFinancing } from "../financing/estimate.ts";
 import { hasMaterialFinancingChange, materialChangeReport } from "../financing/material-change.ts";
 import type { EvaluationSnapshot, FinancingScenario } from "../registration/types.ts";
-import { getFiProduct, nearestTermFor } from "./catalogue.ts";
+import { getFiProduct, isRouteToOwnSelectable, nearestTermFor } from "./catalogue.ts";
 import type { FiProduct } from "./catalogue.ts";
 
 export const MAX_FI_SELECTIONS = competitionConfig.maxFiSelections;
 
-type FiLike = Pick<FiProduct, "id" | "indicativeRatePct" | "termMonths" | "routeToOwnZeroDownCompatible">;
+type FiLike = Pick<FiProduct, "id" | "indicativeRatePct" | "termMonths"> &
+  Partial<Pick<FiProduct, "routeToOwnCompatibilityStatus">>;
 
 /**
  * ประมาณการค่างวดภายใต้เงื่อนไขอ้างอิงของ FI แต่ละแห่ง
@@ -72,9 +73,9 @@ export function assertSelectionAllowed(snapshot: EvaluationSnapshot, fiIds: stri
     const fi = getFiProduct(fiId);
     if (!fi) throw new Error(`ไม่พบสถาบันการเงิน ${fiId}`);
     if (!fi.enabled) throw new Error(`${fi.fiName} ไม่ได้เปิดให้เลือกในรอบนี้`);
-    if (!fi.routeToOwnZeroDownCompatible) {
+    if (!isRouteToOwnSelectable(fi)) {
       throw new Error(
-        `${fi.fiName} มีเงื่อนไขเงินดาวน์ตามผลิตภัณฑ์สาธารณะ จึงยังไม่ใช่ตัวเลือกส่งต่อแบบเงินดาวน์ผู้ขับ 0%`
+        `${fi.fiName} ยังไม่ยืนยันความสอดคล้องกับโครงสร้างโครงการ (เงินดาวน์ผู้ขับ 0%) จึงเลือกเพื่อส่งต่อไม่ได้`
       );
     }
   }

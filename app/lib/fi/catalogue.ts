@@ -12,6 +12,23 @@ import type { FiSourceStatus } from "../config/competition.ts";
  * จึงถูกใช้เป็น candidate seed เท่านั้น และไม่มีรายการใดถูกกำกับว่า VERIFIED_BY_FI
  * จนกว่าสถาบันการเงินจะยืนยันกลับมาเอง
  */
+/**
+ * ความสอดคล้องกับโครงสร้างโครงการ Route to Own
+ *
+ * แยกจาก sourceStatus โดยเจตนา: sourceStatus บอกว่าข้อมูลผลิตภัณฑ์มาจากไหน
+ * ส่วนสถานะนี้บอกว่าสถาบันการเงินยืนยันการเข้าร่วมโครงสร้างโครงการหรือยัง
+ * การมีข้อมูลสาธารณะไม่ได้พิสูจน์ว่าเข้าร่วมโครงการ จึงห้ามอนุมานข้ามกัน
+ */
+export type RouteToOwnCompatibilityStatus = "VERIFIED_PARTNER" | "COMPETITION_ASSUMPTION" | "NOT_CONFIRMED";
+
+export const ROUTE_TO_OWN_COMPATIBILITY_COPY: Record<RouteToOwnCompatibilityStatus, string> = {
+  VERIFIED_PARTNER: "สถาบันการเงินยืนยันการเข้าร่วมโครงสร้างโครงการแล้ว",
+  COMPETITION_ASSUMPTION:
+    "สถานการณ์จำลองสำหรับการแข่งขัน (Competition Illustration) ไม่ใช่การยืนยันการเข้าร่วมโครงการหรือเงื่อนไขสินเชื่อจริงของสถาบันการเงิน",
+  NOT_CONFIRMED:
+    "ยังไม่ยืนยันความสอดคล้องกับโครงสร้างโครงการ แสดงเป็นข้อมูลอ้างอิงตลาดเพื่อเปรียบเทียบเท่านั้น"
+};
+
 export type FiProduct = {
   id: string;
   fiName: string;
@@ -30,15 +47,24 @@ export type FiProduct = {
   checkedAt: string;
   enabled: boolean;
   /**
-   * ผลิตภัณฑ์สาธารณะของ FI รายนี้ใช้ร่วมกับแบบเงินดาวน์ผู้ขับ 0% ได้หรือไม่
-   *
-   * ผลิตภัณฑ์ที่ประกาศต่อสาธารณะว่าต้องมีเงินดาวน์ 10–20% จะถูกแสดงเป็น
-   * Market / Reference Scenario เท่านั้น ไม่ถูกเสนอเป็นตัวเลือกส่งต่ออัตโนมัติ
-   * เพราะการนำโปรโมชันสาธารณะมาสวมเป็นเงื่อนไข Route to Own จะทำให้เข้าใจผิด
+   * สถานะการเข้าร่วมโครงสร้างโครงการ — ไม่ได้อนุมานจาก sourceStatus
+   * ผลิตภัณฑ์ที่ประกาศต่อสาธารณะว่าต้องมีเงินดาวน์ 10–20% จะเป็น NOT_CONFIRMED
+   * และแสดงเป็น Market / Reference Scenario เท่านั้น
    */
-  routeToOwnZeroDownCompatible: boolean;
+  routeToOwnCompatibilityStatus: RouteToOwnCompatibilityStatus;
   compatibilityNote: string;
 };
+
+/**
+ * เสนอเป็นตัวเลือกส่งต่อได้หรือไม่
+ * ต้องยืนยันแล้ว หรืออยู่ในสถานการณ์จำลองที่ติดป้ายกำกับชัดเจนเท่านั้น
+ */
+export function isRouteToOwnSelectable(fi: Pick<FiProduct, "routeToOwnCompatibilityStatus">): boolean {
+  return (
+    fi.routeToOwnCompatibilityStatus === "VERIFIED_PARTNER" ||
+    fi.routeToOwnCompatibilityStatus === "COMPETITION_ASSUMPTION"
+  );
+}
 
 const CHECKED_AT = "2026-09-09";
 
@@ -58,7 +84,7 @@ export const FI_CATALOGUE: FiProduct[] = [
     sourceLabel: "เว็บไซต์ธนาคารออมสินและข่าวประชาสัมพันธ์โครงการ Soft Loan",
     checkedAt: CHECKED_AT,
     enabled: true,
-    routeToOwnZeroDownCompatible: false,
+    routeToOwnCompatibilityStatus: "NOT_CONFIRMED",
     compatibilityNote:
       "ผลิตภัณฑ์สาธารณะกำหนดเงินดาวน์ 10–20% จึงยังไม่ใช่ตัวเลือกส่งต่อแบบเงินดาวน์ 0% ต้องตกลงเงื่อนไขเฉพาะโครงการกับธนาคารก่อน"
   },
@@ -77,7 +103,7 @@ export const FI_CATALOGUE: FiProduct[] = [
     sourceLabel: "ข่าวประชาสัมพันธ์แคมเปญของธนาคาร",
     checkedAt: CHECKED_AT,
     enabled: true,
-    routeToOwnZeroDownCompatible: true,
+    routeToOwnCompatibilityStatus: "COMPETITION_ASSUMPTION",
     compatibilityNote: "ข้อมูลที่เผยแพร่ระบุวงเงินได้ถึง 100% จึงสอดคล้องกับแบบเงินดาวน์ผู้ขับ 0%"
   },
   {
@@ -95,7 +121,7 @@ export const FI_CATALOGUE: FiProduct[] = [
     sourceLabel: "เว็บไซต์ธนาคารกสิกรไทย",
     checkedAt: CHECKED_AT,
     enabled: true,
-    routeToOwnZeroDownCompatible: true,
+    routeToOwnCompatibilityStatus: "COMPETITION_ASSUMPTION",
     compatibilityNote: "รองรับการตกลงเงื่อนไขเฉพาะโครงการได้ ต้องยืนยันวงเงินและเงินดาวน์กับธนาคาร"
   },
   {
@@ -114,7 +140,7 @@ export const FI_CATALOGUE: FiProduct[] = [
     sourceLabel: "เว็บไซต์กรุงศรี ออโต้",
     checkedAt: CHECKED_AT,
     enabled: true,
-    routeToOwnZeroDownCompatible: true,
+    routeToOwnCompatibilityStatus: "COMPETITION_ASSUMPTION",
     compatibilityNote: "ผ่อนได้สูงสุด 84 เดือน รองรับการตกลงเงื่อนไขเฉพาะโครงการ"
   },
   {
@@ -132,7 +158,7 @@ export const FI_CATALOGUE: FiProduct[] = [
     sourceLabel: "เว็บไซต์ธนาคารทหารไทยธนชาต",
     checkedAt: CHECKED_AT,
     enabled: true,
-    routeToOwnZeroDownCompatible: true,
+    routeToOwnCompatibilityStatus: "COMPETITION_ASSUMPTION",
     compatibilityNote: "ผ่อนได้สูงสุด 84 เดือน ต้องยืนยันเงื่อนไขเฉพาะโครงการกับธนาคาร"
   },
   {
@@ -150,7 +176,7 @@ export const FI_CATALOGUE: FiProduct[] = [
     sourceLabel: "สรุปจากบทความสื่อยานยนต์ — ยังไม่ได้ตรวจสอบกับธนาคารโดยตรง",
     checkedAt: CHECKED_AT,
     enabled: true,
-    routeToOwnZeroDownCompatible: true,
+    routeToOwnCompatibilityStatus: "COMPETITION_ASSUMPTION",
     compatibilityNote: "ข้อมูลอ้างอิงจากสื่อ ต้องยืนยันเงื่อนไขกับธนาคารก่อนใช้จริง"
   },
   {
@@ -168,7 +194,7 @@ export const FI_CATALOGUE: FiProduct[] = [
     sourceLabel: "สรุปจากบทความสื่อยานยนต์ — ยังไม่ได้ตรวจสอบกับธนาคารโดยตรง",
     checkedAt: CHECKED_AT,
     enabled: true,
-    routeToOwnZeroDownCompatible: true,
+    routeToOwnCompatibilityStatus: "COMPETITION_ASSUMPTION",
     compatibilityNote: "ข้อมูลอ้างอิงจากสื่อ ต้องยืนยันเงื่อนไขกับธนาคารก่อนใช้จริง"
   }
 ];

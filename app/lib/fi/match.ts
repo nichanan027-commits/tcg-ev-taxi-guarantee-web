@@ -1,7 +1,7 @@
 import { GOVERNANCE_COPY, canHandoffToFi } from "../config/competition.ts";
 import { ROUTES } from "../route2own.ts";
 import type { EvaluationSnapshot } from "../registration/types.ts";
-import { listEnabledFi, nearestTermFor } from "./catalogue.ts";
+import { ROUTE_TO_OWN_COMPATIBILITY_COPY, isRouteToOwnSelectable, listEnabledFi, nearestTermFor } from "./catalogue.ts";
 import type { FiProduct } from "./catalogue.ts";
 import { fiFinancingScenarioFor } from "./selection-service.ts";
 
@@ -33,6 +33,8 @@ export type FiMatchOption = {
   sourceLabel: string;
   checkedAt: string;
   compatibilityNote: string;
+  routeToOwnCompatibilityStatus: FiProduct["routeToOwnCompatibilityStatus"];
+  compatibilityStatusCopy: string;
 
   fit: FiFitDimensions;
   fitNotes: string[];
@@ -60,7 +62,7 @@ export function fiFitFor(fi: FiProduct, snapshot: EvaluationSnapshot): FiFitDime
     // อ่านจาก Snapshot: เงินที่พร้อมรองรับภาระต้องครอบคลุมภาระของ FI รายนี้
     affordabilityFit: snapshot.affordabilityPassed && snapshot.availableCash >= scenario.dailyEquivalentBurden,
     eligibilityFit: snapshot.basicEligibility !== null,
-    routeToOwnCompatibility: fi.routeToOwnZeroDownCompatible
+    routeToOwnCompatibility: isRouteToOwnSelectable(fi)
   };
 }
 
@@ -115,6 +117,8 @@ export function matchFi(snapshot: EvaluationSnapshot): FiMatchOption[] {
       sourceLabel: fi.sourceLabel,
       checkedAt: fi.checkedAt,
       compatibilityNote: fi.compatibilityNote,
+      routeToOwnCompatibilityStatus: fi.routeToOwnCompatibilityStatus,
+      compatibilityStatusCopy: ROUTE_TO_OWN_COMPATIBILITY_COPY[fi.routeToOwnCompatibilityStatus],
 
       fit,
       fitNotes: fitNotesFor(fi, fit, snapshot),
@@ -123,11 +127,11 @@ export function matchFi(snapshot: EvaluationSnapshot): FiMatchOption[] {
       applicantDailyBurden: scenario.dailyEquivalentBurden,
       financingNote: GOVERNANCE_COPY.illustrativeFinancingLong,
 
-      presentation: fi.routeToOwnZeroDownCompatible
+      presentation: isRouteToOwnSelectable(fi)
         ? ("ROUTE_TO_OWN_PARTICIPATING" as const)
         : ("MARKET_REFERENCE" as const),
-      // เลือกเพื่อส่งต่อได้เฉพาะเมื่อเส้นทางเป็น READY และผลิตภัณฑ์รองรับเงินดาวน์ 0%
-      selectableForHandoff: readyToSelect && fi.routeToOwnZeroDownCompatible
+      // เลือกเพื่อส่งต่อได้เฉพาะเมื่อเส้นทางเป็น READY และยืนยัน/จำลองความสอดคล้องไว้แล้ว
+      selectableForHandoff: readyToSelect && isRouteToOwnSelectable(fi)
     };
   });
 }
