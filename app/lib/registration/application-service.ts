@@ -158,6 +158,27 @@ export async function updateApplication(applicationId: string, input: unknown): 
 }
 
 /**
+ * อัปเดตเฉพาะเงื่อนไขทางการเงินที่ใช้ประเมิน (อัตราและระยะเวลา)
+ *
+ * ใช้ตอนประเมินใหม่ภายใต้เงื่อนไขของ FI แต่ละแห่ง
+ * แตะเฉพาะสองสนามนี้ ข้อมูลรายได้ ค่าใช้จ่าย และหลักฐานของผู้สมัครไม่ถูกแก้
+ */
+export async function updateFinancingTerms(
+  applicationId: string,
+  terms: { annualRatePct: number; termMonths: number }
+): Promise<void> {
+  const sql = await ensureSchema();
+  const [row] = await sql`select application_id from financial_inputs where application_id = ${applicationId}`;
+  if (!row) throw new Error(`ยังไม่มีข้อมูลการเงินของใบสมัคร ${applicationId}`);
+
+  await sql`
+    update financial_inputs
+    set annual_rate_pct = ${terms.annualRatePct}, term_months = ${terms.termMonths}, updated_at = now()
+    where application_id = ${applicationId}
+  `;
+}
+
+/**
  * เปลี่ยนสถานะใบสมัคร
  *
  * สถานะเดินหน้าเท่านั้น การเรียกด้วยสถานะที่ถอยหลังกว่าเดิมจะไม่ทำอะไร

@@ -143,21 +143,27 @@ create table if not exists fi_catalogue (
   enabled            boolean not null default true
 );
 
+-- การเลือก FI เป็น append-only: เปลี่ยน FI จะปิดแถวเดิมแล้วเพิ่มแถวใหม่
+-- แต่ละแถวผูกกับ Snapshot ของ FI รายนั้นโดยเฉพาะ เพราะภาระต่อวันของแต่ละแห่งไม่เท่ากัน
 create table if not exists fi_selections (
-  id             text primary key,
-  application_id text not null references applications (id) on delete cascade,
-  fi_id          text not null references fi_catalogue (id),
-  slot           integer not null,
-  active         boolean not null default true,
-  created_at     timestamptz not null default now()
+  id                     text primary key,
+  application_id         text not null references applications (id) on delete cascade,
+  fi_id                  text not null,
+  slot                   integer not null,
+  evaluation_snapshot_id text references evaluation_snapshots (id),
+  financing_scenario     jsonb,
+  material_change        boolean not null default false,
+  active                 boolean not null default true,
+  created_at             timestamptz not null default now()
 );
 
 create index if not exists fi_selections_application_idx on fi_selections (application_id, active);
 
+-- ความยินยอมรายสถาบันการเงิน แยกจากความยินยอมของการแข่งขัน และเป็น append-only
 create table if not exists fi_consent_records (
   id             text primary key,
   application_id text not null references applications (id) on delete cascade,
-  fi_id          text not null references fi_catalogue (id),
+  fi_id          text not null,
   version        text not null,
   accepted       boolean not null,
   accepted_at    timestamptz not null default now()

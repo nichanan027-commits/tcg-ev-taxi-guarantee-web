@@ -108,17 +108,22 @@ export function toEngineInput(input: RegistrationInput, assessment?: RevenueAsse
     grossDaily: revenue.assessmentDailyRevenue,
     // สัดส่วนหลักฐานคำนวณจากหลักฐานจริง ผู้สมัครพิมพ์เองไม่ได้อีกต่อไป
     verifiedPct: engineVerifiedPct(revenue),
-    workingDays: f.workingDaysPerMonth,
+    // ชื่อสนามต้องตรงกับสัญญาของ Frozen Engine พอดี
+    // ชื่อที่ engine ไม่รู้จักจะถูกมองข้ามเงียบ ๆ แล้วใช้ค่า default ของ scenario แทน
+    workDays: f.workingDaysPerMonth,
     rentDaily: f.currentRentDaily,
     fuelDaily: f.fuelDaily,
     batteryServiceDaily: f.batteryServiceDaily,
-    otherDaily: f.otherOpexDaily,
+    otherOpEx: f.otherOpexDaily,
     householdMonthly: f.householdMonthly,
     existingDebt: f.existingDebtMonthly,
-    activityConsistency: f.activityConsistency,
+    /** ข้อมูลกิจกรรมใช้ตรวจสอบไขว้เท่านั้น engine เรียกสนามนี้ว่า gpsComplete */
+    gpsComplete: f.activityConsistency,
     vehiclePrice: f.vehiclePrice,
     downPayment: 0 as const,
-    termMonths: f.termMonths,
-    rateAnnual: f.annualRatePct
+    /** engine นับ tenor เป็นจำนวนเดือน */
+    tenor: f.termMonths,
+    /** engine เรียกอัตราดอกเบี้ยต่อปีว่า interest */
+    interest: f.annualRatePct
   };
 }

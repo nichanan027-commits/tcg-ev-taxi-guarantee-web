@@ -117,10 +117,36 @@ test("the engine input is built only from allow-listed registration fields", () 
   assert.equal(Math.round(engineInput.verifiedPct * 100) / 100, 64.85);
   assert.equal(engineInput.vehiclePrice, 800000);
   assert.equal(engineInput.downPayment, 0, "การแข่งขันใช้เงินดาวน์ผู้ขับ 0% เสมอ");
-  assert.equal(engineInput.workingDays, 26);
 
   // ต้องไม่มีสนามที่ Engine ไม่รู้จักหลุดเข้าไป
   assert.equal(engineInput.displayName, undefined);
   assert.equal(engineInput.phone, undefined);
   assert.equal(engineInput.province, undefined);
+});
+
+test("the engine input uses the exact field names the frozen engine accepts", async () => {
+  // ชื่อที่ engine ไม่รู้จักจะถูกมองข้ามเงียบ ๆ แล้วใช้ค่า default ของ scenario แทน
+  // ทำให้ค่าที่ผู้สมัครกรอกไม่มีผลโดยไม่มีใครสังเกต จึงต้องตรึงสัญญานี้ไว้
+  const parsed = RegistrationInputSchema.parse(valid);
+  const engineInput = toEngineInput(parsed);
+
+  assert.equal(engineInput.workDays, 26, "engine เรียกว่า workDays ไม่ใช่ workingDays");
+  assert.equal(engineInput.otherOpEx, 60, "engine เรียกว่า otherOpEx ไม่ใช่ otherDaily");
+  assert.equal(engineInput.tenor, 60, "engine เรียกจำนวนงวดว่า tenor (เดือน)");
+  assert.equal(engineInput.interest, 4.5, "engine เรียกอัตราดอกเบี้ยต่อปีว่า interest");
+  assert.equal(engineInput.gpsComplete, 88, "ข้อมูลกิจกรรมเข้า engine ผ่าน gpsComplete");
+
+  // ชื่อเก่าที่ engine ไม่รู้จักต้องไม่หลงเหลือ
+  for (const wrong of ["workingDays", "otherDaily", "termMonths", "rateAnnual", "activityConsistency"]) {
+    assert.equal(engineInput[wrong], undefined, `${wrong} ไม่ใช่ชื่อสนามของ engine`);
+  }
+
+  // ค่าที่ส่งไปต้องเปลี่ยนผลลัพธ์จริง ไม่ใช่ถูกแทนด้วย default
+  const { evaluate } = await import("../app/lib/route2own.ts");
+  const cheap = evaluate({ ...engineInput, interest: 4.5, tenor: 60 });
+  const expensive = evaluate({ ...engineInput, interest: 26, tenor: 24 });
+  assert.ok(
+    expensive.calc.pmt > cheap.calc.pmt,
+    "อัตราและระยะเวลาที่ต่างกันต้องให้ค่างวดต่างกัน"
+  );
 });
