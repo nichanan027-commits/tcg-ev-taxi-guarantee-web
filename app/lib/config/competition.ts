@@ -1,3 +1,5 @@
+import { ROUTES, routeLabelOf } from "../route2own.ts";
+
 /**
  * Competition configuration — System A (Front Office) only.
  *
@@ -50,37 +52,44 @@ export const APPLICATION_STATUSES = [
 
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 
-/** เส้นทางตามหลัก (canonical) ของ Frozen Engine — ห้ามเพิ่ม/ลด */
-export const CANONICAL_ROUTES = [
-  "READY FOR FI",
-  "BUILD READINESS / CONTINUE TO LEASE",
-  "NO NEW DEBT"
-] as const;
+/**
+ * เส้นทางตามหลัก (canonical) มาจาก Frozen Engine โดยตรง ไม่ประกาศซ้ำที่นี่
+ *
+ * รหัสภายในกับป้ายที่แสดงต่อผู้ใช้เป็นคนละค่า:
+ *   รหัสภายใน `BUILD READINESS` → ป้ายสาธารณะ `BUILD READINESS / CONTINUE TO LEASE`
+ * การประกาศซ้ำเองจะทำให้สองฝั่งเพี้ยนออกจากกันได้ จึงอ่านจาก engine เสมอ
+ */
+export const CANONICAL_ROUTES = [ROUTES.READY_FOR_FI, ROUTES.BUILD_READINESS, ROUTES.NO_NEW_DEBT] as const;
 
 export type CanonicalRoute = (typeof CANONICAL_ROUTES)[number];
 
 /**
- * ข้อความที่แสดงต่อผู้สมัคร โดย NO NEW DEBT ต้องอ่านว่า "ยังไม่พร้อมสำหรับสินเชื่อใหม่"
- * ส่วนค่า canonical ภายในต้องไม่เปลี่ยน
+ * ข้อความที่แสดงต่อผู้สมัคร
+ * NO NEW DEBT ต้องอ่านว่า "ยังไม่พร้อมสำหรับสินเชื่อใหม่" ส่วนรหัสภายในไม่เปลี่ยน
+ * เส้นทางอื่นใช้ป้ายสาธารณะจาก engine
  */
-export const APPLICANT_ROUTE_COPY: Record<CanonicalRoute, string> = {
-  "READY FOR FI": "READY FOR FI",
-  "BUILD READINESS / CONTINUE TO LEASE": "BUILD READINESS / CONTINUE TO LEASE",
-  "NO NEW DEBT": "ยังไม่พร้อมสำหรับสินเชื่อใหม่"
-};
-
 export function applicantRouteCopy(route: string): string {
-  return APPLICANT_ROUTE_COPY[route as CanonicalRoute] ?? route;
+  if (route === ROUTES.NO_NEW_DEBT) return "ยังไม่พร้อมสำหรับสินเชื่อใหม่";
+  return publicRouteLabel(route);
+}
+
+/** ป้ายสาธารณะตาม engine (ใช้ในหน้าจอ Staff ที่ต้องเห็นชื่อเส้นทางเต็ม) */
+export function publicRouteLabel(route: string): string {
+  return isCanonicalRoute(route) ? routeLabelOf(route) || route : route;
+}
+
+export function isCanonicalRoute(route: string): route is CanonicalRoute {
+  return (CANONICAL_ROUTES as readonly string[]).includes(route);
 }
 
 /** เส้นทางที่ส่งต่อ FI ได้ — มีเพียงเส้นทางเดียว */
 export function canHandoffToFi(route: string): boolean {
-  return route === "READY FOR FI";
+  return route === ROUTES.READY_FOR_FI;
 }
 
 /** เส้นทางที่ขอคำปรึกษา F.A Center ได้ */
 export function canRequestFaAdvisory(route: string): boolean {
-  return route === "BUILD READINESS / CONTINUE TO LEASE" || route === "NO NEW DEBT";
+  return route === ROUTES.BUILD_READINESS || route === ROUTES.NO_NEW_DEBT;
 }
 
 /** สถานะแหล่งที่มาของข้อมูล FI — ห้ามนำข้อมูลสื่อ/AI มาแสดงเป็นข้อเสนอที่ยืนยันแล้ว */
