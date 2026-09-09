@@ -47,6 +47,55 @@ test('this repository stays System A — no post-approval implementation', () =>
   }
 });
 
+test('the competition schema has no sensitive Secure Verification column', () => {
+  const migration = fs.readFileSync('db/migrations/0001_competition_registration.sql', 'utf8');
+  const columnDefinitions = migration
+    .split('\n')
+    .filter((line) => !line.trim().startsWith('--'))
+    .join('\n');
+
+  for (const forbidden of [
+    /national_id/,
+    /bank_account_number/,
+    /statement_blob/,
+    /id_card_blob/,
+    /driver_license_blob/,
+    /credit_report/,
+    /health_/
+  ]) {
+    assert.doesNotMatch(columnDefinitions, forbidden, `schema must not define ${forbidden}`);
+  }
+});
+
+test('the competition schema has no System B table', () => {
+  const migration = fs.readFileSync('db/migrations/0001_competition_registration.sql', 'utf8');
+  const tables = [...migration.matchAll(/create table if not exists (\w+)/g)].map((m) => m[1]);
+
+  assert.deepEqual(
+    tables.sort(),
+    [
+      'application_profiles',
+      'applications',
+      'consent_records',
+      'evaluation_snapshots',
+      'fa_case_events',
+      'fa_cases',
+      'fi_catalogue',
+      'fi_consent_records',
+      'fi_selections',
+      'financial_inputs',
+      'status_history'
+    ].sort()
+  );
+});
+
+test('database access is parameterized and never string-concatenated', () => {
+  const sqlLayer = fs.readFileSync('app/lib/db/sql.ts', 'utf8');
+  // ค่าทุกตัวต้องกลายเป็น $1, $2, ... ไม่ใช่การต่อสตริงเข้ากับคำสั่ง
+  assert.match(sqlLayer, /text \+= `\$\$\{i \+ 1\}`|text \+= `\$\$/);
+  assert.doesNotMatch(sqlLayer, /text \+= String\(values\[/);
+});
+
 test('no post-approval API surface exists in this repository', () => {
   const routes = sourceFiles('app/api')
     .filter((p) => p.endsWith('route.ts'))

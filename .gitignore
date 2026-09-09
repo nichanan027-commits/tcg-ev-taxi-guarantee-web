@@ -8,3 +8,6 @@ npm-debug.log*
 .env*.local
 .vercel
 *.tsbuildinfo
+
+# Local PGlite data directory (dev only — production uses DATABASE_URL)
+.data/
