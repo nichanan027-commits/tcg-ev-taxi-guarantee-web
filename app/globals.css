@@ -609,6 +609,17 @@ code {
   margin: 0 auto;
   padding: 28px 20px 64px;
   color: var(--fo-ink);
+  position: relative;
+}
+
+/* พื้นหลังสถาบันการเงิน: ขาว/ฟ้าน้ำแข็ง ทับกริดนีออนของธีมต้นแบบเดิม
+   ทำเฉพาะหน้า Front Office เพื่อไม่ให้กระทบ /legacy-score ที่ยังใช้ธีมเดิม */
+.fo-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(165deg, #ffffff 0%, #f5faff 52%, #eaf4ff 100%);
 }
 
 .fo-eyebrow {
@@ -776,3 +787,106 @@ code {
     justify-content: center;
   }
 }
+
+/* ---------- Credit Readiness Result ---------- */
+.fo-result { display: grid; gap: 18px; margin-top: 18px; }
+
+.fo-hero-route {
+  padding: 28px 26px;
+  border: 1px solid var(--fo-line);
+  border-left: 6px solid var(--fo-blue);
+  border-radius: var(--fo-radius);
+  background: linear-gradient(150deg, #ffffff, #f2fbff);
+  box-shadow: var(--fo-shadow);
+}
+.fo-hero-route.tone-ready { border-left-color: var(--fo-good); }
+.fo-hero-route.tone-build { border-left-color: var(--fo-warn); }
+.fo-hero-route.tone-hold  { border-left-color: var(--fo-risk); }
+
+/* Route คือหัวเรื่องใหญ่ที่สุดของหน้าเสมอ */
+.fo-route-title { margin: 4px 0 6px; font-size: clamp(26px, 4.6vw, 40px); line-height: 1.18; color: var(--fo-navy); }
+.fo-route-th { margin: 0 0 8px; font-size: clamp(15px, 2.2vw, 18px); font-weight: 600; color: var(--fo-blue); }
+.fo-route-support { margin: 0 0 10px; color: var(--fo-muted); }
+.fo-thesis { margin: 0 0 14px; font-weight: 600; color: var(--fo-navy); }
+
+.fo-cta-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.fo-cta-chip {
+  display: inline-block; padding: 11px 18px; border-radius: 12px;
+  font-size: 14px; font-weight: 700; border: 1px solid var(--fo-line);
+}
+.fo-cta-chip.primary { background: linear-gradient(115deg, var(--fo-navy), var(--fo-blue)); color: #fff; border-color: transparent; }
+.fo-cta-chip.secondary { background: #fff; color: var(--fo-navy); }
+
+/* Capacity — เงินเทียบเงิน */
+.fo-capacity { padding: 22px 24px; border: 1px solid var(--fo-line); border-radius: var(--fo-radius); background: #fff; box-shadow: var(--fo-shadow); }
+.fo-capacity-row { margin-bottom: 14px; }
+.fo-capacity-label { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; margin-bottom: 6px; }
+.fo-capacity-label b { color: var(--fo-navy); }
+.fo-capacity-track { height: 18px; border-radius: 9px; background: #eef6ff; overflow: hidden; }
+.fo-capacity-fill { height: 100%; border-radius: 9px; }
+.fo-capacity-fill.available { background: linear-gradient(90deg, var(--fo-blue), var(--fo-cyan)); }
+.fo-capacity-fill.obligation { background: linear-gradient(90deg, #6d5bd0, #9d8be8); }
+.fo-capacity-fill.obligation.over { background: repeating-linear-gradient(45deg, #f3c3c3, #f3c3c3 6px, #fbd9d9 6px, #fbd9d9 12px); }
+.fo-capacity-verdict { display: flex; justify-content: space-between; gap: 12px; margin: 14px 0 0; padding: 12px 14px; border-radius: 12px; font-weight: 700; }
+.fo-capacity-verdict.residual { background: #eefaf4; color: var(--fo-good); }
+.fo-capacity-verdict.gap { background: #fff1f1; color: var(--fo-risk); }
+
+.fo-result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+
+/* Pre-Score gauge — เชิงสถาบัน ไม่ใช่หน้าปัดรถ */
+.fo-gauge, .fo-passport { padding: 22px 24px; border: 1px solid var(--fo-line); border-radius: var(--fo-radius); background: #fff; box-shadow: var(--fo-shadow); }
+.fo-h3 { margin: 0 0 12px; font-size: 16px; color: var(--fo-navy); }
+.fo-gauge-svg { width: 100%; max-width: 260px; display: block; margin: 0 auto; }
+/* ตัวเลขคะแนนต้องเล็กกว่าหัวเรื่อง Route เสมอ — Route คือคำตอบ คะแนนคือข้อมูลประกอบ */
+.fo-gauge-readout { display: flex; align-items: baseline; justify-content: center; gap: 6px; margin: -18px 0 6px; }
+.fo-gauge-score { font-size: clamp(20px, 2.6vw, 28px); font-weight: 800; color: var(--fo-navy); line-height: 1; }
+.fo-gauge-max { font-size: 13px; color: var(--fo-muted); }
+.fo-gauge-tier { margin: 6px 0 4px; text-align: center; font-weight: 700; color: var(--fo-navy); }
+.fo-gauge-disclaimer { margin: 0; text-align: center; font-size: 12.5px; color: var(--fo-muted); }
+
+/* Financial Passport */
+.fo-passport-list { margin: 0; }
+.fo-passport-row { display: flex; justify-content: space-between; gap: 14px; padding: 9px 0; border-bottom: 1px dashed var(--fo-line); font-size: 14px; }
+.fo-passport-row dt { margin: 0; color: var(--fo-muted); }
+.fo-passport-row dd { margin: 0; font-weight: 600; text-align: right; }
+.fo-passport-row.highlight dd { color: var(--fo-blue); }
+.fo-passport-row.minus dd { color: var(--fo-muted); }
+.fo-passport-row.total { border-bottom: 0; border-top: 2px solid var(--fo-navy); padding-top: 12px; font-size: 15px; }
+.fo-passport-row.total dd { color: var(--fo-navy); font-weight: 800; }
+.fo-passport-row.evidence dd { display: grid; gap: 3px; }
+.fo-passport-row.evidence small { color: var(--fo-muted); font-weight: 400; }
+.fo-chip { display: inline-block; padding: 2px 9px; border-radius: 999px; background: #eef6ff; color: var(--fo-blue); font-size: 12px; font-weight: 700; }
+
+.fo-status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin: 0 0 12px; }
+.fo-status-grid dt { font-size: 12.5px; color: var(--fo-muted); margin-bottom: 2px; }
+.fo-status-grid dd { margin: 0; font-weight: 700; color: var(--fo-navy); }
+
+.fo-reasons { margin: 0; padding-left: 18px; display: grid; gap: 7px; font-size: 14px; }
+.fo-reasons .blocker { color: var(--fo-risk); }
+.fo-reasons .watch { color: var(--fo-warn); }
+
+.fo-disclaimers { display: grid; gap: 5px; font-size: 12.5px; color: var(--fo-muted); padding: 0 4px; }
+.fo-pdf-actions { display: grid; gap: 8px; }
+.fo-error { color: var(--fo-risk); font-size: 13px; margin: 0; }
+
+/* รายงานถูกเรนเดอร์ไว้นอกสายตาแต่ยังวัดขนาดได้ เพื่อให้แปลง PDF ได้ */
+.fo-report-host { position: absolute; left: -10000px; top: 0; width: 794px; }
+
+/* ---------- Readiness Report (PDF) ---------- */
+.rr { width: 794px; background: #fff; color: #10243d; font-size: 13px; }
+.rr .report-sheet { width: 794px; min-height: 1123px; padding: 46px 52px; background: #fff; display: flex; flex-direction: column; }
+.rr-head { display: flex; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 2px solid #071a33; }
+.rr-brand { margin: 0 0 3px; font-size: 12px; font-weight: 700; color: #147ce5; }
+.rr-title { margin: 0; font-size: 19px; color: #071a33; }
+.rr-subtitle { margin: 3px 0 0; font-size: 12.5px; color: #5d7087; }
+.rr-meta { text-align: right; font-size: 12px; color: #5d7087; }
+.rr-meta p { margin: 0 0 3px; }
+.rr-h2 { margin: 22px 0 12px; font-size: 16px; color: #071a33; }
+.rr-table { width: 100%; border-collapse: collapse; }
+.rr-table th { text-align: left; font-weight: 400; color: #5d7087; padding: 8px 0; width: 46%; vertical-align: top; border-bottom: 1px solid #d7e8f5; }
+.rr-table td { padding: 8px 0; border-bottom: 1px solid #d7e8f5; text-align: right; }
+.rr-table td b { display: block; color: #071a33; }
+.rr-table td small { display: block; margin-top: 3px; color: #5d7087; font-weight: 400; }
+.rr-notes { margin: 18px 0 0; padding-left: 18px; color: #5d7087; font-size: 12px; }
+.rr-notes li { margin-bottom: 5px; }
+.rr-foot { margin-top: auto; padding-top: 14px; border-top: 1px solid #d7e8f5; display: flex; justify-content: space-between; gap: 12px; font-size: 11px; color: #5d7087; }
