@@ -69,6 +69,7 @@ export function resultViewModel(snapshot: EvaluationSnapshot) {
     ctas.push({
       id: "fa-advisory",
       label: "F.A. ให้คำปรึกษาเพื่อสร้างความพร้อมก่อนสินเชื่อ",
+      href: `/apply/${snapshot.applicationId}/advisory`,
       tone: "primary"
     });
     ctas.push({ id: "readiness-report", label: "ดู / ดาวน์โหลดรายงานความพร้อม", tone: "secondary" });

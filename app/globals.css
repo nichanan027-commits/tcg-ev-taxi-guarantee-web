@@ -1115,3 +1115,30 @@ code {
     font-size: 12px; font-weight: 400; color: var(--fo-muted); text-align: left; flex: none;
   }
 }
+
+/* ---------- F.A Readiness Advisory ---------- */
+.fo-fa-form { display: grid; gap: 18px; }
+.fo-fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 10px; }
+.fo-fieldset legend { padding: 0; font-size: 13.5px; font-weight: 700; color: var(--fo-navy); }
+.fo-choice-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.fo-choice {
+  display: flex; align-items: center; gap: 9px; cursor: pointer;
+  padding: 11px 16px; min-height: 44px; font-size: 14px;
+  border: 1px solid var(--fo-line); border-radius: 999px; background: #fff; color: var(--fo-ink);
+}
+.fo-choice input { width: 18px; height: 18px; accent-color: var(--fo-blue); }
+.fo-choice.selected { border-color: var(--fo-blue); box-shadow: 0 0 0 2px rgba(20, 124, 229, 0.16); }
+.fo-choice:focus-within { outline: 3px solid rgba(20, 124, 229, 0.35); outline-offset: 2px; }
+
+.fo-fa-confirmed {
+  display: grid; gap: 10px; padding: 20px;
+  border-left: 4px solid var(--fo-good); border-radius: 12px; background: #eefaf4;
+}
+.fo-fa-confirmed p { margin: 0; }
+.fo-fa-case-id { font-size: 16px; }
+.fo-fa-case-id b { color: var(--fo-good); letter-spacing: 0.02em; }
+
+@media (max-width: 520px) {
+  .fo-choice-row { flex-direction: column; }
+  .fo-choice { width: 100%; }
+}
