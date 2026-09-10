@@ -10,7 +10,9 @@
     "lint": "next lint",
     "e2e": "playwright test",
     "e2e:desktop": "playwright test --project=desktop",
-    "e2e:mobile": "playwright test --project=mobile"
+    "e2e:mobile": "playwright test --project=mobile",
+    "db:migrate": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/migrate.mjs",
+    "smoke:neon": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/neon-smoke-test.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",
