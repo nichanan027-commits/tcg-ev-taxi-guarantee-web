@@ -10,6 +10,14 @@ export const competitionConfig = {
   mode: "COMPETITION" as const,
   consentVersion: "RTO-COMP-1.0",
   phoneVerificationStatus: "NOT_REQUIRED_COMPETITION" as const,
+  /**
+   * นโยบายเก็บข้อมูลส่วนบุคคลของรอบการแข่งขัน
+   *
+   * นับจาก "วันสิ้นสุดการแข่งขัน" ไม่ใช่จากวันที่แต่ละใบสมัครถูกสร้าง
+   * เพราะข้อมูลทั้งรอบถูกเก็บไว้เพื่อการตัดสินชุดเดียวกัน จึงหมดความจำเป็นพร้อมกัน
+   * ถ้านับจาก createdAt ใบที่สมัครก่อนจะถูกลบทั้งที่การตัดสินยังไม่จบ
+   */
+  competitionCutoffAt: "2026-10-31T23:59:59.000Z",
   piiRetentionDays: 30,
   lineContact: "@tcgfirst",
   maxFiSelections: 2,
