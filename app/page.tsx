@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { DEMO_BADGE, DEMO_CASE_LIST, DEMO_NOTICE } from "./lib/demo/cases.ts";
+
 /**
  * Route to Own — Competition Registration landing (System A / Front Office)
  *
@@ -50,6 +52,38 @@ export default function HomePage() {
             </li>
           ))}
         </ol>
+      </section>
+
+      <section className="fo-section" aria-labelledby="demo-heading" data-role="demo-mode">
+        <h2 id="demo-heading" className="fo-h2">
+          ชุดข้อมูลสาธิต
+        </h2>
+        <div className="fo-demo">
+          <span className="fo-demo-badge" data-role="demo-badge">
+            {DEMO_BADGE}
+          </span>
+          <p className="fo-muted">{DEMO_NOTICE}</p>
+          <div className="fo-demo-grid">
+            {DEMO_CASE_LIST.map((demo) => (
+              <form
+                key={demo.id}
+                action={`/api/demo/${demo.id}`}
+                method="post"
+                className="fo-demo-card"
+              >
+                <button type="submit" data-role={`demo-case-${demo.id}`}>
+                  <b>{demo.title}</b>
+                  <span className="fo-demo-expect">{demo.expectation}</span>
+                  <small>{demo.demonstrates}</small>
+                </button>
+              </form>
+            ))}
+          </div>
+          <p className="fo-muted">
+            ทุกเคสเดินผ่านเส้นทางเดียวกับผู้สมัครจริง — สร้างใบสมัคร ให้ความยินยอม บันทึกข้อมูล
+            แล้วประเมินด้วยเครื่องคำนวณกลาง ผลที่เห็นจึงไม่ได้ถูกเขียนไว้ล่วงหน้า
+          </p>
+        </div>
       </section>
 
       <section className="fo-section" aria-labelledby="rules-heading">

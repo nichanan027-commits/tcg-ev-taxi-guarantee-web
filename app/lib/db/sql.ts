@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 /**
@@ -32,8 +32,19 @@ function buildQuery(strings: TemplateStringsArray, values: unknown[]) {
   return { text, values };
 }
 
+/**
+ * รวม migration ทุกไฟล์เรียงตามชื่อ
+ *
+ * ทุกคำสั่งเขียนแบบ idempotent (`if not exists`) จึงรันซ้ำได้โดยไม่พัง
+ * และไฟล์ที่เพิ่มทีหลังจะต่อท้ายเสมอ ไม่แก้ของเดิม
+ */
 export function migrationSql(): string {
-  return readFileSync(path.join(process.cwd(), "db/migrations/0001_competition_registration.sql"), "utf8");
+  const dir = path.join(process.cwd(), "db/migrations");
+  return readdirSync(dir)
+    .filter((file) => file.endsWith(".sql"))
+    .sort()
+    .map((file) => readFileSync(path.join(dir, file), "utf8"))
+    .join("\n");
 }
 
 function createNeonClient(url: string): SqlClient {

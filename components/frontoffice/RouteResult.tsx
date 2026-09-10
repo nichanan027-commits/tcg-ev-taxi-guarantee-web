@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { CapacityBar } from "./CapacityBar.tsx";
 import { FinancialPassportCard } from "./FinancialPassportCard.tsx";
 import { PreScoreGauge } from "./PreScoreGauge.tsx";
@@ -31,9 +33,15 @@ export function RouteResult({ vm }: { vm: ResultViewModel }) {
         <ul className="fo-cta-row">
           {vm.ctas.map((cta) => (
             <li key={`${cta.id}-${cta.tone}`}>
-              <span className={`fo-cta-chip ${cta.tone}`} data-role={`cta-${cta.id}`}>
-                {cta.label}
-              </span>
+              {cta.href ? (
+                <Link href={cta.href} className={`fo-cta-chip ${cta.tone}`} data-role={`cta-${cta.id}`}>
+                  {cta.label}
+                </Link>
+              ) : (
+                <span className={`fo-cta-chip ${cta.tone}`} data-role={`cta-${cta.id}`}>
+                  {cta.label}
+                </span>
+              )}
             </li>
           ))}
         </ul>

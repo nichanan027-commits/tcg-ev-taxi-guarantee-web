@@ -1,10 +1,11 @@
 import Link from "next/link";
 
 import { GOVERNANCE_COPY } from "../../lib/config/competition.ts";
-import { getLatestEvaluationSnapshot } from "../../lib/evaluation/evaluate-application.ts";
+import { referenceSnapshotFor } from "../../lib/fi/fi-repository.ts";
 import { getApplication } from "../../lib/registration/application-service.ts";
 import { readinessReportModel } from "../../lib/result/report-model.ts";
 import { resultViewModel } from "../../lib/result/view-model.ts";
+import { RegistrationWizard } from "../../../components/frontoffice/RegistrationWizard.tsx";
 import { RouteResult } from "../../../components/frontoffice/RouteResult.tsx";
 import { ReadinessReport } from "../../../components/frontoffice/pdf/ReadinessReport.tsx";
 import { PdfDownloadButton } from "../../../components/frontoffice/pdf/PdfDownloadButton.tsx";
@@ -35,7 +36,9 @@ export default async function ApplyPage({ params }: Props) {
     );
   }
 
-  const snapshot = await getLatestEvaluationSnapshot(applicationId);
+  // ผลอ้างอิงคือผลภายใต้เงื่อนไขของผู้สมัครเอง
+  // หลังเลือก FI แล้ว ผลล่าสุดอาจเป็นผลภายใต้เงื่อนไขของ FI แห่งนั้น ซึ่งไม่ใช่ผลของหน้านี้
+  const snapshot = await referenceSnapshotFor(applicationId);
 
   if (!snapshot) {
     return (
@@ -43,11 +46,8 @@ export default async function ApplyPage({ params }: Props) {
         <p className="fo-eyebrow">Route to Own by บสย.</p>
         <h1 className="fo-title">ใบสมัคร {application.id}</h1>
         <p className="fo-governance">{GOVERNANCE_COPY.competitionRegistration}</p>
-        <section className="fo-section">
-          <h2 className="fo-h2">สถานะปัจจุบัน: {application.status}</h2>
-          <p>ยังไม่มีผลการประเมิน กรอกข้อมูลอาชีพ รายได้ และค่าใช้จ่ายให้ครบก่อนจึงจะประเมินได้</p>
-          <p className="fo-muted">{GOVERNANCE_COPY.phoneVerification}</p>
-        </section>
+        <p className="fo-muted">{GOVERNANCE_COPY.phoneVerification}</p>
+        <RegistrationWizard applicationId={application.id} />
       </main>
     );
   }

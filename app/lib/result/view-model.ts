@@ -58,7 +58,12 @@ export function resultViewModel(snapshot: EvaluationSnapshot) {
   const ctas: ResultCta[] = [];
   if (isReady) {
     ctas.push({ id: "readiness-report", label: "ดู / ดาวน์โหลดรายงานความพร้อม", tone: "primary" });
-    ctas.push({ id: "fi-match", label: "ดูสถาบันการเงินที่สอดคล้องกับข้อมูลของคุณ", tone: "secondary" });
+    ctas.push({
+      id: "fi-match",
+      label: "ดูสถาบันการเงินที่สอดคล้องกับข้อมูลของคุณ",
+      href: `/apply/${snapshot.applicationId}/fi`,
+      tone: "secondary"
+    });
   }
   if (canAskAdvisory) {
     ctas.push({

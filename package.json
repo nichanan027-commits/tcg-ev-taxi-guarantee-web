@@ -7,7 +7,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "e2e": "playwright test",
+    "e2e:desktop": "playwright test --project=desktop",
+    "e2e:mobile": "playwright test --project=mobile"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",

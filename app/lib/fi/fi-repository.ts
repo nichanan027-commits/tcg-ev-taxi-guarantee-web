@@ -14,6 +14,8 @@ export type StoredFiSelection = {
   fiId: string;
   slot: number;
   evaluationSnapshotId: string | null;
+  /** ผลที่ผู้สมัครเห็นอยู่ตอนเลือก FI แห่งนี้ ใช้เป็นฐานเปรียบเทียบ */
+  referenceSnapshotId: string | null;
   financingScenario: FinancingScenario | null;
   materialChange: boolean;
   active: boolean;
@@ -46,11 +48,29 @@ function hydrateSelection(row: Record<string, unknown>): StoredFiSelection {
     fiId: str(row.fi_id),
     slot: Number(row.slot),
     evaluationSnapshotId: row.evaluation_snapshot_id ? str(row.evaluation_snapshot_id) : null,
+    referenceSnapshotId: row.reference_snapshot_id ? str(row.reference_snapshot_id) : null,
     financingScenario: parseScenario(row.financing_scenario),
     materialChange: row.material_change === true || row.material_change === "true",
     active: row.active === true || row.active === "true",
     createdAt: iso(row.created_at)
   };
+}
+
+/**
+ * ผลอ้างอิงของใบสมัคร — ผลภายใต้เงื่อนไขของผู้สมัครเอง ไม่ใช่ของสถาบันการเงินแห่งใด
+ *
+ * เมื่อเคยเลือก FI มาก่อน ผลล่าสุดจะเป็นผลภายใต้เงื่อนไขของ FI แห่งนั้น
+ * ซึ่งใช้เป็นฐานตัดสินรอบใหม่ไม่ได้ เพราะจะทำให้เงื่อนไขของแห่งหนึ่งไปกำหนดสิทธิ์ของอีกแห่ง
+ * จึงย้อนกลับไปที่ผลอ้างอิงที่บันทึกไว้ตอนเลือกครั้งแรกเสมอ
+ */
+export async function referenceSnapshotFor(applicationId: string): Promise<EvaluationSnapshot | null> {
+  const selections = await listFiSelections(applicationId);
+  for (const selection of selections) {
+    if (!selection.referenceSnapshotId) continue;
+    const snapshot = await getSnapshotById(selection.referenceSnapshotId);
+    if (snapshot) return snapshot;
+  }
+  return getLatestEvaluationSnapshot(applicationId);
 }
 
 /**
@@ -67,11 +87,11 @@ export async function setFiSelections(
 ): Promise<{ selections: StoredFiSelection[]; outcomes: Awaited<ReturnType<typeof evaluateForFi>>[] }> {
   const sql = await ensureSchema();
 
-  const latest = await getLatestEvaluationSnapshot(applicationId);
-  if (!latest) throw new Error("ยังไม่มีผลการประเมิน จึงเลือกสถาบันการเงินไม่ได้");
+  const reference = await referenceSnapshotFor(applicationId);
+  if (!reference) throw new Error("ยังไม่มีผลการประเมิน จึงเลือกสถาบันการเงินไม่ได้");
 
   // ด่านฝั่งเซิร์ฟเวอร์: เส้นทางต้องเป็น READY, ไม่เกิน 2, ไม่ซ้ำ, และรองรับเงินดาวน์ 0%
-  assertSelectionAllowed(latest, fiIds);
+  assertSelectionAllowed(reference, fiIds);
 
   await sql`update fi_selections set active = false where application_id = ${applicationId} and active = true`;
 
@@ -83,21 +103,30 @@ export async function setFiSelections(
     if (!fi) throw new Error(`ไม่พบสถาบันการเงิน ${fiId}`);
 
     // ประเมินใหม่เมื่อเงื่อนไขของ FI รายนี้ต่างอย่างมีนัยสำคัญ
-    const outcome = await evaluateForFi(applicationId, fi, latest);
+    const outcome = await evaluateForFi(applicationId, fi, reference);
     outcomes.push(outcome);
 
     const id = rowId("fisel");
     const [row] = await sql`
       insert into fi_selections (
-        id, application_id, fi_id, slot, evaluation_snapshot_id, financing_scenario, material_change, active
+        id, application_id, fi_id, slot, evaluation_snapshot_id, reference_snapshot_id,
+        financing_scenario, material_change, active
       ) values (
-        ${id}, ${applicationId}, ${fiId}, ${index + 1}, ${outcome.snapshot.id},
+        ${id}, ${applicationId}, ${fiId}, ${index + 1}, ${outcome.snapshot.id}, ${reference.id},
         ${JSON.stringify(outcome.financingScenario)}, ${outcome.materialChange}, ${true}
       )
       returning *
     `;
     selections.push(hydrateSelection(row));
   }
+
+  // คืนเงื่อนไขของใบสมัครกลับเป็นของผู้สมัครเอง
+  // เพื่อไม่ให้เงื่อนไขของ FI แห่งสุดท้ายกลายเป็นค่าตั้งต้นของใบสมัครในรอบถัดไป
+  const { updateFinancingTerms } = await import("../registration/application-service.ts");
+  await updateFinancingTerms(applicationId, {
+    annualRatePct: reference.financingScenario.annualRatePct,
+    termMonths: reference.financingScenario.termMonths
+  });
 
   if (fiIds.length > 0) await setStatus(applicationId, "FI_SELECTED", `เลือกสถาบันการเงิน ${fiIds.length} แห่ง`);
 
