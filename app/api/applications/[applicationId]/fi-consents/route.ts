@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 
-import { FI_CONSENT_VERSION, listFiConsents, recordFiConsent } from "../../../../lib/fi/fi-repository.ts";
+import {
+  FI_CONSENT_NOT_READY_REASON,
+  FI_CONSENT_VERSION,
+  listFiConsents,
+  recordFiConsent
+} from "../../../../lib/fi/fi-repository.ts";
 
 type Context = { params: Promise<{ applicationId: string }> };
 
@@ -33,6 +38,8 @@ export async function POST(request: Request, context: Context) {
     return NextResponse.json({ consent: await recordFiConsent(applicationId, fiId) }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "บันทึกความยินยอมไม่สำเร็จ";
-    return NextResponse.json({ error: message }, { status: 422 });
+    // สถานะที่ยังไม่พร้อมส่งต่อเป็นเรื่องของสถานะปัจจุบัน ไม่ใช่ข้อมูลที่ส่งมาผิดรูปแบบ
+    const notReady = message === FI_CONSENT_NOT_READY_REASON || message.startsWith("ยังไม่มีผลการประเมิน");
+    return NextResponse.json({ error: message }, { status: notReady ? 409 : 422 });
   }
 }

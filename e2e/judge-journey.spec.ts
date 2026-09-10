@@ -20,6 +20,13 @@ async function openDemo(page: Page, caseId: "A" | "B" | "C" | "D"): Promise<stri
   return body.applicationId;
 }
 
+/** กดเลือกสถาบันการเงินด้วยรหัส เพื่อไม่ให้เทสต์ผูกกับลำดับบนหน้าจอ */
+async function selectFi(page: Page, fiId: string): Promise<void> {
+  const toggle = page.locator(`[data-role="fi-option"][data-fi-id="${fiId}"] [data-role="fi-select-toggle"]`);
+  await expect(toggle).toBeEnabled();
+  await toggle.click();
+}
+
 test.describe("1 — หน้าแรกและโหมดสาธิต", () => {
   test("หน้าแรกมีปุ่มเริ่มสมัครและชุดข้อมูลสาธิตครบสี่เคส พร้อมป้ายกำกับ", async ({ page }) => {
     await page.goto("/");
@@ -173,16 +180,17 @@ test.describe("6 — ผลเฉพาะของแต่ละสถาบ�
     const applicationId = await openDemo(page, "D");
     await page.goto(`/apply/${applicationId}/fi`);
 
-    const selectable = page.locator(
-      '[data-role="fi-option"][data-presentation="ROUTE_TO_OWN_PARTICIPATING"] [data-role="fi-select-toggle"]'
-    );
-    await selectable.nth(0).click();
+    await selectFi(page, "KKP_EV");
     await page.locator('[data-role="fi-save-selections"]').click();
 
     await expect(page).toHaveURL(`/apply/${applicationId}/handoff`, { timeout: 30_000 });
 
     const card = page.locator('[data-role="fi-handoff-card"]').first();
     await expect(card.locator('[data-role="material-change-note"]')).toContainText("ประเมินใหม่");
+
+    // เงื่อนไขที่ต่างออกไปทำให้เส้นทางเปลี่ยนจริง ไม่ใช่แค่ตัวเลขค่างวดขยับ
+    await expect(card.locator('[data-role="route-changed-note"]')).toContainText("NO NEW DEBT");
+    await expect(card.locator('[data-role="fi-specific-route"]')).toHaveText("NO NEW DEBT");
 
     // ตารางต้องแสดงทั้งผลอ้างอิงและผลเฉพาะแห่งนั้น พร้อม Snapshot คนละใบ
     const rows = card.locator('[data-role="comparison-row"][data-changed="true"]');
@@ -207,11 +215,10 @@ test.describe("7 — สองสถาบันการเงินถูก�
     const applicationId = await openDemo(page, "D");
     await page.goto(`/apply/${applicationId}/fi`);
 
-    const selectable = page.locator(
-      '[data-role="fi-option"][data-presentation="ROUTE_TO_OWN_PARTICIPATING"] [data-role="fi-select-toggle"]'
-    );
-    await selectable.nth(0).click();
-    await selectable.nth(1).click();
+    // เลือกด้วยรหัสสถาบันการเงิน ไม่ใช่ลำดับบนหน้าจอ
+    // เพื่อให้เคสสาธิตนี้ชี้ไปที่คู่ที่เงื่อนไขต่างกันมากพอจะให้ผลต่างกันเสมอ
+    await selectFi(page, "IBANK_GREEN_LIFE");
+    await selectFi(page, "KKP_EV");
     await page.locator('[data-role="fi-save-selections"]').click();
     await expect(page).toHaveURL(`/apply/${applicationId}/handoff`, { timeout: 30_000 });
 
@@ -225,13 +232,55 @@ test.describe("7 — สองสถาบันการเงินถูก�
     expect(typeof first).toBe("string");
     expect(typeof second).toBe("string");
 
-    // แห่งที่ผลไม่ใช่ READY ต้องให้ความยินยอมไม่ได้
+    // แห่งที่ผลไม่ใช่ READY ต้องไม่มีปุ่มให้ความยินยอมเลย
+    let readyCount = 0;
+    let blockedCount = 0;
     for (const index of [0, 1]) {
       const card = cards.nth(index);
       const route = (await card.locator('[data-role="fi-specific-route"]').innerText()).trim();
-      if (route !== "READY FOR FI") {
-        await expect(card.locator('[data-role="fi-consent"]')).toBeDisabled();
-        await expect(card.locator('[data-role="handoff-not-ready"]')).toBeVisible();
+      if (route === "READY FOR FI") {
+        readyCount += 1;
+        await expect(card.locator('[data-role="fi-consent"]')).toBeVisible();
+      } else {
+        blockedCount += 1;
+        await expect(card.locator('[data-role="fi-consent"]')).toHaveCount(0);
+        await expect(card.locator('[data-role="fi-prepare-handoff"]')).toBeDisabled();
+        await expect(card.locator('[data-role="handoff-not-ready"]')).toContainText(
+          "ยังไม่สามารถให้ความยินยอมเพื่อส่งต่อข้อมูลได้"
+        );
+      }
+    }
+
+    // เคสสาธิตนี้ต้องแยกกันจริง — แห่งหนึ่งผ่าน อีกแห่งไม่ผ่าน
+    expect(readyCount).toBe(1);
+    expect(blockedCount).toBe(1);
+  });
+
+  test("เซิร์ฟเวอร์ปฏิเสธความยินยอมของแห่งที่ผลไม่ใช่ READY แม้เรียก API ตรง", async ({ page }) => {
+    const applicationId = await openDemo(page, "D");
+    await page.goto(`/apply/${applicationId}/fi`);
+
+    // เลือกด้วยรหัสสถาบันการเงิน ไม่ใช่ลำดับบนหน้าจอ
+    // เพื่อให้เคสสาธิตนี้ชี้ไปที่คู่ที่เงื่อนไขต่างกันมากพอจะให้ผลต่างกันเสมอ
+    await selectFi(page, "IBANK_GREEN_LIFE");
+    await selectFi(page, "KKP_EV");
+    await page.locator('[data-role="fi-save-selections"]').click();
+    await expect(page).toHaveURL(`/apply/${applicationId}/handoff`, { timeout: 30_000 });
+
+    const statuses = await (await page.request.get(`/api/applications/${applicationId}/fi-handoff`)).json();
+
+    for (const status of statuses.statuses) {
+      const consent = await page.request.post(`/api/applications/${applicationId}/fi-consents`, {
+        headers: { "content-type": "application/json" },
+        data: { fiId: status.fiId }
+      });
+      // ด่านอยู่ที่เซิร์ฟเวอร์ ไม่ใช่ที่ปุ่มบนหน้าจอ
+      if (status.route === "READY FOR FI") {
+        expect(consent.status(), `${status.fiId} ควรให้ความยินยอมได้`).toBe(201);
+      } else {
+        expect(consent.status(), `${status.fiId} ไม่ควรให้ความยินยอมได้`).toBe(409);
+        const body = await consent.json();
+        expect(body.error).toContain("READY FOR FI");
       }
     }
   });
@@ -242,10 +291,7 @@ test.describe("8 — เตรียมส่งต่อและรายง�
     const applicationId = await openDemo(page, "A");
     await page.goto(`/apply/${applicationId}/fi`);
 
-    const selectable = page.locator(
-      '[data-role="fi-option"][data-presentation="ROUTE_TO_OWN_PARTICIPATING"] [data-role="fi-select-toggle"]'
-    );
-    await selectable.nth(0).click();
+    await selectFi(page, "IBANK_GREEN_LIFE");
     await page.locator('[data-role="fi-save-selections"]').click();
     await expect(page).toHaveURL(`/apply/${applicationId}/handoff`, { timeout: 30_000 });
 
@@ -286,10 +332,7 @@ test.describe("9 — การแสดงผลบนจอเล็กแล�
     const applicationId = await openDemo(page, "A");
     await page.goto(`/apply/${applicationId}/fi`);
 
-    const selectable = page.locator(
-      '[data-role="fi-option"][data-presentation="ROUTE_TO_OWN_PARTICIPATING"] [data-role="fi-select-toggle"]'
-    );
-    await selectable.nth(0).click();
+    await selectFi(page, "IBANK_GREEN_LIFE");
     await page.locator('[data-role="fi-save-selections"]').click();
     await expect(page).toHaveURL(`/apply/${applicationId}/handoff`, { timeout: 30_000 });
 

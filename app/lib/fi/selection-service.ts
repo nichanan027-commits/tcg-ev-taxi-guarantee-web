@@ -1,5 +1,5 @@
 import { competitionConfig, canHandoffToFi } from "../config/competition.ts";
-import { evaluateApplication } from "../evaluation/evaluate-application.ts";
+import { evaluateApplicationForFi } from "../evaluation/evaluate-application.ts";
 import { estimateFinancing } from "../financing/estimate.ts";
 import { hasMaterialFinancingChange, materialChangeReport } from "../financing/material-change.ts";
 import type { EvaluationSnapshot, FinancingScenario } from "../registration/types.ts";
@@ -97,16 +97,17 @@ export type FiEvaluationOutcome = {
  * ถ้าเงื่อนไขต่างอย่างมีนัยสำคัญ จะเรียก Frozen Engine ประเมินใหม่และได้ Snapshot ใหม่
  * Snapshot เดิมไม่ถูกแก้ ทำให้ตรวจย้อนได้ว่าเคยได้ผลอะไรภายใต้เงื่อนไขใด
  *
- * หมายเหตุ: การประเมินใหม่ใช้ข้อมูลใบสมัครที่บันทึกไว้ทั้งชุดผ่าน evaluateApplication()
- * ซึ่งอ่านอัตราและระยะเวลาที่ผู้สมัครบันทึกไว้ ดังนั้นจึงต้องอัปเดตเงื่อนไขก่อนเรียก
+ * เงื่อนไขของ FI ถูกส่งเป็น override ของการเรียกครั้งนั้น ไม่ได้เขียนลงใบสมัคร
+ * จึงไม่มีช่วงเวลาใดที่ใบสมัครถือเงื่อนไขของ FI แห่งอื่นค้างไว้
+ * และการประเมินของแต่ละแห่งไม่ขึ้นต่อกันหรือต่อลำดับการเรียก
  */
 export async function evaluateForFi(
   applicationId: string,
   fi: FiLike,
-  latestSnapshot: EvaluationSnapshot
+  referenceSnapshot: EvaluationSnapshot
 ): Promise<FiEvaluationOutcome> {
-  const financingScenario = fiFinancingScenarioFor(fi, latestSnapshot);
-  const report = materialChangeReport(latestSnapshot.financingScenario, financingScenario);
+  const financingScenario = fiFinancingScenarioFor(fi, referenceSnapshot);
+  const report = materialChangeReport(referenceSnapshot.financingScenario, financingScenario);
 
   if (!report.requiresReevaluation) {
     return {
@@ -114,18 +115,21 @@ export async function evaluateForFi(
       materialChange: false,
       changedFields: [],
       financingScenario,
-      snapshot: latestSnapshot,
+      snapshot: referenceSnapshot,
       reusedExistingSnapshot: true
     };
   }
 
-  const { updateFinancingTerms } = await import("../registration/application-service.ts");
-  await updateFinancingTerms(applicationId, {
-    annualRatePct: financingScenario.annualRatePct,
-    termMonths: financingScenario.termMonths
+  const snapshot = await evaluateApplicationForFi({
+    applicationId,
+    referenceSnapshotId: referenceSnapshot.id,
+    fiId: fi.id,
+    financingOverride: {
+      annualRatePct: financingScenario.annualRatePct,
+      termMonths: financingScenario.termMonths,
+      loanAmount: financingScenario.loanAmount
+    }
   });
-
-  const snapshot = await evaluateApplication(applicationId);
 
   return {
     fiId: fi.id,

@@ -203,20 +203,26 @@ function FiCard({ applicationId, selection }: { applicationId: string; selection
         </p>
       ) : null}
 
+      {/* เมื่อผลของแห่งนี้ไม่ใช่ READY จะไม่มีปุ่มให้ความยินยอมเลย
+          การแสดงปุ่มไว้แล้วปิดการกด ยังเป็นการชวนให้เข้าใจว่าใกล้จะส่งต่อได้ */}
       <div className="fo-handoff-actions">
-        <button
-          type="button"
-          className="fo-secondary"
-          disabled={consented || busy || !ready}
-          onClick={giveConsent}
-          data-role="fi-consent"
-        >
-          {consented ? `ให้ความยินยอมแล้ว (${selection.consentVersion ?? "RTO-FI-1.0"})` : "ให้ความยินยอมสำหรับแห่งนี้"}
-        </button>
+        {ready ? (
+          <button
+            type="button"
+            className="fo-secondary"
+            disabled={consented || busy}
+            onClick={giveConsent}
+            data-role="fi-consent"
+          >
+            {consented
+              ? `ให้ความยินยอมแล้ว (${selection.consentVersion ?? "RTO-FI-1.0"})`
+              : "ให้ความยินยอมสำหรับแห่งนี้"}
+          </button>
+        ) : null}
         <button
           type="button"
           className="fo-cta"
-          disabled={busy}
+          disabled={busy || !ready}
           onClick={prepareHandoff}
           data-role="fi-prepare-handoff"
         >
@@ -225,8 +231,9 @@ function FiCard({ applicationId, selection }: { applicationId: string; selection
       </div>
 
       {!ready ? (
-        <p className="fo-muted" data-role="handoff-not-ready">
-          ผลภายใต้เงื่อนไขของแห่งนี้ไม่ใช่ READY FOR FI จึงยังให้ความยินยอมและส่งต่อไม่ได้
+        <p className="fo-protected-note" data-role="handoff-not-ready">
+          ผลประเมินภายใต้เงื่อนไขของสถาบันการเงินนี้ยังไม่อยู่ในสถานะ READY FOR FI
+          จึงยังไม่สามารถให้ความยินยอมเพื่อส่งต่อข้อมูลได้
         </p>
       ) : null}
 

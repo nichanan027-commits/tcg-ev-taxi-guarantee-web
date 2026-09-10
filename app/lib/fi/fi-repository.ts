@@ -1,4 +1,4 @@
-import { competitionConfig } from "../config/competition.ts";
+import { canHandoffToFi, competitionConfig } from "../config/competition.ts";
 import { ensureSchema, iso, rowId, str } from "../db/schema.ts";
 import { getLatestEvaluationSnapshot, getSnapshotById } from "../evaluation/snapshot.ts";
 import { setStatus } from "../registration/application-service.ts";
@@ -120,13 +120,8 @@ export async function setFiSelections(
     selections.push(hydrateSelection(row));
   }
 
-  // คืนเงื่อนไขของใบสมัครกลับเป็นของผู้สมัครเอง
-  // เพื่อไม่ให้เงื่อนไขของ FI แห่งสุดท้ายกลายเป็นค่าตั้งต้นของใบสมัครในรอบถัดไป
-  const { updateFinancingTerms } = await import("../registration/application-service.ts");
-  await updateFinancingTerms(applicationId, {
-    annualRatePct: reference.financingScenario.annualRatePct,
-    termMonths: reference.financingScenario.termMonths
-  });
+  // ไม่ต้องคืนค่าอะไรที่นี่ — การประเมินของ FI ใช้ override ต่อการเรียก
+  // ข้อมูลใบสมัครจึงไม่เคยถูกเขียนทับด้วยเงื่อนไขของ FI แห่งใดเลย
 
   if (fiIds.length > 0) await setStatus(applicationId, "FI_SELECTED", `เลือกสถาบันการเงิน ${fiIds.length} แห่ง`);
 
@@ -144,7 +139,20 @@ export async function listFiSelections(
   return rows.map(hydrateSelection);
 }
 
-/** ความยินยอมรายสถาบันการเงิน — แยกจากความยินยอมของการแข่งขัน และไม่เขียนทับของเดิม */
+/** เหตุผลที่ยังให้ความยินยอมส่งต่อไม่ได้ — ใช้ทั้งฝั่งเซิร์ฟเวอร์และหน้าจอ */
+export const FI_CONSENT_NOT_READY_REASON =
+  "ผลประเมินภายใต้เงื่อนไขของสถาบันการเงินนี้ยังไม่อยู่ในสถานะ READY FOR FI จึงยังไม่สามารถให้ความยินยอมเพื่อส่งต่อข้อมูลได้";
+
+/**
+ * ความยินยอมรายสถาบันการเงิน — แยกจากความยินยอมของการแข่งขัน และไม่เขียนทับของเดิม
+ *
+ * ความยินยอมนี้มีความหมายเดียวคือ "ยอมให้ส่งข้อมูลไปให้สถาบันการเงินแห่งนี้พิจารณา"
+ * ถ้าผลภายใต้เงื่อนไขของแห่งนั้นไม่ใช่ READY FOR FI การส่งต่อจะไม่เกิดขึ้นอยู่แล้ว
+ * การขอความยินยอมทั้งที่ส่งต่อไม่ได้ จึงเป็นการขอสิ่งที่ไม่มีทางถูกใช้
+ * และทำให้ผู้สมัครเข้าใจว่ากำลังเดินหน้าเข้าสู่การพิจารณา
+ *
+ * ผลเก่าที่เคย READY ใช้อนุมัติแทนไม่ได้ — ตัดสินจาก Snapshot ที่ผูกกับ FI แห่งนั้นในปัจจุบันเท่านั้น
+ */
 export async function recordFiConsent(applicationId: string, fiId: string): Promise<StoredFiConsent> {
   const sql = await ensureSchema();
 
@@ -152,8 +160,19 @@ export async function recordFiConsent(applicationId: string, fiId: string): Prom
   if (!fi) throw new Error(`ไม่พบสถาบันการเงิน ${fiId}`);
 
   const active = await listFiSelections(applicationId, { activeOnly: true });
-  if (!active.some((selection) => selection.fiId === fiId)) {
+  const selection = active.find((row) => row.fiId === fiId);
+  if (!selection) {
     throw new Error(`ต้องเลือก ${fi.fiName} ก่อนจึงจะให้ความยินยอมได้`);
+  }
+
+  const snapshot = selection.evaluationSnapshotId
+    ? await getSnapshotById(selection.evaluationSnapshotId)
+    : null;
+  if (!snapshot) {
+    throw new Error(`ยังไม่มีผลการประเมินภายใต้เงื่อนไขของ ${fi.fiName}`);
+  }
+  if (!canHandoffToFi(snapshot.route)) {
+    throw new Error(FI_CONSENT_NOT_READY_REASON);
   }
 
   const [row] = await sql`

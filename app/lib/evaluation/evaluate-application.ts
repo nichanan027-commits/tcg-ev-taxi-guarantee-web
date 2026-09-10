@@ -14,6 +14,19 @@ export { getLatestEvaluationSnapshot, getSnapshotById, listEvaluationSnapshots }
 export const SPEC_VERSION = "RTO-COMP-REG-1.0";
 
 /**
+ * เงื่อนไขการจัดไฟแนนซ์ที่ใช้แทนของผู้สมัครในรอบประเมินหนึ่ง ๆ
+ *
+ * ใช้เมื่อประเมินภายใต้เงื่อนไขของสถาบันการเงินแห่งหนึ่ง
+ * ค่านี้มีผลเฉพาะการเรียก engine ครั้งนั้นและ Snapshot ที่ได้
+ * ข้อมูลใบสมัครของผู้สมัครไม่ถูกแก้
+ */
+export type FinancingOverride = {
+  annualRatePct: number;
+  termMonths: number;
+  loanAmount?: number;
+};
+
+/**
  * ตัวเชื่อมระหว่างข้อมูลใบสมัครกับ Frozen Route to Own Engine
  *
  * หน้าที่ของไฟล์นี้มีเพียงสามอย่าง: แปลง input, เรียก evaluate() ของ engine,
@@ -22,6 +35,38 @@ export const SPEC_VERSION = "RTO-COMP-REG-1.0";
  * เส้นทางที่ได้จึงเป็นค่าที่ engine ตัดสิน คะแนนสูงไม่มีทางเปิดเคสที่ Affordability ไม่ผ่านกลับมาได้
  */
 export async function evaluateApplication(applicationId: string): Promise<EvaluationSnapshot> {
+  return evaluateWith(applicationId, null);
+}
+
+/**
+ * ประเมินภายใต้เงื่อนไขของสถาบันการเงินแห่งหนึ่ง
+ *
+ * สร้าง input ชุดใหม่จากข้อมูลใบสมัครแล้วแทนที่เฉพาะเงื่อนไขการจัดไฟแนนซ์
+ * ไม่มีการเขียนทับข้อมูลใบสมัคร จึงไม่ต้อง "แก้แล้วคืนค่า" และไม่มีช่วงเวลาที่
+ * ใบสมัครถือเงื่อนไขของ FI แห่งอื่นค้างไว้ การประเมินของแต่ละแห่งจึงไม่ชนกัน
+ *
+ * referenceSnapshotId เก็บไว้เพื่อผูกผลนี้กับผลอ้างอิงที่ใช้เทียบ
+ * และเพื่อปฏิเสธการอ้างผลของใบสมัครอื่น
+ */
+export async function evaluateApplicationForFi(input: {
+  applicationId: string;
+  referenceSnapshotId: string;
+  fiId: string;
+  financingOverride: FinancingOverride;
+}): Promise<EvaluationSnapshot> {
+  const { getSnapshotById } = await import("./snapshot.ts");
+  const reference = await getSnapshotById(input.referenceSnapshotId);
+  if (!reference) throw new Error(`ไม่พบผลอ้างอิง ${input.referenceSnapshotId}`);
+  if (reference.applicationId !== input.applicationId) {
+    throw new Error("ผลอ้างอิงไม่ได้เป็นของใบสมัครนี้");
+  }
+  return evaluateWith(input.applicationId, input.financingOverride);
+}
+
+async function evaluateWith(
+  applicationId: string,
+  financingOverride: FinancingOverride | null
+): Promise<EvaluationSnapshot> {
   const application = await getApplication(applicationId);
   if (!application) throw new Error(`ไม่พบใบสมัคร ${applicationId}`);
   if (!application.financial || !application.profile) {
@@ -40,17 +85,32 @@ export async function evaluateApplication(applicationId: string): Promise<Evalua
   };
   // หลักฐานรายได้ถูกประเมินก่อน แล้วจึงส่งสัดส่วนที่มีหลักฐานจริงให้ engine
   const revenue = revenueAssessmentOf(registration);
-  const engineResult = evaluate(toEngineInput(registration, revenue));
+
+  const vehicleScenario = vehicleScenarioOf(financial.vehicleId, financial.vehiclePrice);
+  // เงินดาวน์ผู้ขับ 0% จึงกู้เต็มราคารถ — 0% Down ≠ 100% Guarantee
+  const loanAmount = financingOverride?.loanAmount ?? vehicleScenario.vehiclePrice;
+  const annualRatePct = financingOverride?.annualRatePct ?? financial.annualRatePct;
+  const termMonths = financingOverride?.termMonths ?? financial.termMonths;
+
+  // input ของ engine ถูกประกอบขึ้นใหม่ทุกครั้ง แล้วแทนที่เฉพาะสนามเงื่อนไขไฟแนนซ์
+  // ชื่อสนามต้องตรงกับสัญญาของ Frozen Engine: interest = % ต่อปี, tenor = จำนวนเดือน
+  const engineInput = {
+    ...toEngineInput(registration, revenue),
+    vehiclePrice: loanAmount,
+    downPayment: 0 as const,
+    interest: annualRatePct,
+    tenor: termMonths
+  };
+
+  const engineResult = evaluate(engineInput);
   const calc = engineResult.calc;
   const readiness = engineResult.readiness;
 
-  const vehicleScenario = vehicleScenarioOf(financial.vehicleId, financial.vehiclePrice);
   const financingScenario = financingScenarioOf({
     vehiclePrice: vehicleScenario.vehiclePrice,
-    // เงินดาวน์ผู้ขับ 0% จึงกู้เต็มราคารถ — 0% Down ≠ 100% Guarantee
-    loanAmount: vehicleScenario.vehiclePrice,
-    annualRatePct: financial.annualRatePct,
-    termMonths: financial.termMonths,
+    loanAmount,
+    annualRatePct,
+    termMonths,
     workingDaysPerMonth: financial.workingDaysPerMonth
   });
 
