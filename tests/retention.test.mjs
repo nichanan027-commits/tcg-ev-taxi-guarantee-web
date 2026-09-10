@@ -13,12 +13,14 @@ import { recordCompetitionConsent, listConsents } from "../app/lib/registration/
 import {
   ANONYMIZED_NAME,
   ANONYMIZED_PHONE,
-  DEFAULT_RETENTION_POLICY,
+  LOCAL_DEVELOPMENT_CUTOFF,
+  MISSING_CUTOFF_MESSAGE,
   anonymizeAfter,
   dryRunRetention,
   executeRetention,
   exportCompetitionMetrics,
-  isDueForAnonymization
+  isDueForAnonymization,
+  resolveRetentionPolicy
 } from "../app/lib/retention/retention-service.ts";
 
 /**
@@ -29,7 +31,11 @@ import {
  *
  * สิ่งที่ต้องเหลือไว้คือร่องรอยว่าระบบตัดสินอย่างไร ไม่ใช่ว่าใครเป็นคนสมัคร
  */
-const POLICY = { competitionCutoffAt: "2026-10-31T23:59:59.000Z", retentionDays: 30 };
+const POLICY = {
+  competitionCutoffAt: "2026-10-31T23:59:59.000Z",
+  retentionDays: 30,
+  cutoffSource: "COMPETITION_CUTOFF_AT"
+};
 const BEFORE = new Date("2026-11-20T00:00:00.000Z");
 const AT_THRESHOLD = new Date("2026-11-30T23:59:59.000Z");
 const AFTER = new Date("2026-12-15T00:00:00.000Z");
@@ -43,8 +49,7 @@ async function seedFullJourney(caseId = "A") {
 }
 
 test("นโยบายนับจากวันสิ้นสุดการแข่งขัน ไม่ใช่จากวันที่สร้างใบสมัคร", () => {
-  assert.equal(DEFAULT_RETENTION_POLICY.retentionDays, 30);
-  assert.equal(DEFAULT_RETENTION_POLICY.competitionCutoffAt, competitionConfig.competitionCutoffAt);
+  assert.equal(competitionConfig.piiRetentionDays, 30);
   assert.equal(anonymizeAfter(POLICY).toISOString(), "2026-11-30T23:59:59.000Z");
 
   const service = fs.readFileSync("app/lib/retention/retention-service.ts", "utf8");

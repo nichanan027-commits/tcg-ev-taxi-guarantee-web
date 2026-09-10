@@ -108,22 +108,42 @@ function createPgliteClient(dataDir: string | undefined): SqlClient {
   return client;
 }
 
+/**
+ * ลำดับความสำคัญของแหล่งเชื่อมต่อฐานข้อมูล — มีคำตอบเดียวเสมอ
+ *
+ *   1. DATABASE_URL   แหล่งหลัก
+ *   2. POSTGRES_URL   ชื่อที่ผู้ให้บริการบางรายตั้งให้ รองรับไว้เพื่อความเข้ากันได้
+ *   3. PGlite         เฉพาะเครื่องนักพัฒนาและการทดสอบเท่านั้น
+ *
+ * ถ้าตั้งทั้งสองตัว DATABASE_URL ชนะเสมอ ไม่ใช่ "แล้วแต่ว่าตัวไหนถูกอ่านก่อน"
+ * เพราะการมีสองแหล่งที่ไม่รู้ว่าอันไหนถูกใช้ คือทางที่ทำให้เขียนลงฐานข้อมูลผิดตัว
+ */
+export function databaseUrlFor(env: NodeJS.ProcessEnv = process.env): {
+  url: string | null;
+  source: "DATABASE_URL" | "POSTGRES_URL" | null;
+} {
+  if (env.DATABASE_URL) return { url: env.DATABASE_URL, source: "DATABASE_URL" };
+  if (env.POSTGRES_URL) return { url: env.POSTGRES_URL, source: "POSTGRES_URL" };
+  return { url: null, source: null };
+}
+
 export function createSqlClient(): SqlClient {
-  const url = process.env.DATABASE_URL;
+  const { url } = databaseUrlFor();
   if (url) return createNeonClient(url);
 
   // อันตรายจริงคือดิสก์ของ serverless ที่ไม่คงอยู่ข้าม request ไม่ใช่ค่า NODE_ENV
-  // การรัน `next start` ในเครื่องจึงยังใช้ PGlite ได้ ส่วนการ deploy จริงต้องมี DATABASE_URL
+  // การรัน `next start` ในเครื่องจึงยังใช้ PGlite ได้ ส่วนการ deploy จริงต้องมีฐานข้อมูลจริง
   const isServerlessDeploy = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
   if (isServerlessDeploy && process.env.ALLOW_EPHEMERAL_DB !== "true") {
     throw new Error(
-      "DATABASE_URL is required on a serverless deployment. PGlite เขียนลงดิสก์ชั่วคราวซึ่งไม่คงอยู่ข้าม request"
+      "DATABASE_URL (หรือ POSTGRES_URL) is required on a serverless deployment. " +
+        "PGlite เขียนลงดิสก์ชั่วคราวซึ่งไม่คงอยู่ข้าม request"
     );
   }
 
   if (process.env.NODE_ENV === "production") {
     console.warn(
-      "[route2own] DATABASE_URL ไม่ได้ตั้งไว้ — กำลังใช้ PGlite ในเครื่อง ข้อมูลจะอยู่เท่าที่โปรเซสนี้ยังทำงาน"
+      "[route2own] ไม่ได้ตั้ง DATABASE_URL หรือ POSTGRES_URL — กำลังใช้ PGlite ในเครื่อง ข้อมูลจะอยู่เท่าที่โปรเซสนี้ยังทำงาน"
     );
   }
 

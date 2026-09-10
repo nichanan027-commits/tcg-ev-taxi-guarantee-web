@@ -14,18 +14,63 @@ import { ensureSchema, iso, isoOrNull, str } from "../db/schema.ts";
 export type RetentionPolicy = {
   competitionCutoffAt: string;
   retentionDays: number;
+  /** วันสิ้นสุดนี้มาจากไหน — ใช้ตรวจว่าเป็นค่าที่ตั้งใจตั้งหรือค่าสำหรับทดสอบ */
+  cutoffSource: "COMPETITION_CUTOFF_AT" | "LOCAL_DEVELOPMENT_FALLBACK";
 };
 
-export const DEFAULT_RETENTION_POLICY: RetentionPolicy = {
-  competitionCutoffAt: competitionConfig.competitionCutoffAt,
-  retentionDays: competitionConfig.piiRetentionDays
-};
+/**
+ * วันสิ้นสุดการแข่งขันสำหรับเครื่องนักพัฒนาและการทดสอบเท่านั้น
+ *
+ * ค่านี้ไม่ใช่วันสิ้นสุดจริงของการแข่งขัน และไม่เคยได้รับการยืนยันจากผู้จัด
+ * มีไว้เพื่อให้เทสต์และงานในเครื่องมีวันอ้างอิงที่แน่นอนเท่านั้น
+ * บน production การใช้ค่านี้จะทำให้ระบบหยุด ไม่ใช่ทำงานต่อเงียบ ๆ
+ */
+export const LOCAL_DEVELOPMENT_CUTOFF = "2026-10-31T23:59:59.000Z";
+
+export const MISSING_CUTOFF_MESSAGE =
+  "COMPETITION_CUTOFF_AT ไม่ได้ตั้งค่าไว้ — นโยบายลบข้อมูลส่วนบุคคลต้องอ้างวันสิ้นสุดการแข่งขันจริง " +
+  "ไม่ใช่ค่าสำหรับทดสอบ ตั้งค่าตัวแปรนี้เป็นเวลาแบบ ISO 8601 ก่อนใช้งานจริง";
+
+function isProductionRuntime(env: NodeJS.ProcessEnv): boolean {
+  // deploy จริงคือสิ่งที่ต้องระวัง ไม่ใช่ค่า NODE_ENV ที่อาจเป็น production ตอนรัน next start ในเครื่อง
+  return Boolean(env.VERCEL || env.AWS_LAMBDA_FUNCTION_NAME);
+}
+
+/**
+ * นโยบายที่ระบบจะใช้จริง
+ *
+ * วันสิ้นสุดการแข่งขันต้องมาจากการตั้งค่าอย่างชัดเจน ไม่ใช่ค่าที่ฝังไว้ในโค้ด
+ * เพราะวันนี้เป็นข้อเท็จจริงของผู้จัดการแข่งขัน ไม่ใช่การตัดสินใจของโปรแกรม
+ * ถ้าไม่ได้ตั้งค่าบนระบบจริง จะโยนข้อผิดพลาดทันที ดีกว่าลบข้อมูลผิดวัน
+ */
+export function resolveRetentionPolicy(env: NodeJS.ProcessEnv = process.env): RetentionPolicy {
+  const configured = env.COMPETITION_CUTOFF_AT?.trim();
+
+  if (configured) {
+    if (Number.isNaN(new Date(configured).getTime())) {
+      throw new Error(`COMPETITION_CUTOFF_AT ไม่ใช่เวลาแบบ ISO 8601 ที่ถูกต้อง: ${configured}`);
+    }
+    return {
+      competitionCutoffAt: new Date(configured).toISOString(),
+      retentionDays: competitionConfig.piiRetentionDays,
+      cutoffSource: "COMPETITION_CUTOFF_AT"
+    };
+  }
+
+  if (isProductionRuntime(env)) throw new Error(MISSING_CUTOFF_MESSAGE);
+
+  return {
+    competitionCutoffAt: LOCAL_DEVELOPMENT_CUTOFF,
+    retentionDays: competitionConfig.piiRetentionDays,
+    cutoffSource: "LOCAL_DEVELOPMENT_FALLBACK"
+  };
+}
 
 /** ค่าที่ใช้แทนข้อมูลเดิม — สื่อว่าถูกลบตามนโยบาย ไม่ใช่ว่าไม่เคยมี */
 export const ANONYMIZED_NAME = "[ลบตามนโยบายเก็บข้อมูล]";
 export const ANONYMIZED_PHONE = "[ลบตามนโยบายเก็บข้อมูล]";
 
-export function anonymizeAfter(policy: RetentionPolicy = DEFAULT_RETENTION_POLICY): Date {
+export function anonymizeAfter(policy: RetentionPolicy = resolveRetentionPolicy()): Date {
   const cutoff = new Date(policy.competitionCutoffAt);
   if (Number.isNaN(cutoff.getTime())) throw new Error("competitionCutoffAt ไม่ใช่วันที่ที่ถูกต้อง");
   if (!Number.isFinite(policy.retentionDays) || policy.retentionDays < 0) {
@@ -40,7 +85,7 @@ export function anonymizeAfter(policy: RetentionPolicy = DEFAULT_RETENTION_POLIC
  * ใช้ ">=" คือ ณ วินาทีที่ครบกำหนดพอดี ถือว่าถึงกำหนดแล้ว
  * เลือกแบบนี้เพื่อให้คำตอบเป็นค่าเดียวเสมอ ไม่ขึ้นกับว่ารันตอนไหนของวินาทีนั้น
  */
-export function isDueForAnonymization(now: Date, policy: RetentionPolicy = DEFAULT_RETENTION_POLICY): boolean {
+export function isDueForAnonymization(now: Date, policy: RetentionPolicy = resolveRetentionPolicy()): boolean {
   return now.getTime() >= anonymizeAfter(policy).getTime();
 }
 
@@ -115,7 +160,7 @@ function emptyReport(
 export async function dryRunRetention(
   input: { now?: Date; policy?: RetentionPolicy } = {}
 ): Promise<RetentionReport> {
-  const policy = input.policy ?? DEFAULT_RETENTION_POLICY;
+  const policy = input.policy ?? resolveRetentionPolicy();
   const now = input.now ?? new Date();
   const report = emptyReport("DRY_RUN", policy, now);
 
@@ -147,7 +192,7 @@ export async function executeRetention(
   input: { now?: Date; policy?: RetentionPolicy } = {}
 ): Promise<RetentionReport> {
   const sql = await ensureSchema();
-  const policy = input.policy ?? DEFAULT_RETENTION_POLICY;
+  const policy = input.policy ?? resolveRetentionPolicy();
   const now = input.now ?? new Date();
   const report = emptyReport("EXECUTE", policy, now);
 
