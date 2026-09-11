@@ -1,0 +1,152 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+
+import {
+  ProfileInputSchema,
+  FinancialInputSchema,
+  RegistrationInputSchema,
+  toEngineInput
+} from "../app/lib/registration/validation.ts";
+import { competitionConfig } from "../app/lib/config/competition.ts";
+
+const validProfile = {
+  displayName: "ผู้ทดลอง",
+  phone: "0812345678",
+  province: "กรุงเทพมหานคร",
+  driverStatus: "RENTING",
+  yearsDriving: 6,
+  ownershipGoal: "OWN_WITHIN_5_YEARS"
+};
+
+const validFinancial = {
+  incomeEntries: [
+    { channel: "PLATFORM", dailyAmount: 1200, hasTransactionEvidence: true },
+    { channel: "CASH", dailyAmount: 650.52, hasTransactionEvidence: false }
+  ],
+  workingDaysPerMonth: 26,
+  currentRentDaily: 700,
+  fuelDaily: 300,
+  batteryServiceDaily: 0,
+  otherOpexDaily: 60,
+  householdMonthly: 15000,
+  existingDebtMonthly: 0,
+  activityConsistency: 88,
+  vehicleId: "AION_ES",
+  vehiclePrice: 800000,
+  termMonths: 60,
+  annualRatePct: 4.5
+};
+
+const validEligibility = {
+  taxiOccupationStatus: "ACTIVE_TAXI_DRIVER",
+  publicDriverLicenseStatus: "TO_VERIFY",
+  currentVehicleRelationship: "RENT",
+  yearsProfessionalDriving: 6,
+  serviceProvince: "กรุงเทพมหานคร",
+  occupationalEvidenceStatus: "DECLARED"
+};
+
+const valid = { profile: validProfile, eligibility: validEligibility, financial: validFinancial };
+
+test("a complete registration input parses and carries competition-mode phone status", () => {
+  const parsed = RegistrationInputSchema.parse(valid);
+  assert.equal(parsed.profile.phoneVerificationStatus, "NOT_REQUIRED_COMPETITION");
+  assert.equal(parsed.profile.phoneVerificationStatus, competitionConfig.phoneVerificationStatus);
+  assert.equal(parsed.financial.vehicleId, "AION_ES");
+});
+
+test("negative money and negative experience are rejected, not coerced", () => {
+  assert.throws(() =>
+    RegistrationInputSchema.parse({
+      ...valid,
+      financial: { ...validFinancial, workingDaysPerMonth: 0 }
+    })
+  );
+  assert.throws(() =>
+    RegistrationInputSchema.parse({
+      ...valid,
+      profile: { ...validProfile, yearsDriving: -1 }
+    })
+  );
+});
+
+test("the default vehicle id is accepted and unknown vehicles are rejected", () => {
+  assert.doesNotThrow(() => FinancialInputSchema.parse({ ...validFinancial, vehicleId: "AION_ES" }));
+  assert.doesNotThrow(() => FinancialInputSchema.parse({ ...validFinancial, vehicleId: "AION_Y_PLUS" }));
+  assert.throws(() => FinancialInputSchema.parse({ ...validFinancial, vehicleId: "TESLA_MODEL_S" }));
+});
+
+test("percentage fields stay inside 0-100", () => {
+  assert.throws(() => FinancialInputSchema.parse({ ...validFinancial, activityConsistency: 101 }));
+  assert.throws(() => FinancialInputSchema.parse({ ...validFinancial, activityConsistency: -5 }));
+  assert.doesNotThrow(() => FinancialInputSchema.parse({ ...validFinancial, activityConsistency: 0 }));
+});
+
+test("the applicant can no longer type the verified share directly", () => {
+  // ช่องนี้เคยเป็นค่าที่พิมพ์เอง ซึ่งทำให้ตัวเลขที่พิมพ์กลายเป็น Verified Revenue ทันที
+  const parsed = FinancialInputSchema.parse({ ...validFinancial, verifiedPct: 100 });
+  assert.equal(parsed.verifiedPct, undefined, "verifiedPct ต้องถูกตัดทิ้ง ไม่ใช่รับเข้ามา");
+});
+
+test("the phone must look like a Thai mobile number", () => {
+  assert.throws(() => ProfileInputSchema.parse({ ...validProfile, phone: "12345" }));
+  assert.doesNotThrow(() => ProfileInputSchema.parse({ ...validProfile, phone: "081-234-5678" }));
+});
+
+test("no sensitive Secure Verification field can enter the registration schema", () => {
+  // ค่าจากหน้า Secure Verification ต้องไม่ผ่านเข้ามาแม้ผู้เรียกจะแนบมาด้วย
+  const parsed = RegistrationInputSchema.parse({
+    ...valid,
+    profile: { ...validProfile, nationalId: "1234567890123" },
+    financial: { ...validFinancial, bankAccountNumber: "1234567890" }
+  });
+
+  const serialized = JSON.stringify(parsed);
+  assert.doesNotMatch(serialized, /nationalId/);
+  assert.doesNotMatch(serialized, /bankAccountNumber/);
+  assert.doesNotMatch(serialized, /1234567890123/);
+});
+
+test("the engine input is built only from allow-listed registration fields", () => {
+  const parsed = RegistrationInputSchema.parse(valid);
+  const engineInput = toEngineInput(parsed);
+
+  // ค่าเหล่านี้คือ input ที่ Frozen Engine รู้จัก
+  assert.equal(engineInput.grossDaily, 1850.52, "ยอดรวมที่ผู้สมัครระบุ");
+  // 1,200 จาก 1,850.52 มีหลักฐาน — คำนวณจากข้อมูลจริง ไม่ใช่ค่าที่พิมพ์
+  assert.equal(Math.round(engineInput.verifiedPct * 100) / 100, 64.85);
+  assert.equal(engineInput.vehiclePrice, 800000);
+  assert.equal(engineInput.downPayment, 0, "การแข่งขันใช้เงินดาวน์ผู้ขับ 0% เสมอ");
+
+  // ต้องไม่มีสนามที่ Engine ไม่รู้จักหลุดเข้าไป
+  assert.equal(engineInput.displayName, undefined);
+  assert.equal(engineInput.phone, undefined);
+  assert.equal(engineInput.province, undefined);
+});
+
+test("the engine input uses the exact field names the frozen engine accepts", async () => {
+  // ชื่อที่ engine ไม่รู้จักจะถูกมองข้ามเงียบ ๆ แล้วใช้ค่า default ของ scenario แทน
+  // ทำให้ค่าที่ผู้สมัครกรอกไม่มีผลโดยไม่มีใครสังเกต จึงต้องตรึงสัญญานี้ไว้
+  const parsed = RegistrationInputSchema.parse(valid);
+  const engineInput = toEngineInput(parsed);
+
+  assert.equal(engineInput.workDays, 26, "engine เรียกว่า workDays ไม่ใช่ workingDays");
+  assert.equal(engineInput.otherOpEx, 60, "engine เรียกว่า otherOpEx ไม่ใช่ otherDaily");
+  assert.equal(engineInput.tenor, 60, "engine เรียกจำนวนงวดว่า tenor (เดือน)");
+  assert.equal(engineInput.interest, 4.5, "engine เรียกอัตราดอกเบี้ยต่อปีว่า interest");
+  assert.equal(engineInput.gpsComplete, 88, "ข้อมูลกิจกรรมเข้า engine ผ่าน gpsComplete");
+
+  // ชื่อเก่าที่ engine ไม่รู้จักต้องไม่หลงเหลือ
+  for (const wrong of ["workingDays", "otherDaily", "termMonths", "rateAnnual", "activityConsistency"]) {
+    assert.equal(engineInput[wrong], undefined, `${wrong} ไม่ใช่ชื่อสนามของ engine`);
+  }
+
+  // ค่าที่ส่งไปต้องเปลี่ยนผลลัพธ์จริง ไม่ใช่ถูกแทนด้วย default
+  const { evaluate } = await import("../app/lib/route2own.ts");
+  const cheap = evaluate({ ...engineInput, interest: 4.5, tenor: 60 });
+  const expensive = evaluate({ ...engineInput, interest: 26, tenor: 24 });
+  assert.ok(
+    expensive.calc.pmt > cheap.calc.pmt,
+    "อัตราและระยะเวลาที่ต่างกันต้องให้ค่างวดต่างกัน"
+  );
+});
