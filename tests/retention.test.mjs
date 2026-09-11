@@ -13,32 +13,25 @@ import { recordCompetitionConsent, listConsents } from "../app/lib/registration/
 import {
   ANONYMIZED_NAME,
   ANONYMIZED_PHONE,
-  LOCAL_DEVELOPMENT_CUTOFF,
-  MISSING_CUTOFF_MESSAGE,
+  RETENTION_BLOCK_CODE,
   anonymizeAfter,
   dryRunRetention,
   executeRetention,
   exportCompetitionMetrics,
-  isDueForAnonymization,
-  resolveRetentionPolicy
+  isDueForAnonymization
 } from "../app/lib/retention/retention-service.ts";
 
 /**
- * นโยบายเก็บข้อมูลส่วนบุคคลของรอบการแข่งขัน
- *
- * ข้อมูลที่ระบุตัวบุคคลหมดความจำเป็นพร้อมกันทั้งรอบ จึงนับจากวันสิ้นสุดการแข่งขัน
- * ไม่ใช่จากวันที่สมัครของแต่ละคน มิฉะนั้นคนที่สมัครก่อนจะถูกลบข้อมูลทั้งที่ยังตัดสินไม่จบ
- *
- * สิ่งที่ต้องเหลือไว้คือร่องรอยว่าระบบตัดสินอย่างไร ไม่ใช่ว่าใครเป็นคนสมัคร
+ * นโยบายด้านล่างเป็น test fixture เท่านั้น ไม่ใช่ authoritative competition cutoff
  */
 const POLICY = {
-  competitionCutoffAt: "2026-10-31T23:59:59.000Z",
+  competitionCutoffAt: "2030-01-31T23:59:59.000Z",
   retentionDays: 30,
   cutoffSource: "COMPETITION_CUTOFF_AT"
 };
-const BEFORE = new Date("2026-11-20T00:00:00.000Z");
-const AT_THRESHOLD = new Date("2026-11-30T23:59:59.000Z");
-const AFTER = new Date("2026-12-15T00:00:00.000Z");
+const BEFORE = new Date("2030-02-20T00:00:00.000Z");
+const AT_THRESHOLD = new Date("2030-03-02T23:59:59.000Z");
+const AFTER = new Date("2030-03-15T00:00:00.000Z");
 
 async function seedFullJourney(caseId = "A") {
   const application = await createApplication();
@@ -48,9 +41,57 @@ async function seedFullJourney(caseId = "A") {
   return { applicationId: application.id, snapshot };
 }
 
+test("ไม่มี cutoff: dry-run คืน BLOCKED โดยไม่ต้องมีฐานข้อมูล", async () => {
+  const report = await dryRunRetention({ now: AFTER, env: {} });
+  assert.equal(report.status, "BLOCKED");
+  assert.equal(report.code, RETENTION_BLOCK_CODE);
+  assert.equal(report.policy, null);
+  assert.equal(report.anonymizeAfter, null);
+  assert.equal(report.due, false);
+  assert.deepEqual(report.eligibleApplications, []);
+  assert.deepEqual(report.wouldAnonymize, []);
+  assert.deepEqual(report.anonymized, []);
+  assert.deepEqual(report.deleted, []);
+});
+
+test("ไม่มี cutoff: execute คืน BLOCKED และไม่แก้ข้อมูลแม้แต่แถวเดียว", async () => {
+  const { applicationId } = await seedFullJourney();
+  const before = await getApplication(applicationId);
+  const snapshotsBefore = await listEvaluationSnapshots(applicationId);
+
+  const report = await executeRetention({ now: AFTER, env: {} });
+  assert.equal(report.status, "BLOCKED");
+  assert.equal(report.code, RETENTION_BLOCK_CODE);
+  assert.deepEqual(report.anonymized, []);
+  assert.deepEqual(report.deleted, []);
+
+  const after = await getApplication(applicationId);
+  assert.deepEqual(after.profile, before.profile);
+  assert.equal(after.piiAnonymizedAt, null);
+  assert.equal((await listEvaluationSnapshots(applicationId)).length, snapshotsBefore.length);
+});
+
+test("missing-cutoff guard มาก่อน schema/database access ทั้ง dry-run และ execute", () => {
+  const service = fs.readFileSync("app/lib/retention/retention-service.ts", "utf8");
+  const dryBody = service.slice(
+    service.indexOf("export async function dryRunRetention"),
+    service.indexOf("export async function executeRetention")
+  );
+  const executeBody = service.slice(
+    service.indexOf("export async function executeRetention"),
+    service.indexOf("export type CompetitionExportRow")
+  );
+
+  assert.ok(dryBody.indexOf("if (!policy)") >= 0);
+  assert.ok(dryBody.indexOf("if (!policy)") < dryBody.indexOf("candidates()"));
+  assert.ok(executeBody.indexOf("if (!policy)") >= 0);
+  assert.ok(executeBody.indexOf("if (!policy)") < executeBody.indexOf("candidates()"));
+  assert.ok(executeBody.indexOf("if (!policy)") < executeBody.indexOf("ensureSchema()"));
+});
+
 test("นโยบายนับจากวันสิ้นสุดการแข่งขัน ไม่ใช่จากวันที่สร้างใบสมัคร", () => {
   assert.equal(competitionConfig.piiRetentionDays, 30);
-  assert.equal(anonymizeAfter(POLICY).toISOString(), "2026-11-30T23:59:59.000Z");
+  assert.equal(anonymizeAfter(POLICY).toISOString(), "2030-03-02T23:59:59.000Z");
 
   const service = fs.readFileSync("app/lib/retention/retention-service.ts", "utf8");
   assert.ok(
@@ -78,7 +119,6 @@ test("ก่อนถึงกำหนด ข้อมูลไม่ถูก�
 });
 
 test("ณ เวลาที่ครบกำหนดพอดี ถือว่าถึงกำหนดแล้ว", () => {
-  // เลือกไว้ชัดเจนว่าเป็น ">=" เพื่อให้คำตอบไม่ขึ้นกับเสี้ยววินาทีที่รัน
   assert.equal(isDueForAnonymization(AT_THRESHOLD, POLICY), true);
   assert.equal(isDueForAnonymization(new Date(AT_THRESHOLD.getTime() - 1), POLICY), false);
 });
@@ -90,7 +130,6 @@ test("หลังพ้นกำหนด ชื่อและเบอร์�
   const dry = await dryRunRetention({ now: AFTER, policy: POLICY });
   assert.ok(dry.wouldAnonymize.includes(applicationId));
 
-  // dry run ต้องไม่แก้อะไรเลย
   const afterDry = await getApplication(applicationId);
   assert.equal(afterDry.profile.displayName, before.profile.displayName);
   assert.equal(afterDry.profile.phone, before.profile.phone);
@@ -105,14 +144,12 @@ test("หลังพ้นกำหนด ชื่อและเบอร์�
   assert.equal(after.profile.phone, ANONYMIZED_PHONE);
   assert.notEqual(after.piiAnonymizedAt, null);
 
-  // เลขที่ใบสมัครและข้อมูลที่ไม่ระบุตัวบุคคลต้องอยู่ครบ
   assert.equal(after.id, applicationId);
   assert.equal(after.status, before.status);
   assert.equal(after.profile.province, before.profile.province);
   assert.equal(after.financial.vehiclePrice, before.financial.vehiclePrice);
   assert.equal(after.financial.workingDaysPerMonth, before.financial.workingDaysPerMonth);
 
-  // ผลการประเมินอ่านได้เหมือนเดิมทุกค่า
   const storedSnapshot = await getSnapshotById(snapshot.id);
   assert.equal(storedSnapshot.route, snapshot.route);
   assert.equal(storedSnapshot.preScore, snapshot.preScore);
@@ -134,27 +171,23 @@ test("ความสัมพันธ์ของสถาบันการ�
 
   await executeRetention({ now: AFTER, policy: POLICY });
 
-  // การเลือกสถาบันการเงินยังชี้ไปที่ Snapshot ที่มีอยู่จริง
   const selections = await listFiSelections(ready.applicationId, { activeOnly: true });
   assert.equal(selections.length, 1);
   const fiSnapshot = await getSnapshotById(selections[0].evaluationSnapshotId);
   assert.ok(fiSnapshot, "Snapshot ของสถาบันการเงินต้องยังอ่านได้");
   assert.ok(await getSnapshotById(selections[0].referenceSnapshotId));
 
-  // ร่องรอยความยินยอมยังอยู่ ทั้งของการแข่งขันและของสถาบันการเงิน
   const fiConsents = await listFiConsents(ready.applicationId);
   assert.equal(fiConsents.length, 1);
   assert.equal(fiConsents[0].accepted, true);
   assert.ok((await listConsents(ready.applicationId)).length > 0);
 
-  // เคสคำปรึกษายังผูกกับใบสมัครและ Snapshot เดิม
   const cases = await listFaCases(build.applicationId);
   assert.equal(cases.length, 1);
   assert.equal(cases[0].id, faCase.id);
   assert.equal(cases[0].applicationId, build.applicationId);
   assert.ok(await getSnapshotById(cases[0].evaluationSnapshotId));
 
-  // ประวัติการประเมินยังครบ
   assert.ok((await listEvaluationSnapshots(ready.applicationId)).length >= 1);
 });
 
@@ -171,7 +204,6 @@ test("ส่งออกข้อมูลโดยค่าเริ่มต�
     assert.ok(!keys.includes(forbidden), `ข้อมูลส่งออกต้องไม่มีสนาม ${forbidden}`);
   }
 
-  // ตรวจทั้งก้อนอีกชั้น เผื่อค่าหลุดเข้ามาในรูปแบบอื่น
   const serialized = JSON.stringify(rows);
   assert.ok(!serialized.includes(DEMO_CASES.A.input.profile.phone));
   assert.ok(!serialized.includes(DEMO_CASES.A.input.profile.displayName));
@@ -186,7 +218,6 @@ test("dry run ไม่แก้ข้อมูลแม้แต่แถวเ
   const first = await dryRunRetention({ now: AFTER, policy: POLICY });
   const second = await dryRunRetention({ now: AFTER, policy: POLICY });
 
-  // เรียกซ้ำได้ผลเท่าเดิม เพราะไม่มีอะไรเปลี่ยน
   assert.deepEqual(first.wouldAnonymize, second.wouldAnonymize);
   assert.deepEqual(first.anonymized, []);
   assert.deepEqual(first.deleted, []);
@@ -196,7 +227,6 @@ test("dry run ไม่แก้ข้อมูลแม้แต่แถวเ
   assert.equal(after.piiAnonymizedAt, null);
   assert.equal((await listEvaluationSnapshots(applicationId)).length, snapshotsBefore.length);
 
-  // ฟังก์ชัน dry run ต้องไม่มีคำสั่งเขียนอยู่ในตัวมันเอง
   const service = fs.readFileSync("app/lib/retention/retention-service.ts", "utf8");
   const dryRunBody = service.slice(
     service.indexOf("export async function dryRunRetention"),
@@ -230,7 +260,6 @@ test("เรียกลบซ้ำไม่สร้างความเส�
 test("ไม่มีค่าจาก Secure Verification ให้ลบ เพราะไม่เคยถูกบันทึก", () => {
   const service = fs.readFileSync("app/lib/retention/retention-service.ts", "utf8");
 
-  // ไม่มีตารางหรือคอลัมน์ของข้อมูลอ่อนไหวให้ต้องจัดการเลย
   for (const term of ["national_id", "bank_account", "id_card", "driver_license_blob", "statement_blob"]) {
     assert.ok(!service.includes(term), `นโยบายเก็บข้อมูลไม่ต้องรู้จัก ${term} เพราะไม่เคยมีการบันทึก`);
   }

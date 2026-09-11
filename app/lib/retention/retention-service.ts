@@ -14,55 +14,33 @@ import { ensureSchema, iso, isoOrNull, str } from "../db/schema.ts";
 export type RetentionPolicy = {
   competitionCutoffAt: string;
   retentionDays: number;
-  /** วันสิ้นสุดนี้มาจากไหน — ใช้ตรวจว่าเป็นค่าที่ตั้งใจตั้งหรือค่าสำหรับทดสอบ */
-  cutoffSource: "COMPETITION_CUTOFF_AT" | "LOCAL_DEVELOPMENT_FALLBACK";
+  cutoffSource: "COMPETITION_CUTOFF_AT";
 };
 
-/**
- * วันสิ้นสุดการแข่งขันสำหรับเครื่องนักพัฒนาและการทดสอบเท่านั้น
- *
- * ค่านี้ไม่ใช่วันสิ้นสุดจริงของการแข่งขัน และไม่เคยได้รับการยืนยันจากผู้จัด
- * มีไว้เพื่อให้เทสต์และงานในเครื่องมีวันอ้างอิงที่แน่นอนเท่านั้น
- * บน production การใช้ค่านี้จะทำให้ระบบหยุด ไม่ใช่ทำงานต่อเงียบ ๆ
- */
-export const LOCAL_DEVELOPMENT_CUTOFF = "2026-10-31T23:59:59.000Z";
+export const RETENTION_BLOCK_CODE = "BLOCKED_MISSING_COMPETITION_CUTOFF" as const;
 
 export const MISSING_CUTOFF_MESSAGE =
-  "COMPETITION_CUTOFF_AT ไม่ได้ตั้งค่าไว้ — นโยบายลบข้อมูลส่วนบุคคลต้องอ้างวันสิ้นสุดการแข่งขันจริง " +
-  "ไม่ใช่ค่าสำหรับทดสอบ ตั้งค่าตัวแปรนี้เป็นเวลาแบบ ISO 8601 ก่อนใช้งานจริง";
-
-function isProductionRuntime(env: NodeJS.ProcessEnv): boolean {
-  // deploy จริงคือสิ่งที่ต้องระวัง ไม่ใช่ค่า NODE_ENV ที่อาจเป็น production ตอนรัน next start ในเครื่อง
-  return Boolean(env.VERCEL || env.AWS_LAMBDA_FUNCTION_NAME);
-}
+  "COMPETITION_CUTOFF_AT ไม่ได้ตั้งค่าไว้ — retention ถูก block แบบ fail closed จนกว่าจะระบุวันสิ้นสุดการแข่งขันจริง";
 
 /**
- * นโยบายที่ระบบจะใช้จริง
+ * คืนค่านโยบายเฉพาะเมื่อมีวันสิ้นสุดการแข่งขันที่ตั้งจากภายนอกเท่านั้น
  *
- * วันสิ้นสุดการแข่งขันต้องมาจากการตั้งค่าอย่างชัดเจน ไม่ใช่ค่าที่ฝังไว้ในโค้ด
- * เพราะวันนี้เป็นข้อเท็จจริงของผู้จัดการแข่งขัน ไม่ใช่การตัดสินใจของโปรแกรม
- * ถ้าไม่ได้ตั้งค่าบนระบบจริง จะโยนข้อผิดพลาดทันที ดีกว่าลบข้อมูลผิดวัน
+ * การไม่มี COMPETITION_CUTOFF_AT ไม่ใช่ runtime error ของแอป เพราะ Front Office
+ * ต้องเปิดใช้งานและ deploy ได้โดยไม่ต้องเดาวันสิ้นสุดการแข่งขัน แต่ action ที่จะอ่าน
+ * หรือแก้ข้อมูลตาม retention policy ต้อง fail closed แยกต่างหาก
  */
-export function resolveRetentionPolicy(env: NodeJS.ProcessEnv = process.env): RetentionPolicy {
+export function resolveRetentionPolicy(env: NodeJS.ProcessEnv = process.env): RetentionPolicy | null {
   const configured = env.COMPETITION_CUTOFF_AT?.trim();
+  if (!configured) return null;
 
-  if (configured) {
-    if (Number.isNaN(new Date(configured).getTime())) {
-      throw new Error(`COMPETITION_CUTOFF_AT ไม่ใช่เวลาแบบ ISO 8601 ที่ถูกต้อง: ${configured}`);
-    }
-    return {
-      competitionCutoffAt: new Date(configured).toISOString(),
-      retentionDays: competitionConfig.piiRetentionDays,
-      cutoffSource: "COMPETITION_CUTOFF_AT"
-    };
+  if (Number.isNaN(new Date(configured).getTime())) {
+    throw new Error(`COMPETITION_CUTOFF_AT ไม่ใช่เวลาแบบ ISO 8601 ที่ถูกต้อง: ${configured}`);
   }
 
-  if (isProductionRuntime(env)) throw new Error(MISSING_CUTOFF_MESSAGE);
-
   return {
-    competitionCutoffAt: LOCAL_DEVELOPMENT_CUTOFF,
+    competitionCutoffAt: new Date(configured).toISOString(),
     retentionDays: competitionConfig.piiRetentionDays,
-    cutoffSource: "LOCAL_DEVELOPMENT_FALLBACK"
+    cutoffSource: "COMPETITION_CUTOFF_AT"
   };
 }
 
@@ -70,7 +48,7 @@ export function resolveRetentionPolicy(env: NodeJS.ProcessEnv = process.env): Re
 export const ANONYMIZED_NAME = "[ลบตามนโยบายเก็บข้อมูล]";
 export const ANONYMIZED_PHONE = "[ลบตามนโยบายเก็บข้อมูล]";
 
-export function anonymizeAfter(policy: RetentionPolicy = resolveRetentionPolicy()): Date {
+export function anonymizeAfter(policy: RetentionPolicy): Date {
   const cutoff = new Date(policy.competitionCutoffAt);
   if (Number.isNaN(cutoff.getTime())) throw new Error("competitionCutoffAt ไม่ใช่วันที่ที่ถูกต้อง");
   if (!Number.isFinite(policy.retentionDays) || policy.retentionDays < 0) {
@@ -79,13 +57,8 @@ export function anonymizeAfter(policy: RetentionPolicy = resolveRetentionPolicy(
   return new Date(cutoff.getTime() + policy.retentionDays * 24 * 60 * 60 * 1000);
 }
 
-/**
- * ถึงกำหนดลบหรือยัง
- *
- * ใช้ ">=" คือ ณ วินาทีที่ครบกำหนดพอดี ถือว่าถึงกำหนดแล้ว
- * เลือกแบบนี้เพื่อให้คำตอบเป็นค่าเดียวเสมอ ไม่ขึ้นกับว่ารันตอนไหนของวินาทีนั้น
- */
-export function isDueForAnonymization(now: Date, policy: RetentionPolicy = resolveRetentionPolicy()): boolean {
+/** ถึงกำหนดลบหรือยัง — ณ เวลาครบกำหนดพอดีถือว่าถึงกำหนดแล้ว */
+export function isDueForAnonymization(now: Date, policy: RetentionPolicy): boolean {
   return now.getTime() >= anonymizeAfter(policy).getTime();
 }
 
@@ -98,8 +71,10 @@ export type RetentionCandidate = {
 
 export type RetentionReport = {
   mode: "DRY_RUN" | "EXECUTE";
-  policy: RetentionPolicy;
-  anonymizeAfter: string;
+  status: "OK" | "BLOCKED";
+  code: typeof RETENTION_BLOCK_CODE | null;
+  policy: RetentionPolicy | null;
+  anonymizeAfter: string | null;
   now: string;
   due: boolean;
   eligibleApplications: string[];
@@ -132,6 +107,24 @@ async function candidates(): Promise<RetentionCandidate[]> {
   }));
 }
 
+function blockedReport(mode: RetentionReport["mode"], now: Date): RetentionReport {
+  return {
+    mode,
+    status: "BLOCKED",
+    code: RETENTION_BLOCK_CODE,
+    policy: null,
+    anonymizeAfter: null,
+    now: now.toISOString(),
+    due: false,
+    eligibleApplications: [],
+    wouldAnonymize: [],
+    anonymized: [],
+    deleted: [],
+    skipped: [],
+    errors: []
+  };
+}
+
 function emptyReport(
   mode: RetentionReport["mode"],
   policy: RetentionPolicy,
@@ -139,6 +132,8 @@ function emptyReport(
 ): RetentionReport {
   return {
     mode,
+    status: "OK",
+    code: null,
     policy,
     anonymizeAfter: anonymizeAfter(policy).toISOString(),
     now: now.toISOString(),
@@ -152,18 +147,22 @@ function emptyReport(
   };
 }
 
+type RetentionInput = {
+  now?: Date;
+  policy?: RetentionPolicy;
+  env?: NodeJS.ProcessEnv;
+};
+
 /**
  * ตรวจว่าจะลบอะไรบ้าง โดยไม่แก้ข้อมูลใด ๆ
- *
- * ฟังก์ชันนี้ไม่มีคำสั่งเขียนอยู่เลย ไม่ใช่แค่ไม่เรียกใช้
+ * ถ้าไม่มี authoritative cutoff จะคืน BLOCKED ก่อนเปิดฐานข้อมูลหรือสร้าง schema
  */
-export async function dryRunRetention(
-  input: { now?: Date; policy?: RetentionPolicy } = {}
-): Promise<RetentionReport> {
-  const policy = input.policy ?? resolveRetentionPolicy();
+export async function dryRunRetention(input: RetentionInput = {}): Promise<RetentionReport> {
+  const policy = input.policy ?? resolveRetentionPolicy(input.env);
   const now = input.now ?? new Date();
-  const report = emptyReport("DRY_RUN", policy, now);
+  if (!policy) return blockedReport("DRY_RUN", now);
 
+  const report = emptyReport("DRY_RUN", policy, now);
   const rows = await candidates();
 
   for (const row of rows) {
@@ -184,19 +183,16 @@ export async function dryRunRetention(
 
 /**
  * ลบข้อมูลส่วนบุคคลจริง
- *
- * เรียกซ้ำได้ ใบที่ถูกลบไปแล้วจะถูกข้าม ไม่ถูกเขียนทับซ้ำและไม่ทำให้รายงานผิด
- * ไม่มีการลบแถวใด เพื่อไม่ให้ผลการประเมินและร่องรอยการตัดสินใจขาดหาย
+ * ถ้าไม่มี authoritative cutoff จะคืน BLOCKED ก่อนเปิดฐานข้อมูลหรือสร้าง schema
  */
-export async function executeRetention(
-  input: { now?: Date; policy?: RetentionPolicy } = {}
-): Promise<RetentionReport> {
-  const sql = await ensureSchema();
-  const policy = input.policy ?? resolveRetentionPolicy();
+export async function executeRetention(input: RetentionInput = {}): Promise<RetentionReport> {
+  const policy = input.policy ?? resolveRetentionPolicy(input.env);
   const now = input.now ?? new Date();
-  const report = emptyReport("EXECUTE", policy, now);
+  if (!policy) return blockedReport("EXECUTE", now);
 
+  const report = emptyReport("EXECUTE", policy, now);
   const rows = await candidates();
+  const sql = await ensureSchema();
 
   for (const row of rows) {
     if (!report.due) {
@@ -239,9 +235,6 @@ export async function executeRetention(
 
 /**
  * ข้อมูลสำหรับส่งออก — ไม่มีข้อมูลที่ระบุตัวบุคคลโดยค่าเริ่มต้น
- *
- * ค่าเริ่มต้นต้องปลอดภัยเสมอ การจะได้ข้อมูลระบุตัวบุคคลออกไป
- * ต้องเป็นการร้องขออย่างชัดเจน ไม่ใช่ผลข้างเคียงของการกดปุ่มส่งออก
  */
 export type CompetitionExportRow = {
   applicationId: string;

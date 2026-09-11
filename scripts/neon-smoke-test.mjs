@@ -25,7 +25,7 @@ import {
 } from "../app/lib/fi/fi-repository.ts";
 import { createApplication, getApplication, updateApplication } from "../app/lib/registration/application-service.ts";
 import { listConsents, recordCompetitionConsent } from "../app/lib/registration/consent-service.ts";
-import { dryRunRetention } from "../app/lib/retention/retention-service.ts";
+import { RETENTION_BLOCK_CODE, dryRunRetention } from "../app/lib/retention/retention-service.ts";
 
 if (!process.env.DATABASE_URL) {
   console.error("NEON_SMOKE_TEST = BLOCKED_BY_MISSING_DATABASE_URL");
@@ -121,7 +121,6 @@ await step("3. competition consent append", async () => {
 });
 
 await step("4-6. save profile, Basic Eligibility and Income Evidence", async () => {
-  // ใช้เคส D เพราะขอบเขตบางพอที่เงื่อนไขของ FI จะเปลี่ยนผลได้จริง
   await updateApplication(ready.id, DEMO_CASES.D.input);
   const saved = await getApplication(ready.id);
   assert(saved.profile !== null, "โปรไฟล์ไม่ถูกบันทึก");
@@ -141,7 +140,6 @@ await step("7. create reference Evaluation Snapshot", async () => {
 await step("8. read reference snapshot", async () => {
   const stored = await getSnapshotById(referenceSnapshot.id);
   assert(stored !== null, "อ่าน Snapshot กลับมาไม่ได้");
-  // numeric ของ PostgreSQL คืนค่าเป็นสตริง จึงเทียบที่ 2 ตำแหน่ง
   assert(
     stored.availableCash.toFixed(2) === referenceSnapshot.availableCash.toFixed(2),
     "ค่า availableCash ที่อ่านกลับไม่ตรง"
@@ -218,20 +216,27 @@ await step("13. F.A case create and read", async () => {
 });
 
 await step("14. retention dry-run", async () => {
-  const early = await dryRunRetention({ now: new Date("2000-01-01T00:00:00Z") });
-  assert(early.due === false, "ยังไม่ถึงกำหนดต้องไม่ due");
-  assert(early.anonymized.length === 0, "dry run ต้องไม่ลบอะไร");
+  const blocked = await dryRunRetention({ now: new Date("2099-01-01T00:00:00Z"), env: {} });
+  assert(blocked.status === "BLOCKED", "ไม่มี cutoff ต้องถูก block");
+  assert(blocked.code === RETENTION_BLOCK_CODE, `block code ไม่ถูกต้อง: ${blocked.code}`);
+  assert(blocked.anonymized.length === 0, "blocked retention ต้องไม่ลบอะไร");
+  assert(blocked.wouldAnonymize.length === 0, "blocked retention ต้องไม่อ่าน candidate จากฐานข้อมูล");
 
-  const due = await dryRunRetention({ now: new Date("2099-01-01T00:00:00Z") });
+  const policy = {
+    competitionCutoffAt: "2098-01-01T00:00:00.000Z",
+    retentionDays: competitionConfig.piiRetentionDays,
+    cutoffSource: "COMPETITION_CUTOFF_AT"
+  };
+  const due = await dryRunRetention({ now: new Date("2099-01-01T00:00:00Z"), policy });
+  assert(due.status === "OK", "เมื่อระบุ policy ชัดเจน dry-run ต้องทำงานได้");
   assert(due.due === true, "เลยกำหนดแล้วต้อง due");
   assert(due.wouldAnonymize.length >= 2, `ควรพบใบที่ต้องลบอย่างน้อย 2 ใบ พบ ${due.wouldAnonymize.length}`);
   assert(due.anonymized.length === 0, "dry run ต้องไม่ลบอะไร");
 
-  // ยืนยันว่าไม่มีอะไรเปลี่ยนจริง
   const application = await getApplication(ready.id);
   assert(application.piiAnonymizedAt === null, "dry run ต้องไม่ประทับเวลาการลบ");
   assert(application.profile.displayName === DEMO_CASES.D.input.profile.displayName, "dry run ต้องไม่แก้ชื่อ");
-  return `${due.wouldAnonymize.length} would anonymize · 0 mutated`;
+  return `${RETENTION_BLOCK_CODE} · ${due.wouldAnonymize.length} would anonymize · 0 mutated`;
 });
 
 console.log("");
