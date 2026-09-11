@@ -12,6 +12,8 @@ export const metadata = {
   title: "Route to Own by บสย. — Competition Registration"
 };
 
+const DATABASE_READY = Boolean(process.env.DATABASE_URL || process.env.POSTGRES_URL);
+
 const JOURNEY = [
   "ลงทะเบียน",
   "Financial Passport",
@@ -30,13 +32,23 @@ export default function HomePage() {
         <p className="fo-lede">จากรายได้จริง → สู่ความพร้อมทางเครดิต → เส้นทางที่เหมาะสม</p>
         <p className="fo-governance">Competition Registration — ไม่ใช่การยื่นขอสินเชื่อจริง</p>
 
-        <form action="/api/applications" method="post" className="fo-cta-form">
+        <form
+          action={DATABASE_READY ? "/api/applications" : "/route2own.html"}
+          method={DATABASE_READY ? "post" : "get"}
+          className="fo-cta-form"
+        >
           <button type="submit" className="fo-cta">
-            ทดลองสมัคร Route to Own
+            {DATABASE_READY ? "ทดลองสมัคร Route to Own" : "เปิด Competition Demo"}
           </button>
         </form>
         <p className="fo-note">
-          เมื่อเริ่ม ระบบจะออกเลขที่ใบสมัครจริงในรูปแบบ <code>RTO-C26-000000</code> เพื่อใช้ติดตามผล
+          {DATABASE_READY ? (
+            <>
+              เมื่อเริ่ม ระบบจะออกเลขที่ใบสมัครจริงในรูปแบบ <code>RTO-C26-000000</code> เพื่อใช้ติดตามผล
+            </>
+          ) : (
+            <>Competition Demo พร้อมใช้งานโดยไม่บันทึกข้อมูลผู้สมัครจริง</>
+          )}
         </p>
       </header>
 
@@ -67,8 +79,8 @@ export default function HomePage() {
             {DEMO_CASE_LIST.map((demo) => (
               <form
                 key={demo.id}
-                action={`/api/demo/${demo.id}`}
-                method="post"
+                action={DATABASE_READY ? `/api/demo/${demo.id}` : "/route2own.html"}
+                method={DATABASE_READY ? "post" : "get"}
                 className="fo-demo-card"
               >
                 <button type="submit" data-role={`demo-case-${demo.id}`}>
@@ -80,8 +92,9 @@ export default function HomePage() {
             ))}
           </div>
           <p className="fo-muted">
-            ทุกเคสเดินผ่านเส้นทางเดียวกับผู้สมัครจริง — สร้างใบสมัคร ให้ความยินยอม บันทึกข้อมูล
-            แล้วประเมินด้วยเครื่องคำนวณกลาง ผลที่เห็นจึงไม่ได้ถูกเขียนไว้ล่วงหน้า
+            {DATABASE_READY
+              ? "ทุกเคสเดินผ่านเส้นทางเดียวกับผู้สมัครจริง — สร้างใบสมัคร ให้ความยินยอม บันทึกข้อมูล แล้วประเมินด้วยเครื่องคำนวณกลาง ผลที่เห็นจึงไม่ได้ถูกเขียนไว้ล่วงหน้า"
+              : "Competition Public Demo เปิด Front Office รุ่น Frozen ที่ประเมินด้วยเครื่องคำนวณกลางใน browser และไม่บันทึกข้อมูลผู้สมัครจริง"}
           </p>
         </div>
       </section>
