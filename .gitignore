@@ -17,3 +17,6 @@ npm-debug.log*
 /playwright-report/
 /blob-report/
 /.playwright/
+
+# ผลลัพธ์ของการประกอบรุ่นเบราว์เซอร์ (สร้างใหม่ได้ด้วย node browser/build.mjs)
+browser/dist/

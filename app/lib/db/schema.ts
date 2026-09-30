@@ -53,8 +53,21 @@ export function isoOrNull(value: unknown): string | null {
   return iso(value);
 }
 
-/** ตัวสร้าง id ภายในของแถวย่อย (ไม่ใช่เลขที่ใบสมัครที่แสดงต่อผู้ใช้) */
+/**
+ * ตัวสร้าง id ภายในของแถวย่อย (ไม่ใช่เลขที่ใบสมัครที่แสดงต่อผู้ใช้)
+ *
+ * id เรียงตามเวลาที่สร้างเสมอเมื่อเทียบเป็นสตริง เพราะคำสั่งอ่านหลายที่ใช้
+ * `order by id` หรือใช้ id เป็นตัวตัดสินเมื่อเวลาเท่ากัน
+ * ถ้าส่วนท้ายเป็นค่าสุ่มล้วน แถวที่เกิดในมิลลิวินาทีเดียวกันจะสลับลำดับไปมา
+ * เช่น ช่องทางรายได้ที่ผู้สมัครกรอกเรียงกันในรอบเดียว จะแสดงสลับที่กันเอง
+ *
+ * ตัวนับกลางจึงคั่นไว้ก่อนค่าสุ่ม และตรึงความกว้างไว้เพื่อให้เทียบสตริงได้ตรงลำดับ
+ */
+let rowCounter = 0;
+
 export function rowId(prefix: string): string {
+  const stamp = Date.now().toString(36).padStart(9, "0");
+  const order = (rowCounter = (rowCounter + 1) % 46_656).toString(36).padStart(3, "0");
   const random = Math.random().toString(36).slice(2, 10);
-  return `${prefix}_${Date.now().toString(36)}${random}`;
+  return `${prefix}_${stamp}${order}${random}`;
 }
