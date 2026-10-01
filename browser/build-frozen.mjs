@@ -17,6 +17,15 @@ const ROOT = process.cwd();
 const OUT = process.argv[2];
 if (!OUT) throw new Error("ต้องระบุไฟล์ปลายทาง");
 
+/**
+ * --standalone = ไฟล์เอกสารเต็มที่เปิดเองได้
+ *
+ * หน้าเผยแพร่บน artifact ใส่ <html><head> ให้เอง ไฟล์ที่ส่งไปจึงเป็นชิ้นส่วน
+ * แต่ถ้าจะเอาไปวางบนโฮสต์อื่น ส่งต่อ หรือเปิดจากเครื่องตรง ๆ
+ * ต้องเป็นเอกสารเต็มที่มี charset ของตัวเอง ไม่งั้นภาษาไทยจะเพี้ยน
+ */
+const STANDALONE = process.argv.includes("--standalone");
+
 let html = readFileSync(path.join(ROOT, "public/route2own.html"), "utf8");
 
 const dataUri = (file, mime) =>
@@ -51,7 +60,8 @@ html =
 html = html.replace(/\/assets\/route2own-gateway-hero\.jpeg/g, dataUri("route2own-gateway-hero.jpeg", "image/jpeg"));
 html = html.replace(/\/assets\/tcg-logo\.png/g, dataUri("tcg-logo.png", "image/png"));
 
-// 4. ตัดโครงหน้าที่หน้าเผยแพร่ใส่ให้เองอยู่แล้ว
+// 4. ตัดโครงหน้าที่หน้าเผยแพร่ใส่ให้เองอยู่แล้ว (เฉพาะตอนสร้างชิ้นส่วนสำหรับ artifact)
+if (!STANDALONE) {
 html = html
   .replace(/<!DOCTYPE[^>]*>\s*/i, "")
   .replace(/<html[^>]*>\s*/i, "")
@@ -66,6 +76,7 @@ html = html
 
 html = html.replace(/<meta[^>]*charset[^>]*>\s*/gi, "");
 html = html.replace(/<meta[^>]*name="viewport"[^>]*>\s*/gi, "");
+}
 
 mkdirSync(path.dirname(OUT), { recursive: true });
 writeFileSync(OUT, html.trim());
