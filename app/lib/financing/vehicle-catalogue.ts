@@ -14,9 +14,10 @@ export const VEHICLE_CATALOGUE: VehicleCatalogueItem[] = [
     id: "AION_ES",
     name: "AION ES",
     segment: "Sedan — ใช้งานเชิงพาณิชย์/แท็กซี่",
-    referencePrice: 800_000,
+    // ราคารุ่นแท็กซี่ที่ใช้อ้างอิงในตลาดรถรับจ้าง ยังเป็นค่าตั้งต้นที่ผู้สมัครแก้ได้
+    referencePrice: 929_900,
     rangeKm: 442,
-    sourceLabel: "ราคาอ้างอิงตั้งต้นของโครงการ ปรับได้ตามใบเสนอราคาจริง",
+    sourceLabel: "ราคารุ่นแท็กซี่ที่ใช้อ้างอิงในตลาด ปรับได้ตามใบเสนอราคาจริง",
     sourceStatus: "COMPETITION_ILLUSTRATION",
     configurable: true
   },

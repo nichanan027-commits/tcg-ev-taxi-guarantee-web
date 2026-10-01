@@ -744,13 +744,12 @@ Object.assign(state.calc,{guaranteeYear:1});
  * ไม่มีรุ่นใดได้คะแนนหรือเส้นทางเป็นพิเศษ และไม่มีกติกาการให้คะแนนใดถูกเพิ่มที่นี่
  */
 const VEHICLE_CATALOGUE=[
- {id:'AION_ES',name:'AION ES',segment:'Sedan — ใช้งานเชิงพาณิชย์/แท็กซี่',referencePrice:800000,rangeKm:442},
- {id:'AION_Y_PLUS',name:'AION Y Plus',segment:'Compact SUV',referencePrice:900000,rangeKm:490},
- {id:'AION_UT',name:'AION UT',segment:'Hatchback',referencePrice:700000,rangeKm:420},
- {id:'AION_V',name:'AION V',segment:'SUV',referencePrice:1100000,rangeKm:510},
- {id:'OTHER',name:'รถรุ่นอื่น (ระบุราคาเอง)',segment:'กำหนดเอง',referencePrice:800000,rangeKm:null}
+ {id:'AION_ES',name:'AION ES',segment:'Sedan — ใช้งานเชิงพาณิชย์/แท็กซี่',referencePrice:929900,rangeKm:442,source:'ราคารุ่นแท็กซี่ที่ใช้อ้างอิงในตลาด ปรับได้ตามใบเสนอราคาจริง'},
+ {id:'AION_Y_PLUS',name:'AION Y Plus',segment:'Compact SUV',referencePrice:900000,rangeKm:490,source:'ราคาอ้างอิงตั้งต้นของโครงการ ปรับได้ตามใบเสนอราคาจริง'},
+ {id:'AION_UT',name:'AION UT',segment:'Hatchback',referencePrice:700000,rangeKm:420,source:'ราคาอ้างอิงตั้งต้นของโครงการ ปรับได้ตามใบเสนอราคาจริง'},
+ {id:'AION_V',name:'AION V',segment:'SUV',referencePrice:1100000,rangeKm:510,source:'ราคาอ้างอิงตั้งต้นของโครงการ ปรับได้ตามใบเสนอราคาจริง'},
+ {id:'OTHER',name:'รถรุ่นอื่น (ระบุราคาเอง)',segment:'กำหนดเอง',referencePrice:800000,rangeKm:null,source:'ผู้สมัครระบุราคาเอง'}
 ];
-const VEHICLE_SOURCE_LABEL='ราคาอ้างอิงตั้งต้นของโครงการ ปรับได้ตามใบเสนอราคาจริง';
 const VEHICLE_SOURCE_STATUS='COMPETITION_ILLUSTRATION';
 
 function getVehicle(id){return VEHICLE_CATALOGUE.find(v=>v.id===id)||VEHICLE_CATALOGUE[VEHICLE_CATALOGUE.length-1]}
@@ -770,7 +769,7 @@ function currentVehicleId(){
 function vehicleNoteText(v){
  if(v.id==='OTHER')return 'ระบุราคาจากใบเสนอราคาที่คุณได้รับ — ระบบไม่ได้ยืนยันราคานี้';
  const range=v.rangeKm?` • ระยะทางอ้างอิง ${money0(v.rangeKm)} กม./ชาร์จ`:'';
- return `${v.segment}${range} • ${VEHICLE_SOURCE_LABEL}`;
+ return `${v.segment}${range} • ${v.source}`;
 }
 
 function vehicleField(){

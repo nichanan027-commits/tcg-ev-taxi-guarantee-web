@@ -18,15 +18,18 @@ const html = fs.readFileSync("public/route2own.html", "utf8");
 function frozenCatalogue() {
   const block = /const VEHICLE_CATALOGUE=\[([\s\S]*?)\];/.exec(html);
   assert.ok(block, "ต้องพบ VEHICLE_CATALOGUE ใน public/route2own.html");
-  return [...block[1].matchAll(/\{id:'([^']+)',name:'([^']+)',segment:'([^']+)',referencePrice:(\d+),rangeKm:(\d+|null)\}/g)].map(
-    (m) => ({
-      id: m[1],
-      name: m[2],
-      segment: m[3],
-      referencePrice: Number(m[4]),
-      rangeKm: m[5] === "null" ? null : Number(m[5])
-    })
-  );
+  return [
+    ...block[1].matchAll(
+      /\{id:'([^']+)',name:'([^']+)',segment:'([^']+)',referencePrice:(\d+),rangeKm:(\d+|null),source:'([^']+)'\}/g
+    )
+  ].map((m) => ({
+    id: m[1],
+    name: m[2],
+    segment: m[3],
+    referencePrice: Number(m[4]),
+    rangeKm: m[5] === "null" ? null : Number(m[5]),
+    sourceLabel: m[6]
+  }));
 }
 
 test("แคตตาล็อกรถของ Front Office รุ่น Frozen ตรงกับแคตตาล็อกกลางทุกรายการ", () => {
@@ -44,12 +47,21 @@ test("แคตตาล็อกรถของ Front Office รุ่น Froze
       `${canonical.id} ราคาอ้างอิงต้องตรงกัน`
     );
     assert.equal(mirror.rangeKm, canonical.rangeKm, `${canonical.id} ระยะทางอ้างอิงต้องตรงกัน`);
+    assert.equal(
+      mirror.sourceLabel,
+      canonical.sourceLabel,
+      `${canonical.id} คำกำกับที่มาของราคาต้องตรงกัน`
+    );
   });
 });
 
 test("ราคารถถูกกำกับว่าเป็นค่าอ้างอิง ไม่ใช่ราคาขายที่ยืนยันแล้ว", () => {
-  const canonicalLabel = "ราคาอ้างอิงตั้งต้นของโครงการ ปรับได้ตามใบเสนอราคาจริง";
-  assert.ok(html.includes(canonicalLabel), "ต้องมีคำกำกับแหล่งที่มาของราคาชุดเดียวกับแคตตาล็อกกลาง");
+  for (const vehicle of VEHICLE_CATALOGUE) {
+    assert.ok(
+      /ปรับได้ตามใบเสนอราคาจริง|ระบุราคาเอง/.test(vehicle.sourceLabel),
+      `${vehicle.id} ต้องบอกชัดว่าราคายังปรับได้ ไม่ใช่ราคาที่ยืนยันแล้ว`
+    );
+  }
   assert.ok(
     html.includes("COMPETITION_ILLUSTRATION"),
     "สถานะแหล่งที่มาต้องระบุว่าเป็นภาพประกอบการแข่งขัน"
