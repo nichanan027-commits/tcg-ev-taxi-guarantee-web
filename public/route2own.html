@@ -596,7 +596,8 @@ ${stepField('existingDebt','หนี้/ค่างวดเดิมรวม
 ${stepField('householdMonthly','เงินจำเป็นครัวเรือน / เดือน',p.householdMonthly??15000,1000,0)}
 ${stepField('nextShiftDaily','Next-Shift Reserve / วัน',p.nextShiftDaily??0,50,0)}
 ${stepField('reserveBalance','Adaptive Payment Reserve ที่สะสมแล้ว',p.reserveBalance??0,500,0,'ยอดสะสมปัจจุบัน ใช้คำนวณ Preview การสะสมต่อ')}
-${stepField('vehiclePrice','ราคารถ EV ที่สนใจ',p.vehiclePrice??800000,25000,0,'ปรับครั้งละ 25,000 บาท')}
+${vehicleField()}
+${stepField('vehiclePrice','ราคารถ EV ที่สนใจ',p.vehiclePrice??800000,25000,0,'เลือกรุ่นแล้วราคาอ้างอิงจะถูกเติมให้ ปรับเองได้ครั้งละ 25,000 บาท')}
 <div class="field"><label>เงินดาวน์ผู้ขับ</label><input id="downPayment" type="number" value="0" disabled><small>Base Product Design: เงินดาวน์ผู้ขับ 0% — ไม่ใช่การอนุมัติสินเชื่ออัตโนมัติ</small></div>
 <div class="field"><label>วงเงินสินเชื่อที่ต้องใช้ <span class="autoflag">⚙ คำนวณอัตโนมัติ</span></label><input id="loanNeed" type="number" readonly tabindex="-1" value="${p.vehiclePrice??800000}"><small>= ราคารถ EV (เงินดาวน์ 0%)</small></div>
 ${stepField('eligibleGuaranteedAmount','วงเงินค้ำที่เข้าเกณฑ์ใน Scenario',p.eligibleGuaranteedAmount??(p.vehiclePrice??800000),25000,0,'ไม่ใช่สิทธิอัตโนมัติ และต้องไม่เกินวงเงินสินเชื่อรถ')}
@@ -655,12 +656,13 @@ function calculateRoute(){
  const P=res.input.loanNeed;
  const incomeEvidence=res.readiness.incomeEvidenceReliability,activityEvidence=res.readiness.activityEvidenceStatus,route=res.readiness.route,tier=res.readiness.tier;
  const routeLabel=E.routeLabelOf?E.routeLabelOf(route):route;
+ const chosenVehicle=getVehicle(currentVehicleId());
  const energyLabel=energyIncluded?'พลังงาน EV (รวมในแพ็กเกจแบตเตอรี่)':'พลังงาน EV (แยกจากแพ็กเกจแบตเตอรี่)';
  const rbpLabel=guaranteeYear<=3?`RBP ลูกค้าจ่าย — ปี ${guaranteeYear} (Fee Waiver)`:`RBP ลูกค้าจ่าย — ปี ${guaranteeYear}`;
  const availCls=cashShortfallBeforeObligations>0?'bad':'';
  const remainText=money(residualCash);
  const gapNote=affordabilityGap>0?`<div class="wf minus"><span>Affordability Gap — ยังขาด</span><b>- ${money(affordabilityGap)}</b></div>`:'';
- a.innerHTML=`<div class="metric-grid"><div class="metric"><div class="label">Verified Revenue / วัน</div><div class="value">฿${money(verified)}</div><div class="sub">Gross ${money(gross)} × Verification</div></div><div class="metric ${availCls}"><div class="label">Available Cash / วัน</div><div class="value">฿${money(availableCash)}</div><div class="sub">${cashShortfallBeforeObligations>0?`ยังขาดอีก ฿${money(cashShortfallBeforeObligations)} จึงจะครอบคลุม Eligible OpEx + Protected Cash`:'หลัง Eligible OpEx + Protected Cash'}</div></div><div class="metric ${dscr>=1?'good':'bad'}"><div class="label">DSCR Base — Affordability Gate</div><div class="value">${dscr.toFixed(2)}x</div><div class="sub">Gate ขั้นต่ำ = 1.00x</div></div><div class="metric ${c.principalSustainabilityPassed?'good':'bad'}"><div class="label">Principal Sustainability</div><div class="value">${c.principalSustainabilityPassed?'CLOSE':'GAP'}</div><div class="sub">ยอดคงเหลือ ณ งวดสุดท้าย ฿${money(maturity)} ตาม FI Contractual Schedule</div></div></div><div class="calc-layout" style="margin-top:16px"><div class="card"><h3>Daily Financial X-Ray</h3><div class="waterfall"><div class="wf"><span>รายได้ที่ตรวจสอบย้อนกลับได้</span><b>+ ${money(verified)}</b></div><div class="wf minus"><span>ค่าบริการแบตเตอรี่ / การสลับ</span><b>- ${money(batteryService)}</b></div><div class="wf minus"><span>${energyLabel}</span><b>- ${money(energy)}</b></div><div class="wf minus"><span>Maintenance + Tire</span><b>- ${money(maint+tire)}</b></div><div class="wf minus"><span>Insurance + Registration</span><b>- ${money(ins)}</b></div><div class="wf minus"><span>Other OpEx</span><b>- ${money(other)}</b></div><div class="wf reserve"><span>Protected Cash</span><b>- ${money(protectedDaily)}</b></div><div class="wf total"><span><small>Available Cash</small></span><b>${money(availableCash)}</b></div><div class="wf minus"><span>PAYD Target Preview</span><b>- ${money(paydTarget)}</b></div><div class="wf minus"><span>${rbpLabel}</span><b>- ${money(customerRbpDay)}</b></div><div class="wf reserve"><span>Adaptive Payment Reserve Preview</span><b>- ${money(reserveContributionPreview)}</b></div>${gapNote}<div class="wf total"><span><small>Residual Cash</small></span><b>${remainText}</b></div></div><small style="color:var(--muted);display:block;margin-top:10px">ลำดับความสำคัญ: Protected Cash → PAYD → Adaptive Payment Reserve • ตัวเลขทั้งหมดเป็น Preview — Actual Sweep เกิดหลัง FI อนุมัติในระบบ Post-Approval</small></div><div class="result-box"><h3>ผลคำนวณหลัก</h3><div class="result-row"><span>FI Contractual Instalment — Scenario</span><b>฿${money(pmt)} / เดือน</b></div><div class="result-row"><span>PAYD Target Preview</span><b>฿${money(paydTarget)} / Eligible Day</b></div><div class="result-row"><span>PAYD Capacity</span><b>฿${money(paydCapacity)} / Eligible Day</b></div><div class="result-row"><span>DSCR Base</span><b>${dscr.toFixed(2)}x</b></div><div class="result-row"><span>DSCR Downside −15%</span><b>${dscr15.toFixed(2)}x</b></div><div class="result-row"><span>DSCR Severe −30%</span><b>${dscr30.toFixed(2)}x</b></div><div class="result-row"><span>PAI</span><b>${pai.toFixed(2)}</b></div><div class="result-row"><span>Income Evidence Reliability</span><b>${incomeEvidence}</b></div><div class="result-row"><span>Activity Evidence</span><b>${activityEvidence}</b></div><div class="result-row"><span>Appropriate Route</span><b>${routeLabel}</b></div><div class="result-row"><span>Indicative Risk Tier</span><b>${tier}</b></div></div></div><div class="cards" style="margin-top:16px;grid-template-columns:repeat(2,1fr)"><div class="card"><h3>Adaptive Payment Reserve — Preview</h3><div class="result-row"><span>สะสมต่อวัน (10% ของ PAYD Target)</span><b>฿${money(reserveContributionPreview)}</b></div><div class="result-row"><span>เป้าหมายเงินสำรอง (5 × PAYD Target)</span><b>฿${money(reserveTarget)}</b></div><div class="result-row"><span>ยอดสะสมปัจจุบัน</span><b>฿${money(c.reserveBalance)}</b></div><small style="color:var(--muted)">หากเงินไม่พอสะสม PAYD Target ระบบจะแสดงยอดสะสม = 0 • ไม่มีการบังคับหักเมื่อไม่มีรายได้ที่ตรวจสอบได้</small></div><div class="card"><h3>ค่าธรรมเนียมค้ำประกันอ้างอิง</h3><div class="result-row"><span>วงเงินสินเชื่อ (เงินดาวน์ 0%)</span><b>฿${money(P)}</b></div><div class="result-row"><span>วงเงินค้ำที่เข้าเกณฑ์</span><b>฿${money(eligibleGuaranteedAmount)}</b></div><div class="result-row"><span>Annual RBP Rate</span><b>${(rbpRate*100).toFixed(2)}%</b></div><div class="result-row"><span>RBP Reference / วันปฏิทิน</span><b>฿${money(rbpReferenceDay)}</b></div><div class="result-row"><span>Customer RBP / วัน</span><b>฿${money(customerRbpDay)}</b></div><div class="result-row"><span>Day-count Basis</span><b>${rbpDayCountBasis} วัน</b></div><div class="result-row"><span>Guarantee Year</span><b>ปีที่ ${guaranteeYear}</b></div><small style="color:var(--muted)">Reference Daily RBP = Eligible Guaranteed Amount × Annual RBP Rate ÷ ${rbpDayCountBasis}<br>${rbpStatus} • Proposed Fee Waiver ปี 1–3; ปี 4 เป็นต้นไปเริ่มเก็บตาม Risk Tier • วงเงินค้ำที่เข้าเกณฑ์ไม่ใช่สิทธิอัตโนมัติ</small></div></div><div class="cards" style="margin-top:14px;grid-template-columns:1fr"><div class="card"><h3>TCO เปรียบเทียบรายเดือน</h3><div class="result-row"><span>เช่ารถเดิม + เชื้อเพลิง</span><b>฿${money(currentCost)}</b></div><div class="result-row"><span>EV Ownership Working Allocation*</span><b>฿${money(evExpense)}</b></div><div class="result-row"><span>ส่วนต่าง</span><b>${tcoDelta>=0?'+':''}฿${money(tcoDelta)}</b></div><small style="color:var(--muted)">*ใช้ PAYD Reference Target และไม่รวม Adaptive Payment Reserve เพราะยังเป็นเงินของผู้ขับ • ต้นทุนแบตเตอรี่/พลังงานยังต้อง Partner Validation</small></div></div><div class="notice warn" style="margin-top:14px"><b>เส้นทางตัดสินจาก Affordability ก่อนคะแนน:</b> DSCR ≥ 1.00x และ Principal Sustainability เป็น Gate หลัก จากนั้นจึงดู Income Evidence Reliability • คะแนน Pre-Score ไม่มีสิทธิ์ Override • Stress DSCR แสดงเป็น Diagnostic เพื่อใช้ Calibration ไม่ใช่ Hard Decline จนกว่าจะผ่าน Real Data Replay</div>`;
+ a.innerHTML=`<div class="metric-grid"><div class="metric"><div class="label">Verified Revenue / วัน</div><div class="value">฿${money(verified)}</div><div class="sub">Gross ${money(gross)} × Verification</div></div><div class="metric ${availCls}"><div class="label">Available Cash / วัน</div><div class="value">฿${money(availableCash)}</div><div class="sub">${cashShortfallBeforeObligations>0?`ยังขาดอีก ฿${money(cashShortfallBeforeObligations)} จึงจะครอบคลุม Eligible OpEx + Protected Cash`:'หลัง Eligible OpEx + Protected Cash'}</div></div><div class="metric ${dscr>=1?'good':'bad'}"><div class="label">DSCR Base — Affordability Gate</div><div class="value">${dscr.toFixed(2)}x</div><div class="sub">Gate ขั้นต่ำ = 1.00x</div></div><div class="metric ${c.principalSustainabilityPassed?'good':'bad'}"><div class="label">Principal Sustainability</div><div class="value">${c.principalSustainabilityPassed?'CLOSE':'GAP'}</div><div class="sub">ยอดคงเหลือ ณ งวดสุดท้าย ฿${money(maturity)} ตาม FI Contractual Schedule</div></div></div><div class="calc-layout" style="margin-top:16px"><div class="card"><h3>Daily Financial X-Ray</h3><div class="waterfall"><div class="wf"><span>รายได้ที่ตรวจสอบย้อนกลับได้</span><b>+ ${money(verified)}</b></div><div class="wf minus"><span>ค่าบริการแบตเตอรี่ / การสลับ</span><b>- ${money(batteryService)}</b></div><div class="wf minus"><span>${energyLabel}</span><b>- ${money(energy)}</b></div><div class="wf minus"><span>Maintenance + Tire</span><b>- ${money(maint+tire)}</b></div><div class="wf minus"><span>Insurance + Registration</span><b>- ${money(ins)}</b></div><div class="wf minus"><span>Other OpEx</span><b>- ${money(other)}</b></div><div class="wf reserve"><span>Protected Cash</span><b>- ${money(protectedDaily)}</b></div><div class="wf total"><span><small>Available Cash</small></span><b>${money(availableCash)}</b></div><div class="wf minus"><span>PAYD Target Preview</span><b>- ${money(paydTarget)}</b></div><div class="wf minus"><span>${rbpLabel}</span><b>- ${money(customerRbpDay)}</b></div><div class="wf reserve"><span>Adaptive Payment Reserve Preview</span><b>- ${money(reserveContributionPreview)}</b></div>${gapNote}<div class="wf total"><span><small>Residual Cash</small></span><b>${remainText}</b></div></div><small style="color:var(--muted);display:block;margin-top:10px">ลำดับความสำคัญ: Protected Cash → PAYD → Adaptive Payment Reserve • ตัวเลขทั้งหมดเป็น Preview — Actual Sweep เกิดหลัง FI อนุมัติในระบบ Post-Approval</small></div><div class="result-box"><h3>ผลคำนวณหลัก</h3><div class="result-row"><span>FI Contractual Instalment — Scenario</span><b>฿${money(pmt)} / เดือน</b></div><div class="result-row"><span>PAYD Target Preview</span><b>฿${money(paydTarget)} / Eligible Day</b></div><div class="result-row"><span>PAYD Capacity</span><b>฿${money(paydCapacity)} / Eligible Day</b></div><div class="result-row"><span>DSCR Base</span><b>${dscr.toFixed(2)}x</b></div><div class="result-row"><span>DSCR Downside −15%</span><b>${dscr15.toFixed(2)}x</b></div><div class="result-row"><span>DSCR Severe −30%</span><b>${dscr30.toFixed(2)}x</b></div><div class="result-row"><span>PAI</span><b>${pai.toFixed(2)}</b></div><div class="result-row"><span>Income Evidence Reliability</span><b>${incomeEvidence}</b></div><div class="result-row"><span>Activity Evidence</span><b>${activityEvidence}</b></div><div class="result-row"><span>Appropriate Route</span><b>${routeLabel}</b></div><div class="result-row"><span>Indicative Risk Tier</span><b>${tier}</b></div></div></div><div class="cards" style="margin-top:16px;grid-template-columns:repeat(2,1fr)"><div class="card"><h3>Adaptive Payment Reserve — Preview</h3><div class="result-row"><span>สะสมต่อวัน (10% ของ PAYD Target)</span><b>฿${money(reserveContributionPreview)}</b></div><div class="result-row"><span>เป้าหมายเงินสำรอง (5 × PAYD Target)</span><b>฿${money(reserveTarget)}</b></div><div class="result-row"><span>ยอดสะสมปัจจุบัน</span><b>฿${money(c.reserveBalance)}</b></div><small style="color:var(--muted)">หากเงินไม่พอสะสม PAYD Target ระบบจะแสดงยอดสะสม = 0 • ไม่มีการบังคับหักเมื่อไม่มีรายได้ที่ตรวจสอบได้</small></div><div class="card"><h3>ค่าธรรมเนียมค้ำประกันอ้างอิง</h3><div class="result-row"><span>รถที่ใช้ใน Scenario</span><b>${chosenVehicle.name}</b></div><div class="result-row"><span>ราคารถที่ใช้คำนวณ</span><b>฿${money(res.input.vehiclePrice)}</b></div><div class="result-row"><span>วงเงินสินเชื่อ (เงินดาวน์ 0%)</span><b>฿${money(P)}</b></div><div class="result-row"><span>วงเงินค้ำที่เข้าเกณฑ์</span><b>฿${money(eligibleGuaranteedAmount)}</b></div><div class="result-row"><span>Annual RBP Rate</span><b>${(rbpRate*100).toFixed(2)}%</b></div><div class="result-row"><span>RBP Reference / วันปฏิทิน</span><b>฿${money(rbpReferenceDay)}</b></div><div class="result-row"><span>Customer RBP / วัน</span><b>฿${money(customerRbpDay)}</b></div><div class="result-row"><span>Day-count Basis</span><b>${rbpDayCountBasis} วัน</b></div><div class="result-row"><span>Guarantee Year</span><b>ปีที่ ${guaranteeYear}</b></div><small style="color:var(--muted)">Reference Daily RBP = Eligible Guaranteed Amount × Annual RBP Rate ÷ ${rbpDayCountBasis}<br>${rbpStatus} • Proposed Fee Waiver ปี 1–3; ปี 4 เป็นต้นไปเริ่มเก็บตาม Risk Tier • วงเงินค้ำที่เข้าเกณฑ์ไม่ใช่สิทธิอัตโนมัติ</small></div></div><div class="cards" style="margin-top:14px;grid-template-columns:1fr"><div class="card"><h3>TCO เปรียบเทียบรายเดือน</h3><div class="result-row"><span>เช่ารถเดิม + เชื้อเพลิง</span><b>฿${money(currentCost)}</b></div><div class="result-row"><span>EV Ownership Working Allocation*</span><b>฿${money(evExpense)}</b></div><div class="result-row"><span>ส่วนต่าง</span><b>${tcoDelta>=0?'+':''}฿${money(tcoDelta)}</b></div><small style="color:var(--muted)">*ใช้ PAYD Reference Target และไม่รวม Adaptive Payment Reserve เพราะยังเป็นเงินของผู้ขับ • ต้นทุนแบตเตอรี่/พลังงานยังต้อง Partner Validation</small></div></div><div class="notice warn" style="margin-top:14px"><b>เส้นทางตัดสินจาก Affordability ก่อนคะแนน:</b> DSCR ≥ 1.00x และ Principal Sustainability เป็น Gate หลัก จากนั้นจึงดู Income Evidence Reliability • คะแนน Pre-Score ไม่มีสิทธิ์ Override • Stress DSCR แสดงเป็น Diagnostic เพื่อใช้ Calibration ไม่ใช่ Hard Decline จนกว่าจะผ่าน Real Data Replay</div>`;
  renderBusiness();
 }
 function followUpHtml(){
@@ -731,6 +733,74 @@ Object.assign(state.passport,{grossDaily:1850.52,workDays:25,verifiedPct:95,comm
 Object.assign(state.calc,{guaranteeYear:1});
 
 /* ================= v1.4 — Stepper • Live Readiness • Business Insights • Report ================= */
+/**
+ * แคตตาล็อกรถของโหมดการแข่งขัน
+ *
+ * ค่าทั้งหมดตรงกับ app/lib/financing/vehicle-catalogue.ts และถูกตรึงด้วย
+ * tests/vehicle-catalogue-sync.test.mjs เพื่อไม่ให้สองฝั่งเพี้ยนกันเงียบ ๆ
+ *
+ * ราคาเป็นค่าตั้งต้นเพื่อให้เริ่มกรอกได้เร็ว ไม่ใช่ราคาขายที่ยืนยันแล้ว และแก้เองได้เสมอ
+ * การเลือกรุ่นรถเปลี่ยนเพียง "ราคารถ" ซึ่งเป็น input ที่ engine รับอยู่แล้ว
+ * ไม่มีรุ่นใดได้คะแนนหรือเส้นทางเป็นพิเศษ และไม่มีกติกาการให้คะแนนใดถูกเพิ่มที่นี่
+ */
+const VEHICLE_CATALOGUE=[
+ {id:'AION_ES',name:'AION ES',segment:'Sedan — ใช้งานเชิงพาณิชย์/แท็กซี่',referencePrice:800000,rangeKm:442},
+ {id:'AION_Y_PLUS',name:'AION Y Plus',segment:'Compact SUV',referencePrice:900000,rangeKm:490},
+ {id:'AION_UT',name:'AION UT',segment:'Hatchback',referencePrice:700000,rangeKm:420},
+ {id:'AION_V',name:'AION V',segment:'SUV',referencePrice:1100000,rangeKm:510},
+ {id:'OTHER',name:'รถรุ่นอื่น (ระบุราคาเอง)',segment:'กำหนดเอง',referencePrice:800000,rangeKm:null}
+];
+const VEHICLE_SOURCE_LABEL='ราคาอ้างอิงตั้งต้นของโครงการ ปรับได้ตามใบเสนอราคาจริง';
+const VEHICLE_SOURCE_STATUS='COMPETITION_ILLUSTRATION';
+
+function getVehicle(id){return VEHICLE_CATALOGUE.find(v=>v.id===id)||VEHICLE_CATALOGUE[VEHICLE_CATALOGUE.length-1]}
+
+/** รุ่นที่เลือกอยู่ — ถ้ายังไม่เคยเลือก ให้เดาจากราคาที่กรอกไว้ ไม่เช่นนั้นถือเป็น "ระบุราคาเอง" */
+function currentVehicleId(){
+ const p=state.passport;
+ if(p.vehicleId&&VEHICLE_CATALOGUE.some(v=>v.id===p.vehicleId))return p.vehicleId;
+ const price=Number(p.vehiclePrice);
+ if(Number.isFinite(price)){
+  const hit=VEHICLE_CATALOGUE.find(v=>v.id!=='OTHER'&&v.referencePrice===price);
+  if(hit)return hit.id;
+ }
+ return p.vehiclePrice===undefined?'AION_ES':'OTHER';
+}
+
+function vehicleNoteText(v){
+ if(v.id==='OTHER')return 'ระบุราคาจากใบเสนอราคาที่คุณได้รับ — ระบบไม่ได้ยืนยันราคานี้';
+ const range=v.rangeKm?` • ระยะทางอ้างอิง ${money0(v.rangeKm)} กม./ชาร์จ`:'';
+ return `${v.segment}${range} • ${VEHICLE_SOURCE_LABEL}`;
+}
+
+function vehicleField(){
+ const id=currentVehicleId(),v=getVehicle(id);
+ return `<div class="field"><label>รถ EV ที่สนใจ</label>`+
+  `<select id="vehicleId" onchange="applyVehicleChoice()">`+
+  VEHICLE_CATALOGUE.map(o=>`<option value="${o.id}" ${o.id===id?'selected':''}>${o.name}${o.id==='OTHER'?'':` — ฿${money0(o.referencePrice)}`}</option>`).join('')+
+  `</select><small id="vehicleNote">${vehicleNoteText(v)}</small></div>`;
+}
+
+/**
+ * เลือกรุ่นรถแล้วเติมราคาอ้างอิงให้
+ *
+ * เลือก "รถรุ่นอื่น" จะไม่ทับราคาที่ผู้ขับกรอกไว้เอง
+ * วงเงินค้ำที่เข้าเกณฑ์ถูกตั้งตามราคารถใหม่ เพราะต้องไม่เกินวงเงินสินเชื่อรถ
+ */
+function applyVehicleChoice(){
+ const sel=document.getElementById('vehicleId');if(!sel)return;
+ const v=getVehicle(sel.value);
+ state.passport.vehicleId=v.id;
+ const note=document.getElementById('vehicleNote');if(note)note.textContent=vehicleNoteText(v);
+ if(v.id!=='OTHER'){
+  const price=document.getElementById('vehiclePrice');
+  if(price)price.value=v4Round(v.referencePrice,0);
+  const elig=document.getElementById('eligibleGuaranteedAmount');
+  if(elig)elig.value=v4Round(v.referencePrice,0);
+ }
+ onPassportChange();
+}
+
 const V4_BOUNDS={existingDebt:[0,500000],householdMonthly:[0,500000],nextShiftDaily:[0,10000],
  vehiclePrice:[0,5000000],downPayment:[0,5000000],interest:[0,36],tenor:[12,120]};
 function money0(x){return new Intl.NumberFormat('th-TH',{maximumFractionDigits:0}).format(Number(x||0))}
