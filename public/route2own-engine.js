@@ -144,6 +144,14 @@ export const DEMO_CASES = {
     label: 'ยังไม่ควรเพิ่มหนี้ใหม่',
     route: ROUTES.NO_NEW_DEBT,
     input: { ...SCENARIO_COMPETITION, grossDaily: 1150, workDays: 21, verifiedPct: 80, gpsComplete: 70, downtimeDays: 4, existingDebt: 2500 }
+  },
+  AION: {
+    // AION ES รุ่นแท็กซี่ 929,900 บาท ดาวน์ 0 ผ่อน 84 งวด
+    // ดอกเบี้ย flat 4.5%/ปี ที่ใช้ในตลาดรถแท็กซี่ = ดอกเบี้ยแท้จริงประมาณ 8.14%/ปี (ค่างวด ≈ 14,558 บาท)
+    // รายได้ใช้ค่าเฉลี่ยจากชุดสำรวจภาคสนามเดียวกับ Scenario หลัก
+    label: 'AION ES 929,900 บาท',
+    route: ROUTES.READY_FOR_FI,
+    input: { ...SCENARIO_COMPETITION, vehiclePrice: 929900, interest: 8.14, tenor: 84 }
   }
 };
 
@@ -323,6 +331,7 @@ export function normalize(body) {
  */
 export function buildSchedule(principal, monthlyRate, months, payment) {
   const rows = [];
+  const monthly = [];   // ตารางผ่อนรายงวด (รายเดือน) — ใช้ลูปเดียวกับรายปี ตัวเลขจึงรวมกันได้ตรงเสมอ
   let balance = principal;
   let amortizes = true;
   const yearCount = Math.ceil(months / 12);
@@ -341,6 +350,15 @@ export function buildSchedule(principal, monthlyRate, months, payment) {
       interestPaid += interest;
       principalPaid += toPrincipal;
       paid += due;
+      monthly.push({
+        no: y * 12 + m + 1,
+        year: y + 1,
+        month: m + 1,
+        payment: due,
+        interest,
+        principal: toPrincipal,
+        closing: balance
+      });
     }
     rows.push({
       year: y + 1,
@@ -352,7 +370,7 @@ export function buildSchedule(principal, monthlyRate, months, payment) {
       closing: balance
     });
   }
-  return { rows, amortizes, finalBalance: balance };
+  return { rows, monthly, amortizes, finalBalance: balance };
 }
 
 function scoreComponent(id, label, maxPoints, rawPoints, explanation, improvementActions) {
@@ -699,6 +717,7 @@ export function scoreRoute2Own(input) {
       totalInterest,
       interestRatio,
       schedule: schedule.rows,
+      scheduleMonthly: schedule.monthly,
       amortizes: schedule.amortizes,
       breakEven
     },

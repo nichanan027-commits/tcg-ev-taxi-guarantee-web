@@ -103,24 +103,43 @@ test('RBP result exposes the 365-day basis and the competition parameter status'
   assert.deepEqual(RBP_RATE, { A: 0.012, B: 0.015, C: 0.018 });
 });
 
-test('the demo cases cover exactly the three frozen routes', () => {
+/**
+ * ชุดข้อมูลสาธิตต้องครอบคลุมทั้งสามเส้นทาง และต้องไม่มีเคสใดหลุดกรอบ
+ *
+ * เดิมเทสต์นี้ล็อกว่าต้องมีสามเคสพอดี แต่ชุดสาธิตมีเคสเพิ่มได้
+ * (เช่นเคสราคารถจริงที่ให้ผลเป็นเส้นทางเดียวกับเคสที่มีอยู่)
+ * สิ่งที่ต้องคุมจริงคือ ทุกเส้นทางมีเคสแทน และทุกเคส — รวมเคสที่เพิ่มมา —
+ * ต้องให้เส้นทางที่อยู่ในชุดที่ frozen ไว้ พร้อม Pre-Score ที่คำนวณครบ
+ */
+test('the demo cases cover every frozen route and never produce one outside the set', () => {
   const expected = {
     READY: ROUTES.READY_FOR_FI,
     BUILD: ROUTES.BUILD_READINESS,
     NODEBT: ROUTES.NO_NEW_DEBT
   };
 
-  assert.deepEqual(Object.keys(DEMO_CASES).sort(), Object.keys(expected).sort());
+  for (const id of Object.keys(expected)) {
+    assert.ok(DEMO_CASES[id], `demo case ${id} must exist`);
+  }
 
-  for (const [id, route] of Object.entries(expected)) {
+  const frozenRoutes = [ROUTES.READY_FOR_FI, ROUTES.BUILD_READINESS, ROUTES.NO_NEW_DEBT];
+  const covered = new Set();
+
+  for (const id of Object.keys(DEMO_CASES)) {
     const result = evaluate(DEMO_CASES[id].input);
-    assert.equal(result.readiness.route, route, `demo case ${id}`);
+    const route = result.readiness.route;
+
+    assert.ok(frozenRoutes.includes(route), `demo case ${id} must map to a frozen route, got ${route}`);
     assert.equal(result.readiness.preScore.status, 'COMPLETED', `pre-score for case ${id}`);
     assert.ok(
       result.readiness.readinessScore >= 0 && result.readiness.readinessScore <= 100,
       `pre-score range for case ${id}`
     );
+    if (expected[id]) assert.equal(route, expected[id], `demo case ${id}`);
+    covered.add(route);
   }
+
+  assert.deepEqual([...covered].sort(), [...frozenRoutes].sort(), 'ทุกเส้นทางต้องมีเคสสาธิตแทน');
 });
 
 test('the five follow-up questions allow skipping and require separate consent before submission', () => {
