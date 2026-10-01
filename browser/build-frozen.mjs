@@ -26,6 +26,17 @@ if (!OUT) throw new Error("ต้องระบุไฟล์ปลายท�
  */
 const STANDALONE = process.argv.includes("--standalone");
 
+/**
+ * --embed-pdf = ฝังตัวสร้าง PDF ลงในไฟล์ (ทำให้ไฟล์โตขึ้นราว 950 KB)
+ *
+ * ไม่เปิดเป็นค่าเริ่มต้น เพราะหน้าที่เผยแพร่ซึ่งมีขนาด 2.1 MB
+ * โหลดไม่ขึ้นบนเบราว์เซอร์ในแอป (เช่นที่เปิดจาก Messenger) ขึ้นว่า
+ * "Couldn't load this Artifact" ขนาดไฟล์จึงสำคัญกว่าการทำงานตอนไม่มีเน็ต
+ *
+ * ไฟล์ที่เอาไปวางบนโฮสต์ที่เราคุมเอง (--standalone) ฝังได้เต็มที่
+ */
+const EMBED_PDF = process.argv.includes("--embed-pdf") || STANDALONE;
+
 let html = readFileSync(path.join(ROOT, "public/route2own.html"), "utf8");
 
 const dataUri = (file, mime) =>
@@ -48,13 +59,15 @@ html = html.replace(engineTag[0], `<script${isModule ? ' type="module"' : ""}>\n
  * การตั้ง window.html2pdf ไว้ก่อน ทำให้ loadPdfLib คืนค่าทันทีโดยไม่ออกเน็ตเลย
  * ตรรกะโหลดจาก CDN ยังอยู่ครบสำหรับการใช้งานที่มีเซิร์ฟเวอร์จริง
  */
-const pdfLib = readFileSync(path.join(ROOT, "public/vendor/html2pdf.bundle.min.js"), "utf8");
-const bodyOpen = html.indexOf("<body>") + "<body>".length;
-if (bodyOpen < "<body>".length) throw new Error("ไม่พบ <body>");
-html =
-  html.slice(0, bodyOpen) +
-  `\n<script>\n/* html2pdf ถูกฝังไว้เพื่อให้ปุ่มดาวน์โหลดทำงานได้แม้ไม่มีอินเทอร์เน็ต */\n${pdfLib}\n</script>\n` +
-  html.slice(bodyOpen);
+if (EMBED_PDF) {
+  const pdfLib = readFileSync(path.join(ROOT, "public/vendor/html2pdf.bundle.min.js"), "utf8");
+  const bodyOpen = html.indexOf("<body>") + "<body>".length;
+  if (bodyOpen < "<body>".length) throw new Error("ไม่พบ <body>");
+  html =
+    html.slice(0, bodyOpen) +
+    `\n<script>\n/* html2pdf ถูกฝังไว้เพื่อให้ปุ่มดาวน์โหลดทำงานได้แม้ไม่มีอินเทอร์เน็ต */\n${pdfLib}\n</script>\n` +
+    html.slice(bodyOpen);
+}
 
 // 3. ฝังรูปภาพ
 html = html.replace(/\/assets\/route2own-gateway-hero\.jpeg/g, dataUri("route2own-gateway-hero.jpeg", "image/jpeg"));
@@ -85,6 +98,6 @@ const leftovers = (html.match(/"\/(assets|route2own-engine|vendor)/g) || []).len
 console.log(`เขียน ${OUT}`);
 console.log(`ขนาด ${(statSync(OUT).size / 1024 / 1024).toFixed(2)} MB`);
 console.log(`engine เป็น module: ${isModule}`);
-console.log(`ตัวสร้าง PDF ฝังแล้ว: ${html.includes("html2pdf ถูกฝังไว้")}`);
+console.log(`ตัวสร้าง PDF: ${EMBED_PDF ? "ฝังในไฟล์" : "โหลดจากอินเทอร์เน็ตตอนกดปุ่ม"}`);
 console.log(`พาธของเซิร์ฟเวอร์ที่ยังเหลือ: ${leftovers}`);
 if (leftovers > 0) throw new Error("ยังมีพาธที่ชี้ไปยังเซิร์ฟเวอร์เหลืออยู่");
